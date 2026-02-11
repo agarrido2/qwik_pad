@@ -10,8 +10,10 @@ export interface InputProps {
   error?: string;
   label?: string;
   required?: boolean;
+  helperText?: string;
   onInput$?: QRL<(event: Event) => void>;
   class?: string;
+  autocomplete?: string;
   'aria-describedby'?: string;
 }
 
@@ -25,12 +27,15 @@ export const Input = component$<InputProps>(
     error,
     label,
     required = false,
+    helperText,
     onInput$,
+    autocomplete,
     class: className,
     'aria-describedby': ariaDescribedby,
   }) => {
     const inputId = `input-${name}`;
     const errorId = `${inputId}-error`;
+    const helperId = `${inputId}-helper`;
 
     return (
       <div class={cn('flex flex-col gap-1', className)}>
@@ -45,13 +50,14 @@ export const Input = component$<InputProps>(
           id={inputId}
           name={name}
           type={type}
-          value={value}
+          {...(value !== undefined && { value })}
           placeholder={placeholder}
           disabled={disabled}
           required={required}
+          autocomplete={autocomplete}
           onInput$={onInput$}
           aria-invalid={!!error}
-          aria-describedby={error ? errorId : ariaDescribedby}
+          aria-describedby={error ? errorId : (helperText ? helperId : ariaDescribedby)}
           class={cn(
             'h-10 w-full rounded-md border bg-white px-3 py-2 text-sm transition-colors',
             'placeholder:text-neutral-400',
@@ -63,8 +69,14 @@ export const Input = component$<InputProps>(
           )}
         />
 
+        {helperText && !error && (
+          <p id={helperId} class="text-xs text-neutral-500">
+            {helperText}
+          </p>
+        )}
+
         {error && (
-          <p id={errorId} class="text-sm text-error" role="alert">
+          <p id={errorId} class="text-sm text-error leading-relaxed" role="alert">
             {error}
           </p>
         )}

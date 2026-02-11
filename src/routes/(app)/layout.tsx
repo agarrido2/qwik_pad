@@ -26,7 +26,7 @@ export const useAppGuard = routeLoader$(async (requestEvent) => {
 
   // Si no completó onboarding y NO está en /onboarding, redirigir
   const pathname = requestEvent.pathname;
-  if (!data.dbUser.hasCompletedOnboarding && !pathname.startsWith('/onboarding')) {
+  if (!data.dbUser.onboardingCompleted && !pathname.startsWith('/onboarding')) {
     throw requestEvent.redirect(302, '/onboarding/step-1');
   }
 
@@ -35,7 +35,7 @@ export const useAppGuard = routeLoader$(async (requestEvent) => {
       id: data.authUser.id,
       email: data.authUser.email ?? '',
       fullName: data.dbUser.fullName ?? '',
-      hasCompletedOnboarding: data.dbUser.hasCompletedOnboarding,
+      onboardingCompleted: data.dbUser.onboardingCompleted,
     },
     organizations: data.organizations,
   };

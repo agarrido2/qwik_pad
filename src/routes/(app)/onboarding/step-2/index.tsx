@@ -1,6 +1,7 @@
 /**
- * Onboarding Step 2 - Selección de industria/sector
- * Lee datos del paso 1 desde cookie, permite elegir sector
+ * Onboarding Step 2 - Reglas del Negocio
+ * - Sector
+ * - Descripción del negocio
  */
 
 import { component$, useSignal } from '@builder.io/qwik';
@@ -11,14 +12,13 @@ import {
   zod$,
   Form,
 } from '@builder.io/qwik-city';
-import { Button, Alert } from '~/components/ui';
+import { Button, Alert, Select, type SelectOption } from '~/components/ui';
 import { OnboardingProgress } from '~/components/onboarding/onboarding-progress';
-import { IndustrySelector, type IndustryOption } from '~/components/onboarding/industry-selector';
 import { OnboardingStep2Schema } from '~/lib/schemas/onboarding.schemas';
 import { db } from '~/lib/db';
 import { industryTypes } from '~/lib/db/schema';
 
-// Cargar industrias disponibles desde DB
+// Cargar industrias disponibles desde DB y convertir a formato SelectOption
 export const useIndustries = routeLoader$(async () => {
   const industries = await db
     .select({
@@ -29,7 +29,12 @@ export const useIndustries = routeLoader$(async () => {
     })
     .from(industryTypes);
 
-  return industries as IndustryOption[];
+  return industries.map(industry => ({
+    value: industry.slug,
+    label: industry.name,
+    description: industry.description,
+    icon: industry.icon,
+  })) as SelectOption[];
 });
 
 // Verificar que el paso 1 se completó
@@ -39,12 +44,13 @@ export const useCheckStep1 = routeLoader$(async (requestEvent) => {
     throw requestEvent.redirect(302, '/onboarding/step-1');
   }
   return JSON.parse(step1Cookie.value) as {
+    fullName: string;
     organizationName: string;
-    organizationSlug: string;
+    phone: string;
   };
 });
 
-// Action: Guardar industria seleccionada y avanzar al paso 3
+// Action: Guardar sector y descripción, avanzar al paso 3
 export const useStep2Action = routeAction$(
   async (data, requestEvent) => {
     // Guardar selección en cookie
@@ -65,6 +71,7 @@ export default component$(() => {
   const step1Data = useCheckStep1();
   const action = useStep2Action();
   const selectedIndustry = useSignal('');
+  const description = useSignal('');
 
   return (
     <div class="space-y-8">
@@ -72,29 +79,57 @@ export default component$(() => {
 
       <div class="rounded-xl bg-white p-8 shadow-md">
         <div class="mb-6">
-          <h1 class="text-xl font-bold text-neutral-900">¿En qué sector opera {step1Data.value.organizationName}?</h1>
+          <h1 class="text-xl font-bold text-neutral-900">Reglas del Negocio</h1>
           <p class="mt-1 text-sm text-neutral-600">
-            Configuraremos tu asistente de voz con plantillas especializadas para tu sector
+            Ayúdanos a configurar tu asistente para {step1Data.value.organizationName}
           </p>
         </div>
 
         {action.value?.failed && (
           <Alert variant="error" class="mb-4">
-            {action.value?.fieldErrors?.industrySlug?.[0] || 'Selecciona un sector'}
+            {action.value?.fieldErrors?.industrySlug?.[0] || 
+             action.value?.fieldErrors?.businessDescription?.[0] || 
+             'Completa todos los campos'}
           </Alert>
         )}
 
         <Form action={action} class="space-y-6">
-          {/* Hidden input que se actualiza con la selección */}
-          <input type="hidden" name="industrySlug" value={selectedIndustry.value} />
-
-          <IndustrySelector
-            industries={industries.value}
-            selectedSlug={selectedIndustry.value}
-            onSelect$={(slug: string) => {
-              selectedIndustry.value = slug;
+          {/* Selector de Industria con componente Select */}
+          <Select
+            name="industrySlug"
+            label="Sector de tu negocio"
+            options={industries.value}
+            value={selectedIndustry.value}
+            onChange$={(value: string) => {
+              selectedIndustry.value = value;
             }}
+            placeholder="Selecciona el sector de tu negocio"
+            required
+            error={action.value?.fieldErrors?.industrySlug?.[0]}
           />
+
+          {/* Descripción del Negocio */}
+          <div>
+            <label for="businessDescription" class="mb-2 block text-sm font-medium text-neutral-700">
+              Descripción del negocio *
+            </label>
+            <textarea
+              id="businessDescription"
+              name="businessDescription"
+              rows={5}
+              class="w-full rounded-lg border border-neutral-300 px-4 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="Describe tu negocio, servicios principales, horarios, etc. Esto ayudará al asistente a responder mejor a tus clientes."
+              required
+              value={description.value}
+              onInput$={(e: Event) => {
+                const target = e.target as HTMLTextAreaElement;
+                description.value = target.value;
+              }}
+            />
+            <p class="mt-1 text-xs text-neutral-500">
+              {description.value.length}/500 caracteres (mínimo 20)
+            </p>
+          </div>
 
           <div class="flex justify-between pt-4">
             <a
@@ -103,12 +138,8 @@ export default component$(() => {
             >
               ← Atrás
             </a>
-            <Button
-              type="submit"
-              loading={action.isRunning}
-              disabled={!selectedIndustry.value}
-            >
-              Siguiente
+            <Button type="submit" loading={action.isRunning}>
+              Continuar →
             </Button>
           </div>
         </Form>
@@ -118,5 +149,5 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: 'Paso 2: Tu sector - Onucall',
+  title: 'Paso 2: Reglas del Negocio - Onucall',
 };

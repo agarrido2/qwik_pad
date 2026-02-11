@@ -15,12 +15,15 @@ export function createServerSupabaseClient(requestEvent: RequestEvent) {
     {
       cookies: {
         getAll() {
-          // Qwik Cookie.getAll() devuelve Record<string, CookieValue>
+          // Qwik Cookie.getAll() devuelve Record<string, CookieValue | null>
+          // Filtramos valores null para evitar errores al acceder a .value
           const allCookies = requestEvent.cookie.getAll();
-          return Object.entries(allCookies).map(([name, cookie]) => ({
-            name,
-            value: cookie.value,
-          }));
+          return Object.entries(allCookies)
+            .filter(([_, cookie]) => cookie !== null)
+            .map(([name, cookie]) => ({
+              name,
+              value: cookie!.value,
+            }));
         },
         setAll(
           cookies: { name: string; value: string; options: CookieOptions }[],

@@ -3,7 +3,7 @@
  * routeAction$ con validación zod$
  */
 
-import { component$ } from '@builder.io/qwik';
+import { component$, useVisibleTask$ } from '@builder.io/qwik';
 import { type DocumentHead, routeAction$, routeLoader$, zod$, z, Form } from '@builder.io/qwik-city';
 import { Button, Input, Alert } from '~/components/ui';
 import { AuthService } from '~/lib/services/auth.service';
@@ -13,7 +13,7 @@ import { getAuthGuardData } from '~/lib/auth/auth-guard';
 export const useCheckAuth = routeLoader$(async (requestEvent) => {
   const data = await getAuthGuardData(requestEvent);
   if (data) {
-    if (!data.dbUser.hasCompletedOnboarding) {
+    if (!data.dbUser.onboardingCompleted) {
       throw requestEvent.redirect(302, '/onboarding/step-1');
     }
     throw requestEvent.redirect(302, '/dashboard');
@@ -46,20 +46,29 @@ export const useRegisterAction = routeAction$(
 );
 
 // Action: Registro con Google OAuth
+// IMPORTANTE: Devuelve URL para redirección client-side (no server-side redirect)
 export const useGoogleRegisterAction = routeAction$(async (_, requestEvent) => {
-  try {
-    const url = await AuthService.getGoogleOAuthUrl(requestEvent);
-    if (url) throw requestEvent.redirect(302, url);
-    return requestEvent.fail(500, { message: 'Error al iniciar OAuth' });
-  } catch (err: any) {
-    if (err?.status === 302) throw err;
-    return requestEvent.fail(500, { message: err.message });
+  const result = await AuthService.getGoogleOAuthUrl(requestEvent);
+  
+  if (result.url) {
+    return { success: true, redirectUrl: result.url };
   }
+  
+  return requestEvent.fail(500, { message: result.error || 'Error al iniciar OAuth' });
 });
 
 export default component$(() => {
   const registerAction = useRegisterAction();
   const googleAction = useGoogleRegisterAction();
+
+  // Client-side redirect para OAuth (CRÍTICO: throw redirect no funciona en actions con fetch)
+  useVisibleTask$(({ track }) => {
+    const actionValue = track(() => googleAction.value);
+    
+    if (actionValue?.success && actionValue.redirectUrl) {
+      window.location.href = actionValue.redirectUrl;
+    }
+  });
 
   return (
     <div class="space-y-6">
@@ -77,7 +86,7 @@ export default component$(() => {
       )}
 
       {/* Google OAuth */}
-      <Form action={googleAction}>
+      <Form action={googleAction} spaReset>
         <Button
           type="submit"
           variant="outline"
@@ -103,13 +112,19 @@ export default component$(() => {
         </div>
       </div>
 
-      <Form action={registerAction} class="space-y-4">
+      <Form 
+        action={registerAction} 
+        class="space-y-4" 
+        spaReset
+        autocomplete="off"
+      >
         <Input
           name="fullName"
           type="text"
           label="Nombre completo"
           placeholder="Juan Pérez"
           required
+          autocomplete="off"
           error={registerAction.value?.fieldErrors?.fullName?.[0]}
         />
         <Input
@@ -118,6 +133,7 @@ export default component$(() => {
           label="Email"
           placeholder="tu@email.com"
           required
+          autocomplete="off"
           error={registerAction.value?.fieldErrors?.email?.[0]}
         />
         <Input
@@ -126,6 +142,7 @@ export default component$(() => {
           label="Contraseña"
           placeholder="Mínimo 6 caracteres"
           required
+          autocomplete="new-password"
           error={registerAction.value?.fieldErrors?.password?.[0]}
         />
 

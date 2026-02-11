@@ -12,7 +12,7 @@
  * Basado en: docs/plans/FASE_01_AUTH_LANDING_V2.md
  */
 
-import { pgTable, pgEnum, uuid, text, timestamp, boolean, jsonb, unique } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, uuid, text, timestamp, boolean, jsonb, unique, integer } from 'drizzle-orm/pg-core';
 
 // ==========================================
 // ENUMS
@@ -23,6 +23,11 @@ export const subscriptionTierEnum = pgEnum('subscription_tier', [
   'starter',   // 1 número Zadarme, agente básico Retell AI
   'pro',       // Múltiples números, integraciones CRM/Agenda
   'enterprise' // Custom: volumen alto, soporte dedicado
+]);
+
+export const assistantGenderEnum = pgEnum('assistant_gender', [
+  'male',   // Hombre
+  'female'  // Mujer
 ]);
 
 export const subscriptionStatusEnum = pgEnum('subscription_status', [
@@ -50,6 +55,9 @@ export const organizations = pgTable('organizations', {
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(), // Para URLs: app.onucall.com/{slug}
   
+  // Datos de contacto (Onboarding Paso 1)
+  phone: text('phone'), // Teléfono del negocio
+  
   // Subscription
   subscriptionTier: subscriptionTierEnum('subscription_tier').notNull().default('free'),
   subscriptionStatus: subscriptionStatusEnum('subscription_status').notNull().default('active'),
@@ -58,8 +66,15 @@ export const organizations = pgTable('organizations', {
   zadarmePhoneNumber: text('zadarme_phone_number'), // +34919930992
   retellAgentId: text('retell_agent_id'),           // UUID de Retell AI
   
-  // Metadata de negocio
+  // Metadata de negocio (Onboarding Paso 2)
   industry: text('industry'), // concesionario | inmobiliaria | clinica | ...
+  businessDescription: text('business_description'), // Descripción del negocio
+  
+  // Configuración del Asistente (Onboarding Paso 3)
+  assistantName: text('assistant_name'), // Nombre del asistente de voz
+  assistantGender: assistantGenderEnum('assistant_gender'), // Género del asistente
+  assistantKindnessLevel: integer('assistant_kindness_level'), // 1-5
+  assistantFriendlinessLevel: integer('assistant_friendliness_level'), // 1-5
   
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -76,14 +91,28 @@ export const users = pgTable('users', {
   // Perfil
   email: text('email').notNull().unique(),
   fullName: text('full_name'),
+  phone: text('phone'),
   avatarUrl: text('avatar_url'),
+  role: text('role').notNull().default('invited'),
+  isActive: boolean('is_active').notNull().default(true),
+  subscriptionTier: text('subscription_tier').notNull().default('free'),
   
   // Estado de onboarding
-  hasCompletedOnboarding: boolean('has_completed_onboarding').notNull().default(false),
+  onboardingCompleted: boolean('onboarding_completed').notNull().default(false),
+  trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
+  trialStartedAt: timestamp('trial_started_at', { withTimezone: true }),
+  signupIp: text('signup_ip'),
+  lastLoginIp: text('last_login_ip'),
+  signupFingerprint: text('signup_fingerprint'),
+  suspiciousActivityFlags: integer('suspicious_activity_flags').default(0),
+  ipAddress: text('ip_address'),
+  timezone: text('timezone').default('Europe/Madrid'),
+  locale: text('locale').default('es'),
+  lastLogin: timestamp('last_login', { withTimezone: true }),
   
   // Timestamps
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ==========================================

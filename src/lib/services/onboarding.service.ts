@@ -12,40 +12,72 @@ import type { IndustrySlug } from '../utils/demo-data-templates';
 export class OnboardingService {
   /**
    * Completa el proceso de onboarding
-   * 1. Crea la organización
-   * 2. Añade al usuario como owner
-   * 3. Marca onboarding como completado
-   * 4. (Futuro) Genera datos demo según industria
+   * 1. Actualiza el perfil del usuario (full_name)
+   * 2. Crea la organización con todos los datos
+   * 3. Añade al usuario como owner
+   * 4. Marca onboarding como completado
+   * 5. Genera datos demo según industria
    */
   static async completeOnboarding(
     userId: string,
     data: {
+      // Paso 1: Identidad Corporativa
+      fullName: string;
       organizationName: string;
-      organizationSlug: string;
+      phone: string;
+      // Paso 2: Reglas del Negocio
       industrySlug: IndustrySlug;
+      businessDescription: string;
+      // Paso 3: Su Asistente
+      assistantGender: 'male' | 'female';
+      assistantName: string;
+      assistantKindnessLevel: number;
+      assistantFriendlinessLevel: number;
     },
   ) {
-    // 1. Crear organización
+    // 1. Actualizar perfil del usuario
+    await db
+      .update(users)
+      .set({ fullName: data.fullName })
+      .where(eq(users.id, userId));
+
+    // 2. Generar slug único desde el nombre de la organización
+    const slug = data.organizationName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    // 3. Crear organización con todos los datos
     const organization = await OrganizationService.createOrganization({
       name: data.organizationName,
-      slug: data.organizationSlug,
+      slug,
+      phone: data.phone,
       industry: data.industrySlug,
+      businessDescription: data.businessDescription,
+      assistantName: data.assistantName,
+      assistantGender: data.assistantGender,
+      assistantKindnessLevel: data.assistantKindnessLevel,
+      assistantFriendlinessLevel: data.assistantFriendlinessLevel,
     });
 
-    // 2. Añadir usuario como owner
+    // 4. Añadir usuario como owner
     await OrganizationService.addUserToOrganization(
       userId,
       organization.id,
       'owner',
     );
 
-    // 3. Marcar onboarding completado
+    // 5. Marcar onboarding completado
     await db
       .update(users)
-      .set({ hasCompletedOnboarding: true })
+      .set({ onboardingCompleted: true })
       .where(eq(users.id, userId));
 
-    // 4. Generar datos demo según industria
+    // 6. Generar datos demo según industria
     const demoData = await DemoDataService.generateForIndustry(
       organization.id,
       data.industrySlug,
@@ -59,11 +91,11 @@ export class OnboardingService {
    */
   static async hasCompletedOnboarding(userId: string): Promise<boolean> {
     const [user] = await db
-      .select({ hasCompletedOnboarding: users.hasCompletedOnboarding })
+      .select({ onboardingCompleted: users.onboardingCompleted })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
 
-    return user?.hasCompletedOnboarding ?? false;
+    return user?.onboardingCompleted ?? false;
   }
 }

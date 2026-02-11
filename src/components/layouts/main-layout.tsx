@@ -1,5 +1,5 @@
 import { component$, Slot } from '@builder.io/qwik';
-import { Container } from '~/components/ui/container';
+import { Link } from '@builder.io/qwik-city';
 
 /**
  * MainLayout - Para páginas públicas (landing, pricing, etc.)
@@ -9,12 +9,12 @@ export const MainLayout = component$(() => {
     <div class="flex min-h-screen flex-col">
       {/* Header */}
       <header class="sticky top-0 z-50 border-b border-neutral-200 bg-white/80 backdrop-blur-sm">
-        <Container>
+        <div class="content-container">
           <nav class="flex h-16 items-center justify-between" role="navigation" aria-label="Navegación principal">
             <div class="flex items-center gap-8">
-              <a href="/" class="text-xl font-bold text-primary-600" aria-label="Onucall - Inicio">
+              <Link href="/" class="text-xl font-bold text-primary-600" aria-label="Onucall - Inicio">
                 Onucall
-              </a>
+              </Link>
               
               <div class="hidden items-center gap-6 md:flex">
                 <a href="#features" class="text-sm font-medium text-neutral-700 hover:text-primary-600 transition-colors">
@@ -30,21 +30,21 @@ export const MainLayout = component$(() => {
             </div>
 
             <div class="flex items-center gap-3">
-              <a
+              <Link
                 href="/login"
                 class="hidden sm:inline-flex text-sm font-medium text-neutral-700 hover:text-primary-600 transition-colors"
               >
                 Iniciar sesión
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/register"
                 class="inline-flex h-9 items-center justify-center rounded-md bg-primary-600 px-4 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
               >
                 Comenzar gratis
-              </a>
+              </Link>
             </div>
           </nav>
-        </Container>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -54,7 +54,7 @@ export const MainLayout = component$(() => {
 
       {/* Footer */}
       <footer class="border-t border-neutral-200 bg-neutral-50">
-        <Container>
+        <div class="content-container">
           <div class="py-8 md:py-12">
             <div class="grid gap-8 md:grid-cols-4">
               <div>
@@ -95,7 +95,7 @@ export const MainLayout = component$(() => {
               © {new Date().getFullYear()} Onucall. Todos los derechos reservados.
             </div>
           </div>
-        </Container>
+        </div>
       </footer>
     </div>
   );

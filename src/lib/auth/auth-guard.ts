@@ -21,7 +21,7 @@ export interface AuthGuardResult {
     email: string;
     fullName: string | null;
     avatarUrl: string | null;
-    hasCompletedOnboarding: boolean;
+    onboardingCompleted: boolean;
   };
   organizations: Awaited<ReturnType<typeof OrganizationService.getUserOrganizations>>;
 }

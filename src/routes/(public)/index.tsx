@@ -4,15 +4,14 @@
  */
 
 import { component$ } from '@builder.io/qwik';
-import type { DocumentHead } from '@builder.io/qwik-city';
-import { Container } from '~/components/ui';
+import { Link, type DocumentHead } from '@builder.io/qwik-city';
 
 export default component$(() => {
   return (
     <>
       {/* Hero Section */}
       <section class="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-primary-50/30 py-20 md:py-32">
-        <Container>
+        <div class="content-container">
           <div class="mx-auto max-w-3xl text-center">
             <span class="mb-4 inline-block rounded-full bg-primary-100 px-4 py-1.5 text-sm font-medium text-primary-700">
               Agentes de Voz con IA
@@ -27,12 +26,12 @@ export default component$(() => {
               y resuelven consultas. Sin esperas, sin horarios, sin límites.
             </p>
             <div class="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <a
+              <Link
                 href="/register"
                 class="inline-flex h-12 items-center justify-center rounded-lg bg-primary-600 px-8 text-base font-semibold text-white shadow-md transition-colors hover:bg-primary-700"
               >
                 Comenzar gratis
-              </a>
+              </Link>
               <a
                 href="#features"
                 class="inline-flex h-12 items-center justify-center rounded-lg border-2 border-neutral-300 px-8 text-base font-semibold text-neutral-700 transition-colors hover:border-primary-400 hover:text-primary-600"
@@ -41,12 +40,12 @@ export default component$(() => {
               </a>
             </div>
           </div>
-        </Container>
+        </div>
       </section>
 
       {/* Features Section */}
       <section id="features" class="py-20">
-        <Container>
+        <div class="content-container">
           <div class="mx-auto mb-16 max-w-2xl text-center">
             <h2 class="mb-4 text-3xl font-bold text-neutral-900">
               Todo lo que necesitas para automatizar tu atención telefónica
@@ -96,12 +95,12 @@ export default component$(() => {
               </div>
             ))}
           </div>
-        </Container>
+        </div>
       </section>
 
       {/* Sectores */}
       <section class="bg-neutral-50 py-20">
-        <Container>
+        <div class="content-container">
           <div class="mx-auto mb-12 max-w-2xl text-center">
             <h2 class="mb-4 text-3xl font-bold text-neutral-900">
               Diseñado para tu sector
@@ -131,12 +130,12 @@ export default component$(() => {
               </div>
             ))}
           </div>
-        </Container>
+        </div>
       </section>
 
       {/* Pricing */}
       <section id="pricing" class="py-20">
-        <Container>
+        <div class="content-container">
           <div class="mx-auto mb-16 max-w-2xl text-center">
             <h2 class="mb-4 text-3xl font-bold text-neutral-900">
               Planes simples, sin sorpresas
@@ -158,9 +157,9 @@ export default component$(() => {
                 <li class="flex items-center gap-2"><span class="text-success">✓</span> Audio de ejemplo</li>
                 <li class="flex items-center gap-2"><span class="text-neutral-400">—</span> Sin número real</li>
               </ul>
-              <a href="/register" class="block w-full rounded-lg border-2 border-primary-600 py-2.5 text-center text-sm font-semibold text-primary-600 transition-colors hover:bg-primary-50">
+              <Link href="/register" class="block w-full rounded-lg border-2 border-primary-600 py-2.5 text-center text-sm font-semibold text-primary-600 transition-colors hover:bg-primary-50">
                 Empezar gratis
-              </a>
+              </Link>
             </div>
 
             {/* Starter - Destacado */}
@@ -177,9 +176,9 @@ export default component$(() => {
                 <li class="flex items-center gap-2"><span class="text-success">✓</span> 500 minutos/mes</li>
                 <li class="flex items-center gap-2"><span class="text-success">✓</span> Transcripciones</li>
               </ul>
-              <a href="/register" class="block w-full rounded-lg bg-primary-600 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-primary-700">
+              <Link href="/register" class="block w-full rounded-lg bg-primary-600 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-primary-700">
                 Comenzar ahora
-              </a>
+              </Link>
             </div>
 
             {/* Pro */}
@@ -193,17 +192,17 @@ export default component$(() => {
                 <li class="flex items-center gap-2"><span class="text-success">✓</span> 2000 minutos/mes</li>
                 <li class="flex items-center gap-2"><span class="text-success">✓</span> Integraciones CRM</li>
               </ul>
-              <a href="/register" class="block w-full rounded-lg border-2 border-primary-600 py-2.5 text-center text-sm font-semibold text-primary-600 transition-colors hover:bg-primary-50">
+              <Link href="/register" class="block w-full rounded-lg border-2 border-primary-600 py-2.5 text-center text-sm font-semibold text-primary-600 transition-colors hover:bg-primary-50">
                 Comenzar ahora
-              </a>
+              </Link>
             </div>
           </div>
-        </Container>
+        </div>
       </section>
 
       {/* CTA Final */}
       <section id="contact" class="bg-primary-600 py-20 text-white">
-        <Container>
+        <div class="content-container">
           <div class="mx-auto max-w-2xl text-center">
             <h2 class="mb-4 text-3xl font-bold">
               ¿Listo para automatizar tu atención telefónica?
@@ -211,14 +210,14 @@ export default component$(() => {
             <p class="mb-8 text-lg text-primary-100">
               Crea tu cuenta gratis en menos de 2 minutos. Sin tarjeta de crédito.
             </p>
-            <a
+            <Link
               href="/register"
               class="inline-flex h-12 items-center justify-center rounded-lg bg-white px-8 text-base font-semibold text-primary-700 shadow-md transition-colors hover:bg-primary-50"
             >
               Crear cuenta gratis
-            </a>
+            </Link>
           </div>
-        </Container>
+        </div>
       </section>
     </>
   );

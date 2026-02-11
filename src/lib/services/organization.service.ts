@@ -13,14 +13,26 @@ export class OrganizationService {
   static async createOrganization(data: {
     name: string;
     slug: string;
+    phone?: string;
     industry?: string;
+    businessDescription?: string;
+    assistantName?: string;
+    assistantGender?: 'male' | 'female';
+    assistantKindnessLevel?: number;
+    assistantFriendlinessLevel?: number;
   }) {
     const [org] = await db
       .insert(organizations)
       .values({
         name: data.name,
         slug: data.slug,
+        phone: data.phone,
         industry: data.industry,
+        businessDescription: data.businessDescription,
+        assistantName: data.assistantName,
+        assistantGender: data.assistantGender,
+        assistantKindnessLevel: data.assistantKindnessLevel,
+        assistantFriendlinessLevel: data.assistantFriendlinessLevel,
         subscriptionTier: 'free',
         subscriptionStatus: 'active',
       })

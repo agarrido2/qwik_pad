@@ -17,7 +17,12 @@ BEGIN
     email,
     full_name,
     avatar_url,
-    has_completed_onboarding,
+    role,
+    is_active,
+    subscription_tier,
+    onboarding_completed,
+    timezone,
+    locale,
     created_at,
     updated_at
   )
@@ -26,7 +31,12 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'fullName', NULL),
     NEW.raw_user_meta_data->>'avatar_url',
+    'invited',
+    true,
+    'free',
     false, -- Por defecto, no ha completado onboarding
+    'Europe/Madrid',
+    'es',
     NOW(),
     NOW()
   );

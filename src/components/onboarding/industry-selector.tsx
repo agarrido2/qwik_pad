@@ -14,12 +14,15 @@ export interface IndustryOption {
 
 export interface IndustrySelectorProps {
   industries: IndustryOption[];
-  selectedSlug?: string;
+  selected?: string;
+  selectedSlug?: string; // Backward compatibility
   onSelect$: QRL<(slug: string) => void>;
 }
 
 export const IndustrySelector = component$<IndustrySelectorProps>(
-  ({ industries, selectedSlug, onSelect$ }) => {
+  ({ industries, selected, selectedSlug, onSelect$ }) => {
+    const activeSlug = selected || selectedSlug || '';
+    
     return (
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Selecciona tu sector">
         {industries.map((industry) => (
@@ -27,13 +30,13 @@ export const IndustrySelector = component$<IndustrySelectorProps>(
             key={industry.slug}
             type="button"
             role="radio"
-            aria-checked={selectedSlug === industry.slug}
+            aria-checked={activeSlug === industry.slug}
             onClick$={() => onSelect$(industry.slug)}
             class={cn(
               'flex flex-col items-start gap-2 rounded-lg border-2 p-4 text-left transition-all',
               'hover:border-primary-400 hover:bg-primary-50/50',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
-              selectedSlug === industry.slug
+              activeSlug === industry.slug
                 ? 'border-primary-600 bg-primary-50 shadow-sm'
                 : 'border-neutral-200 bg-white'
             )}
