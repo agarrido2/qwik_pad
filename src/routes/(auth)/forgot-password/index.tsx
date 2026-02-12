@@ -4,7 +4,7 @@
 
 import { component$ } from '@builder.io/qwik';
 import { type DocumentHead, routeAction$, zod$, z, Form } from '@builder.io/qwik-city';
-import { Button, Input, Alert } from '~/components/ui';
+import { Button, Input, Alert, Spinner } from '~/components/ui';
 import { createServerSupabaseClient } from '~/lib/supabase/client.server';
 
 export const useForgotPasswordAction = routeAction$(
@@ -58,7 +58,8 @@ export default component$(() => {
           error={action.value?.fieldErrors?.email?.[0]}
         />
 
-        <Button type="submit" class="w-full" loading={action.isRunning}>
+        <Button type="submit" class="w-full" disabled={action.isRunning}>
+          {action.isRunning && <Spinner size="sm" />}
           Enviar enlace
         </Button>
       </Form>

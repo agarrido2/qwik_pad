@@ -15,7 +15,7 @@ import {
   Form,
   Link,
 } from '@builder.io/qwik-city';
-import { Button, Input, Alert, Card, CardContent } from '~/components/ui';
+import { Button, Input, Alert, Card, CardContent, Spinner } from '~/components/ui';
 import { OnboardingProgress } from '~/components/onboarding/onboarding-progress';
 import { OnboardingStep3Schema } from '~/lib/schemas/onboarding.schemas';
 import { OnboardingService } from '~/lib/services/onboarding.service';
@@ -276,7 +276,8 @@ export default component$(() => {
             >
               ← Atrás
             </Link>
-            <Button type="submit" loading={action.isRunning}>
+            <Button type="submit" disabled={action.isRunning}>
+              {action.isRunning && <Spinner size="sm" />}
               🚀 Finalizar configuración
             </Button>
           </div>

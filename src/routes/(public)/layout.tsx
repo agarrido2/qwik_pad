@@ -1,15 +1,15 @@
 /**
  * Layout público - Envuelve landing, pricing, etc.
- * Renderiza MainLayout (Header marketing + Footer)
+ * Renderiza PublicLayout (Header marketing + Footer)
  */
 
 import { component$, Slot } from '@builder.io/qwik';
-import { MainLayout } from '~/components/layouts';
+import { PublicLayout } from '~/components/layouts';
 
 export default component$(() => {
   return (
-    <MainLayout>
+    <PublicLayout>
       <Slot />
-    </MainLayout>
+    </PublicLayout>
   );
 });

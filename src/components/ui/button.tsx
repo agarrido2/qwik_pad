@@ -1,62 +1,140 @@
-import { component$, Slot, type QRL } from '@builder.io/qwik';
+/**
+ * Button Component - Sistema de Diseño UI
+ * 
+ * Componente de botón basado en CVA (Class Variance Authority) que proporciona
+ * variantes semánticas, tamaños consistentes y micro-interacciones refinadas.
+ * 
+ * Patrón: Tipado automático mediante VariantProps<> para máxima seguridad TypeScript.
+ * UX: Incluye feedback táctil (scale), depth visual (shadow) y transiciones suaves.
+ * 
+ * @example
+ * // Botón primario con loading state externo
+ * <Button variant="default" size="lg">
+ *   <Spinner />
+ *   Guardando...
+ * </Button>
+ * 
+ * @example
+ * // Botón destructivo con ícono
+ * <Button variant="destructive" size="icon" aria-label="Eliminar">
+ *   <TrashIcon />
+ * </Button>
+ */
+
+import { component$, Slot, type PropFunction } from '@builder.io/qwik';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '~/lib/utils/cn';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+/**
+ * Definición de variantes del Button mediante CVA.
+ * 
+ * Base: Clases compartidas por todas las variantes (layout, accesibilidad, transiciones).
+ * Variants: Configuración semántica de colores, estilos y tamaños.
+ * 
+ * Razón del Patrón: CVA genera tipos TypeScript automáticamente, eliminando
+ * la necesidad de Record<> manuales y previniendo desincronización entre tipos y clases.
+ */
+const buttonVariants = cva(
+  // Base: Aplicado a TODOS los botones
+  'inline-flex items-center justify-center whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95',
+  {
+    variants: {
+      variant: {
+        // Primary: Acción principal de contexto
+        default:
+          'bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:shadow-md focus:bg-primary/90 rounded-md',
+        
+        // Destructive: Acciones peligrosas (eliminar, cancelar operación crítica)
+        destructive:
+          'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-md focus:bg-destructive/90 rounded-md',
+        
+        // Success: Confirmación positiva (aprobar, publicar, completar)
+        success:
+          'bg-green-500 text-white shadow hover:bg-green-600 hover:shadow-md focus:bg-green-600 rounded-md',
+        
+        // Outline: Acciones secundarias con jerarquía visual
+        outline:
+          'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:shadow-md focus:bg-accent focus:text-accent-foreground rounded-md',
+        
+        // Secondary: Acciones de soporte (cancelar, cerrar)
+        secondary:
+          'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:shadow-md focus:bg-secondary/80 rounded-md',
+        
+        // Ghost: Acciones terciarias sin background (ej: items de menú)
+        ghost:
+          'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground rounded-md',
+        
+        // Link: Navegación inline (sin bordes, comportamiento textual)
+        link: 'text-primary underline-offset-4 hover:underline focus:underline hover:text-primary/80 focus:text-primary/80',
+      },
+      size: {
+        // Default: Altura estándar para formularios y toolbars
+        default: 'h-10 px-4 py-2 text-sm font-medium gap-2',
+        
+        // SM: Espacios reducidos (tablas, chips, tags)
+        sm: 'h-9 px-3 text-xs font-medium gap-2 rounded-md',
+        
+        // LG: Llamadas a acción (CTAs, landings)
+        lg: 'h-11 px-8 text-base font-medium gap-2 rounded-md',
+        
+        // XL: Heros, secciones destacadas
+        xl: 'h-12 px-10 text-lg font-semibold gap-2 rounded-md',
+        
+        // Icon: Botones cuadrados sin padding horizontal (solo íconos)
+        icon: 'h-10 w-10 gap-0',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
 
-export interface ButtonProps {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  type?: 'button' | 'submit' | 'reset';
-  disabled?: boolean;
-  loading?: boolean;
-  onClick$?: QRL<() => void>;
+/**
+ * Props del Button con tipado automático de variantes.
+ * 
+ * VariantProps<> infiere automáticamente los tipos permitidos desde buttonVariants,
+ * garantizando sincronización entre la definición CVA y la interfaz TypeScript.
+ */
+export interface ButtonProps extends VariantProps<typeof buttonVariants> {
+  /** Clases CSS adicionales (composición vía cn()) */
   class?: string;
+  
+  /** Estado disabled (previene interacción) */
+  disabled?: boolean;
+  
+  /** Tipo HTML nativo del botón */
+  type?: 'button' | 'submit' | 'reset';
+  
+  /** Handler de evento click (serializablе con $) */
+  onClick$?: PropFunction<() => void>;
+  
+  /** Label accesible para lectores de pantalla */
   'aria-label'?: string;
 }
 
+/**
+ * Button Component - Export Principal
+ * 
+ * Renderiza un botón HTML nativo con variantes semánticas y accesibilidad completa.
+ * 
+ * Separación de Responsabilidades:
+ * - Este componente maneja SOLO la UI del botón.
+ * - Estados de loading se gestionan externamente con <Spinner /> en Slot.
+ * - Lógica de negocio vive en services, no en este componente.
+ */
 export const Button = component$<ButtonProps>(
-  ({
-    variant = 'primary',
-    size = 'md',
-    type = 'button',
-    disabled = false,
-    loading = false,
-    onClick$,
-    class: className,
-    'aria-label': ariaLabel,
-  }) => {
-    const baseStyles = 'inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:pointer-events-none disabled:opacity-50';
-
-    const variants: Record<ButtonVariant, string> = {
-      primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800',
-      secondary: 'bg-neutral-200 text-neutral-900 hover:bg-neutral-300 active:bg-neutral-400',
-      outline: 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 active:bg-primary-100',
-      ghost: 'text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200',
-      danger: 'bg-error text-white hover:bg-red-600 active:bg-red-700',
-    };
-
-    const sizes: Record<ButtonSize, string> = {
-      sm: 'h-8 px-3 text-sm rounded-md',
-      md: 'h-10 px-4 text-base rounded-md',
-      lg: 'h-12 px-6 text-lg rounded-lg',
-    };
-
+  ({ variant, size, class: className, disabled, type = 'button', onClick$, 'aria-label': ariaLabel, ...props }) => {
     return (
       <button
         type={type}
-        disabled={disabled || loading}
+        disabled={disabled}
         onClick$={onClick$}
-        class={cn(baseStyles, variants[variant], sizes[size], className)}
+        class={cn(buttonVariants({ variant, size }), className)}
         aria-label={ariaLabel}
-        aria-busy={loading}
+        {...props}
       >
-        {loading && (
-          <svg class="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        )}
         <Slot />
       </button>
     );

@@ -13,7 +13,7 @@ import {
   Form,
   Link,
 } from '@builder.io/qwik-city';
-import { Button, Alert, Select, type SelectOption } from '~/components/ui';
+import { Button, Alert, Select, Spinner, type SelectOption } from '~/components/ui';
 import { OnboardingProgress } from '~/components/onboarding/onboarding-progress';
 import { OnboardingStep2Schema } from '~/lib/schemas/onboarding.schemas';
 import { db } from '~/lib/db';
@@ -139,7 +139,8 @@ export default component$(() => {
             >
               ← Atrás
             </Link>
-            <Button type="submit" loading={action.isRunning}>
+            <Button type="submit" disabled={action.isRunning}>
+              {action.isRunning && <Spinner size="sm" />}
               Continuar →
             </Button>
           </div>

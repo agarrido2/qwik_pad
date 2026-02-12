@@ -2,25 +2,49 @@
 
 /* Theme colors */
 @theme {
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
+  /* Azul petróleo Onucall */
+  --color-primary-50:  #f3f6fb;
+  --color-primary-100: #e1e8f5;
+  --color-primary-200: #c3d1eb;
+  --color-primary-300: #95afd9;
+  --color-primary-400: #617fbe;
+  --color-primary-500: #39549b;  /* principal */
+  --color-primary-600: #283d7b;
+  --color-primary-700: #1d2d5d;
+  --color-primary-800: #141f42;
+  --color-primary-900: #0c142b;
   
-  --color-error: #dc2626;
-  --color-success: #16a34a;
+  /* Aliases para uso directo (sin número) */
+  --color-primary: var(--color-primary-600);  /* Color principal por defecto */
+  --color-primary-foreground: #ffffff;        /* Texto sobre primary */
+
+  /* Acento teal suave (para hovers, pills, detalles) */
+  --color-accent-400: #2dd4bf;
+  --color-accent-500: #14b8a6;
+  --color-accent-600: #0d9488;
+  --color-accent: var(--color-accent-500);
+  --color-accent-foreground: #ffffff;
+
+  /* Estados semánticos */
+  --color-info:    #3b82f6; /* azul información */
+  --color-success: #16a34a; /* verde éxito */
+  --color-warning: #f59e0b; /* ámbar advertencia */
+  --color-error:   #e11d48; /* rojo frambuesa */
+  --color-destructive: var(--color-error);
+  --color-destructive-foreground: #ffffff;
+  
+  /* Colores de UI sistema */
+  --color-ring: var(--color-primary-500);  /* Focus ring */
+  --color-background: #ffffff;
+  --color-input: #e5e7eb;  /* border de inputs */
+  --color-secondary: #f3f4f6;
+  --color-secondary-foreground: #18181b;
 }
 
 /* Layout utilities */
 @layer utilities {
   .content-container {
-    @apply mx-auto w-full px-4 sm:px-6 lg:px-8 max-w-screen-lg;
+    @apply mx-auto w-full px-4 sm:px-6 lg:px-8 max-w-5xl;
   }
 }
 
@@ -36,5 +60,5 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Focus styles (a11y) */
 *:focus-visible {
-  @apply outline outline-2 outline-offset-2;
+  @apply outline-2 outline-offset-2;
 }

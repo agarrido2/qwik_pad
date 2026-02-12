@@ -7,7 +7,7 @@
 
 import { component$ } from '@builder.io/qwik';
 import { type DocumentHead, routeAction$, zod$, Form } from '@builder.io/qwik-city';
-import { Button, Input, Alert } from '~/components/ui';
+import { Button, Input, Alert, Spinner } from '~/components/ui';
 import { OnboardingProgress } from '~/components/onboarding/onboarding-progress';
 import { OnboardingStep1Schema } from '~/lib/schemas/onboarding.schemas';
 
@@ -78,7 +78,8 @@ export default component$(() => {
           />
 
           <div class="flex justify-end pt-4">
-            <Button type="submit" loading={action.isRunning}>
+            <Button type="submit" disabled={action.isRunning}>
+              {action.isRunning && <Spinner size="sm" />}
               Continuar →
             </Button>
           </div>

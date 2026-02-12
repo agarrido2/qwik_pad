@@ -10,13 +10,13 @@ export default component$(() => {
   return (
     <>
       {/* Hero Section */}
-      <section class="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-primary-50/30 py-20 md:py-32">
+      <section class="relative overflow-hidden bg-linear-to-br from-primary-50 via-white to-primary-50/30 py-20 md:py-32">
         <div class="content-container">
           <div class="mx-auto max-w-3xl text-center">
             <span class="mb-4 inline-block rounded-full bg-primary-100 px-4 py-1.5 text-sm font-medium text-primary-700">
-              Agentes de Voz con IA
+              Agentes de Voz con IA 
             </span>
-            <h1 class="mb-6 text-4xl font-bold tracking-tight text-neutral-900 md:text-6xl">
+            <h1 class="mb-12 text-4xl font-bold tracking-tight text-neutral-900 md:text-6xl">
               Tu negocio atendido{' '}
               <span class="text-primary-600">24/7</span>{' '}
               con inteligencia artificial

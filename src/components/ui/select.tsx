@@ -1,9 +1,28 @@
 /**
- * Select Component - Custom dropdown con estilo moderno
- * Diseño "cool" con iconos y descripciones
+ * Select Component - Dropdown Personalizado con Estilos Modernos
+ * 
+ * Selector custom que reemplaza el <select> nativo con un dropdown estilizado.
+ * Incluye soporte para íconos, descripciones y estados de error.
+ * 
+ * Características:
+ * - Variantes visuales: default, error, success (armonizado con Input)
+ * - Tamaños: sm, default, lg (consistencia con Button/Input)
+ * - Accesibilidad: ARIA roles, keyboard navigation (próximamente)
+ * 
+ * @example
+ * // Select con iconos y descripciones
+ * <Select
+ *   name="industry"
+ *   options={[
+ *     { value: 'tech', label: 'Tecnología', icon: '💻', description: 'Software y hardware' }
+ *   ]}
+ *   onChange$={handleChange}
+ *   error={fieldError.value}
+ * />
  */
 
 import { component$, useSignal, $, type QRL } from '@builder.io/qwik';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '~/lib/utils/cn';
 
 export interface SelectOption {
@@ -13,15 +32,61 @@ export interface SelectOption {
   icon?: string;
 }
 
-export interface SelectProps {
+/**
+ * Variantes del trigger button mediante CVA.
+ * 
+ * Razón: Armonización con Input component. Un Select debe verse como un Input
+ * en su estado cerrado, manteniendo consistencia visual del form.
+ */
+const selectTriggerVariants = cva(
+  // Base: Layout y comportamiento compartido
+  'relative w-full rounded-lg border-2 bg-white px-4 text-left transition-all duration-200 hover:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500',
+  {
+    variants: {
+      variant: {
+        default: 'border-neutral-200',
+        error: 'border-error hover:border-error/80 focus:ring-error',
+        success: 'border-green-500 hover:border-green-600 focus:ring-green-500',
+      },
+      size: {
+        sm: 'py-2 text-xs',   // Altura ~h-8 (alineado con Input sm)
+        default: 'py-3 text-sm', // Altura ~h-10 (alineado con Input default)
+        lg: 'py-4 text-base',  // Altura ~h-12 (alineado con Input lg)
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
+
+export interface SelectProps extends VariantProps<typeof selectTriggerVariants> {
+  /** Nombre del campo (requerido para forms) */
   name: string;
+  
+  /** Opciones del dropdown */
   options: SelectOption[];
+  
+  /** Valor seleccionado */
   value?: string;
+  
+  /** Handler de cambio */
   onChange$: QRL<(value: string) => void>;
+  
+  /** Placeholder cuando no hay selección */
   placeholder?: string;
+  
+  /** Label del campo */
   label?: string;
+  
+  /** Campo requerido */
   required?: boolean;
+  
+  /** Mensaje de error (fuerza variant="error") */
   error?: string;
+  
+  /** Clases CSS adicionales para el wrapper */
   class?: string;
 }
 
@@ -36,10 +101,14 @@ export const Select = component$<SelectProps>(
     required = false,
     error,
     class: className,
+    variant,
+    size,
   }) => {
+    // Estado del dropdown (abierto/cerrado)
     const isOpen = useSignal(false);
-    const selectedOption = options.find(opt => opt.value === value);
+    const selectedOption = options.find((opt) => opt.value === value);
 
+    // Handlers de interacción con serialización ($)
     const toggleDropdown = $(() => {
       isOpen.value = !isOpen.value;
     });
@@ -49,32 +118,39 @@ export const Select = component$<SelectProps>(
       isOpen.value = false;
     });
 
+    // Forzar variant="error" si existe mensaje de error (consistencia con Input)
+    const computedVariant = error ? 'error' : variant;
+
     return (
       <div class={cn('relative', className)}>
+        {/* Label con asterisco si es required */}
         {label && (
           <label class="mb-2 block text-sm font-medium text-neutral-700">
             {label}
-            {required && <span class="ml-1 text-error" aria-label="obligatorio">*</span>}
+            {required && (
+              <span class="ml-1 text-error" aria-label="obligatorio">
+                *
+              </span>
+            )}
           </label>
         )}
 
-        {/* Hidden input for form submission */}
+        {/* Hidden input para form submission */}
         <input type="hidden" name={name} value={value || ''} />
 
-        {/* Custom Trigger Button */}
+        {/* Trigger Button con variantes CVA */}
         <button
           type="button"
           onClick$={toggleDropdown}
           class={cn(
-            'relative w-full rounded-lg border-2 bg-white px-4 py-3 text-left transition-all',
-            'hover:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500',
-            error ? 'border-error' : 'border-neutral-200',
-            !selectedOption && 'text-neutral-400'
+            selectTriggerVariants({ variant: computedVariant, size }),
+            !selectedOption && 'text-neutral-400' // Placeholder styling
           )}
           aria-haspopup="listbox"
           aria-expanded={isOpen.value}
         >
           <div class="flex items-center justify-between">
+            {/* Contenido seleccionado o placeholder */}
             <div class="flex items-center gap-3">
               {selectedOption?.icon && (
                 <span class="text-2xl" aria-hidden="true">
@@ -92,21 +168,28 @@ export const Select = component$<SelectProps>(
                 )}
               </div>
             </div>
+
+            {/* Chevron indicador (rotación animada) */}
             <svg
               class={cn(
-                'h-5 w-5 text-neutral-400 transition-transform',
+                'h-5 w-5 text-neutral-400 transition-transform duration-200',
                 isOpen.value && 'rotate-180'
               )}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </div>
         </button>
 
-        {/* Dropdown Menu */}
+        {/* Dropdown Menu (condicional) */}
         {isOpen.value && (
           <div class="absolute z-10 mt-2 w-full rounded-lg border border-neutral-200 bg-white shadow-xl">
             <ul class="max-h-80 overflow-auto py-2" role="listbox">
@@ -116,18 +199,21 @@ export const Select = component$<SelectProps>(
                     type="button"
                     onClick$={() => selectOption(option.value)}
                     class={cn(
-                      'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors',
+                      'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150',
                       'hover:bg-primary-50',
                       option.value === value && 'bg-primary-100'
                     )}
                     role="option"
                     aria-selected={option.value === value}
                   >
+                    {/* Ícono de opción */}
                     {option.icon && (
                       <span class="text-2xl" aria-hidden="true">
                         {option.icon}
                       </span>
                     )}
+
+                    {/* Label y descripción */}
                     <div class="flex-1">
                       <div class="font-medium text-neutral-900">
                         {option.label}
@@ -138,9 +224,19 @@ export const Select = component$<SelectProps>(
                         </div>
                       )}
                     </div>
+
+                    {/* Checkmark para opción seleccionada */}
                     {option.value === value && (
-                      <svg class="h-5 w-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      <svg
+                        class="h-5 w-5 text-primary-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clip-rule="evenodd"
+                        />
                       </svg>
                     )}
                   </button>
@@ -150,14 +246,14 @@ export const Select = component$<SelectProps>(
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Mensaje de error */}
         {error && (
-          <p class="mt-1 text-sm text-error" role="alert">
+          <p class="mt-1 text-sm text-error leading-relaxed" role="alert">
             {error}
           </p>
         )}
 
-        {/* Overlay to close dropdown when clicking outside */}
+        {/* Overlay para cerrar dropdown al hacer click fuera */}
         {isOpen.value && (
           <div
             class="fixed inset-0 z-0"
