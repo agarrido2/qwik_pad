@@ -90,4 +90,10 @@ export default component$(() => {
 
 export const head: DocumentHead = {
   title: 'Paso 1: Identidad Corporativa - Onucall',
+  meta: [
+    {
+      name: 'description',
+      content: 'Configura la identidad de tu negocio: nombre completo, nombre de la empresa y teléfono de contacto para tu asistente de voz IA.',
+    },
+  ],
 };

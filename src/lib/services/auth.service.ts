@@ -71,46 +71,40 @@ export class AuthService {
 
   /**
    * Genera URL para OAuth con Google
-   * @description Patrón OAuth: devuelve URL para redirección client-side
+   * @description Patrón OAuth para redirect server-side directo
    * @param requestEvent - RequestEvent de Qwik City
    * @param redirectTo - URL de destino después del login (opcional, default: /dashboard)
-   * @returns { url, error } - URL de Google OAuth o error
+   * @returns URL de Google OAuth (para redirect directo)
    */
   static async getGoogleOAuthUrl(
     requestEvent: RequestEventAction,
     redirectTo?: string
-  ): Promise<{ url: string | null; error: string | null }> {
-    try {
-      const supabase = createServerSupabaseClient(requestEvent);
-      
-      // Callback URL que procesará el código OAuth
-      const callbackUrl = `${requestEvent.url.origin}/callback?next=${encodeURIComponent(redirectTo || '/dashboard')}`;
+  ): Promise<string> {
+    const supabase = createServerSupabaseClient(requestEvent);
+    
+    // Callback URL que procesará el código OAuth
+    const callbackUrl = `${requestEvent.url.origin}/callback?next=${encodeURIComponent(redirectTo || '/dashboard')}`;
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: callbackUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
+    console.log('[AuthService] Iniciando OAuth con Google...');
+    console.log('[AuthService] Callback URL:', callbackUrl);
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: callbackUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
         },
-      });
+      },
+    });
 
-      if (error) {
-        console.error('[OAuth] Error al generar URL de Google:', error.message);
-        return { url: null, error: error.message };
-      }
-
-      if (!data?.url) {
-        console.error('[OAuth] No se recibió URL de autorización');
-        return { url: null, error: 'No se pudo generar la URL de autorización de Google' };
-      }
-
-      return { url: data.url, error: null };
-    } catch (err: any) {
-      console.error('[OAuth] Exception en getGoogleOAuthUrl:', err);
-      return { url: null, error: 'Error inesperado al iniciar sesión con Google' };
+    if (error || !data.url) {
+      console.error('[AuthService] OAuth Error:', error);
+      throw new Error(error?.message || 'Error al generar URL de OAuth');
     }
+
+    console.log('[AuthService] OAuth URL generada exitosamente');
+    return data.url;
   }
 }

@@ -3,8 +3,9 @@
  * routeAction$ con validación zod$
  */
 
-import { component$, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useTask$ } from '@builder.io/qwik';
 import { type DocumentHead, routeAction$, routeLoader$, zod$, z, Form } from '@builder.io/qwik-city';
+import { isServer } from '@builder.io/qwik/build';
 import { Button, Input, Alert } from '~/components/ui';
 import { AuthService } from '~/lib/services/auth.service';
 import { getAuthGuardData } from '~/lib/auth/auth-guard';
@@ -45,28 +46,37 @@ export const useRegisterAction = routeAction$(
   }),
 );
 
-// Action: Registro con Google OAuth
-// IMPORTANTE: Devuelve URL para redirección client-side (no server-side redirect)
+// Action: Registro con Google OAuth (Devuelve URL para redirect client-side)
 export const useGoogleRegisterAction = routeAction$(async (_, requestEvent) => {
-  const result = await AuthService.getGoogleOAuthUrl(requestEvent);
-  
-  if (result.url) {
-    return { success: true, redirectUrl: result.url };
+  try {
+    console.log('🔵 [Register OAuth] Action iniciada');
+    const oauthUrl = await AuthService.getGoogleOAuthUrl(requestEvent, '/onboarding/step-1');
+    console.log('🟢 [Register OAuth] URL obtenida:', oauthUrl);
+    
+    // Devolver la URL para redirect client-side
+    return {
+      success: true,
+      redirectUrl: oauthUrl
+    };
+  } catch (err: any) {
+    console.error('🔴 [Register OAuth] Error capturado:', err);
+    
+    return requestEvent.fail(500, { 
+      message: err.message || 'Error al iniciar registro con Google. Por favor, inténtalo de nuevo.' 
+    });
   }
-  
-  return requestEvent.fail(500, { message: result.error || 'Error al iniciar OAuth' });
 });
 
 export default component$(() => {
   const registerAction = useRegisterAction();
   const googleAction = useGoogleRegisterAction();
 
-  // Client-side redirect para OAuth (CRÍTICO: throw redirect no funciona en actions con fetch)
-  useVisibleTask$(({ track }) => {
-    const actionValue = track(() => googleAction.value);
-    
-    if (actionValue?.success && actionValue.redirectUrl) {
-      window.location.href = actionValue.redirectUrl;
+  // Redirect automático cuando OAuth devuelve URL (Resumable)
+  useTask$(({ track }) => {
+    const result = track(() => googleAction.value);
+    if (!isServer && result?.success && result.redirectUrl) {
+      console.log('🟢 [Register] Redirigiendo a OAuth:', result.redirectUrl);
+      window.location.href = result.redirectUrl;
     }
   });
 
@@ -85,8 +95,15 @@ export default component$(() => {
         </Alert>
       )}
 
+      {googleAction.value?.failed && (
+        <Alert variant="error">
+          {googleAction.value.message || 'Error al iniciar registro con Google'}
+        </Alert>
+      )}
+
       {/* Google OAuth */}
       <Form action={googleAction} spaReset>
+        <input type="hidden" name="_oauth" value="google" />
         <Button
           type="submit"
           variant="outline"
@@ -163,5 +180,10 @@ export default component$(() => {
 
 export const head: DocumentHead = {
   title: 'Crear cuenta - Onucall',
-  meta: [{ name: 'description', content: 'Regístrate gratis en Onucall y empieza a automatizar tu atención telefónica.' }],
+  meta: [
+    {
+      name: 'description',
+      content: 'Crea tu cuenta gratuita en Onucall y comienza a automatizar tu atención telefónica con agentes de voz IA. Sin tarjeta de crédito.',
+    },
+  ],
 };

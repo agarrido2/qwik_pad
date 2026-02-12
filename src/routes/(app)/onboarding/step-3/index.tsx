@@ -13,6 +13,7 @@ import {
   routeLoader$,
   zod$,
   Form,
+  Link,
 } from '@builder.io/qwik-city';
 import { Button, Input, Alert, Card, CardContent } from '~/components/ui';
 import { OnboardingProgress } from '~/components/onboarding/onboarding-progress';
@@ -269,12 +270,12 @@ export default component$(() => {
           </Card>
 
           <div class="flex justify-between pt-4">
-            <a
+            <Link
               href="/onboarding/step-2"
               class="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900"
             >
               ← Atrás
-            </a>
+            </Link>
             <Button type="submit" loading={action.isRunning}>
               🚀 Finalizar configuración
             </Button>
@@ -287,4 +288,10 @@ export default component$(() => {
 
 export const head: DocumentHead = {
   title: 'Paso 3: Su Asistente - Onucall',
+  meta: [
+    {
+      name: 'description',
+      content: 'Personaliza la voz de tu asistente IA: elige el género, nombre y nivel de amabilidad que mejor represente a tu marca.',
+    },
+  ],
 };

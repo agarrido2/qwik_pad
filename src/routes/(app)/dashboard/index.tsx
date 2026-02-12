@@ -174,5 +174,10 @@ export default component$(() => {
 
 export const head: DocumentHead = {
   title: 'Dashboard - Onucall',
-  meta: [{ name: 'description', content: 'Panel de control de tu asistente de voz Onucall.' }],
+  meta: [
+    {
+      name: 'description',
+      content: 'Panel de control de Onucall. Monitoriza llamadas, revisa métricas de tu asistente IA y gestiona tu workspace en tiempo real.',
+    },
+  ],
 };

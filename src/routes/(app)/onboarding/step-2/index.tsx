@@ -11,6 +11,7 @@ import {
   routeLoader$,
   zod$,
   Form,
+  Link,
 } from '@builder.io/qwik-city';
 import { Button, Alert, Select, type SelectOption } from '~/components/ui';
 import { OnboardingProgress } from '~/components/onboarding/onboarding-progress';
@@ -132,12 +133,12 @@ export default component$(() => {
           </div>
 
           <div class="flex justify-between pt-4">
-            <a
+            <Link
               href="/onboarding/step-1"
               class="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900"
             >
               ← Atrás
-            </a>
+            </Link>
             <Button type="submit" loading={action.isRunning}>
               Continuar →
             </Button>
@@ -150,4 +151,10 @@ export default component$(() => {
 
 export const head: DocumentHead = {
   title: 'Paso 2: Reglas del Negocio - Onucall',
+  meta: [
+    {
+      name: 'description',
+      content: 'Selecciona el sector de tu negocio y describe tus servicios para que tu asistente IA pueda atender mejor a tus clientes.',
+    },
+  ],
 };
