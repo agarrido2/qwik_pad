@@ -16,7 +16,7 @@ import {
 import { Button, Alert, Select, Spinner, type SelectOption } from '~/components/ui';
 import { OnboardingProgress } from '~/components/onboarding/onboarding-progress';
 import { OnboardingStep2Schema } from '~/lib/schemas/onboarding.schemas';
-import { db } from '~/lib/db';
+import { db } from '~/lib/db/client';
 import { industryTypes } from '~/lib/db/schema';
 
 // Cargar industrias disponibles desde DB y convertir a formato SelectOption

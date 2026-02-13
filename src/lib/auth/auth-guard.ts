@@ -7,7 +7,7 @@ import type { RequestEventLoader, RequestEventAction } from '@builder.io/qwik-ci
 import { AuthService } from '../services/auth.service';
 import { OnboardingService } from '../services/onboarding.service';
 import { OrganizationService } from '../services/organization.service';
-import { db } from '../db';
+import { db } from '../db/client';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 

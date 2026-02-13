@@ -4,9 +4,66 @@
  */
 
 import { component$ } from '@builder.io/qwik';
-import { Link, type DocumentHead } from '@builder.io/qwik-city';
+import { Link, routeAction$, zod$, type DocumentHead } from '@builder.io/qwik-city';
+import { DemoWidget } from '~/features/demo/components/DemoWidget';
+import { demoFormSchema } from '~/features/demo/schemas/demo.schema';
+import { verificationSchema } from '~/features/demo/schemas/verification.schema';
+import { requestDemoVerification, verifyAndTriggerDemo } from '~/features/demo/services/demo.services';
+
+/**
+ * Action: Step 1 - Solicitar código de verificación
+ * @description Orquesta el servicio requestDemoVerification (envía email con OTP)
+ */
+export const useDemoRequestAction = routeAction$(
+  async (data, requestEvent) => {
+    // Obtener IP del cliente para tracking anti-abuse
+    const ipAddress = 
+      requestEvent.headers.get('x-forwarded-for') || 
+      requestEvent.headers.get('x-real-ip') || 
+      'unknown';
+
+    const result = await requestDemoVerification(requestEvent, data, ipAddress);
+
+    if (!result.success) {
+      return requestEvent.fail(400, {
+        message: result.error || 'Error al procesar la solicitud',
+      });
+    }
+
+    // Retornar email para el Step 2 (modal de verificación)
+    return { success: true, email: data.email };
+  },
+  zod$(demoFormSchema)
+);
+
+/**
+ * Action: Step 2 - Verificar código OTP y disparar llamada
+ * @description Orquesta el servicio verifyAndTriggerDemo (valida + llama Retell)
+ */
+export const useVerifyCodeAction = routeAction$(
+  async (data, requestEvent) => {
+    const result = await verifyAndTriggerDemo(
+      requestEvent,
+      data.email,
+      data.code
+    );
+
+    if (!result.success) {
+      return requestEvent.fail(400, {
+        message: result.error || 'Código inválido',
+      });
+    }
+
+    return { success: true, callId: result.callId };
+  },
+  zod$(verificationSchema)
+);
 
 export default component$(() => {
+  // Actions para el flujo de demo (2 pasos)
+  const demoRequestAction = useDemoRequestAction();
+  const verifyCodeAction = useVerifyCodeAction();
+
   return (
     <>
       {/* Hero Section */}
@@ -94,6 +151,89 @@ export default component$(() => {
                 <p class="text-sm text-neutral-600">{feature.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Live Demo Section - ACTUALIZADO: Widget funcional con 2-step verification */}
+      <section id="live-demo" class="bg-linear-to-br from-primary-50 to-white py-20">
+        <div class="content-container">
+          
+          {/* Hero */}
+          <div class="mx-auto mb-12 max-w-2xl text-center">
+            <h2 class="mb-4 text-3xl font-bold text-neutral-900 md:text-4xl">
+              Prueba nuestro agente de IA ahora
+            </h2>
+            <p class="text-lg text-neutral-600">
+              Descubre cómo tu negocio puede automatizar llamadas. Selecciona tu sector 
+              y recibirás una llamada en menos de 30 segundos.
+            </p>
+          </div>
+
+          {/* 2 Column Layout: Sectores Grid (Left) + DemoWidget (Right) */}
+          <div class="grid gap-8 lg:grid-cols-[2fr,1fr]">
+            
+            {/* LEFT BLOCK: Grid Bento de 5 Sectores (2x3) */}
+            <div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
+              {[
+                {
+                  id: 'concesionario',
+                  name: 'Concesionarios',
+                  description: 'Gestiona consultas de stock y agenda test drives',
+                  emoji: '🚗',
+                },
+                {
+                  id: 'inmobiliaria',
+                  name: 'Inmobiliarias',
+                  description: 'Atiende visitas y responde sobre propiedades',
+                  emoji: '🏠',
+                },
+                {
+                  id: 'retail',
+                  name: 'Retail',
+                  description: 'Informa sobre productos y disponibilidad',
+                  emoji: '🛒',
+                },
+                {
+                  id: 'alquiladora',
+                  name: 'Alquiladoras',
+                  description: 'Informa disponibilidad y condiciones de alquiler',
+                  emoji: '🚛',
+                },
+                {
+                  id: 'sat',
+                  name: 'Servicios SAT',
+                  description: 'Recibe incidencias y programa intervenciones',
+                  emoji: '🔧',
+                },
+              ].map((sector) => (
+                <div 
+                  key={sector.id}
+                  class="group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-lg"
+                >
+                  {/* Icon/Image Area con gradiente de marca */}
+                  <div class="flex h-28 items-center justify-center bg-linear-to-br from-primary-50 to-accent-50">
+                    <span class="text-4xl" aria-hidden="true">{sector.emoji}</span>
+                  </div>
+                  
+                  {/* Content: Título + Descripción breve */}
+                  <div class="p-4">
+                    <h3 class="mb-1 text-sm font-semibold text-neutral-900">
+                      {sector.name}
+                    </h3>
+                    <p class="text-xs text-neutral-600">
+                      {sector.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* RIGHT BLOCK: DemoWidget funcional con 2-step verification */}
+            <DemoWidget 
+              requestAction={demoRequestAction} 
+              verifyAction={verifyCodeAction} 
+            />
           </div>
         </div>
       </section>

@@ -62,9 +62,15 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY es obligatoria'),
   RESEND_FROM: z.string().email('RESEND_FROM debe ser un email válido'),
 
-  // Retell AI (opcional por ahora, requerido en paid tier)
-  RETELL_API_KEY: z.string().optional(),
-  RETELL_FROM_NUMBER: z.string().optional(),
+  // Retell AI (Llamadas telefónicas con IA)
+  RETELL_API_KEY: z
+    .string()
+    .min(1, 'RETELL_API_KEY es obligatoria')
+    .startsWith('key_', 'RETELL_API_KEY debe empezar con key_'),
+  RETELL_FROM_NUMBER: z
+    .string()
+    .min(1, 'RETELL_FROM_NUMBER es obligatorio')
+    .regex(/^\+[1-9]\d{8,14}$/, 'RETELL_FROM_NUMBER debe ser formato E.164 (ej: +34919930992)'),
 
   // App Config
   PUBLIC_SITE_URL: z.string().url('PUBLIC_SITE_URL debe ser una URL válida'),
