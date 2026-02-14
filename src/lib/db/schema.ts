@@ -20,8 +20,9 @@ import { relations } from 'drizzle-orm';
 // ==========================================
 
 /**
- * Sectores verticales de Onucall (5 sectores)
+ * Sectores verticales de Onucall (7 sectores)
  * @description Usado en onboarding y demo para determinar plantillas y agentes
+ * IMPORTANTE: Debe coincidir con onboarding.schemas.ts y features/demo/data/agents.ts
  */
 export const industrySectorEnum = pgEnum('industry_sector', [
   'concesionario',    // Concesionarios de Vehículos
@@ -29,6 +30,8 @@ export const industrySectorEnum = pgEnum('industry_sector', [
   'retail',           // Retail y Distribución
   'alquiladora',      // Empresas Alquiladoras
   'sat',              // Servicios Técnicos (SAT)
+  'despacho',         // Despachos Profesionales (legal/contable)
+  'clinica',          // Clínicas y Centros Médicos
 ]);
 
 export const subscriptionTierEnum = pgEnum('subscription_tier', [

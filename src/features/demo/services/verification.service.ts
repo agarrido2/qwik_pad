@@ -9,6 +9,7 @@
  */
 
 import { Resend } from 'resend';
+import { randomInt } from 'node:crypto';
 import type { RequestEventBase } from '@builder.io/qwik-city';
 
 /**
@@ -28,12 +29,15 @@ function getResendClient(): Resend {
 }
 
 /**
- * Genera código de verificación de 6 dígitos
+ * Genera código de verificación de 6 dígitos (criptográficamente seguro)
  * @returns Código numérico (ej: "123456")
+ * 
+ * SEGURIDAD: Usa crypto.randomInt en lugar de Math.random()
+ * para evitar predicción de códigos OTP.
  */
 export function generateVerificationCode(): string {
-  // Generar número entre 100000 y 999999
-  const code = Math.floor(100000 + Math.random() * 900000);
+  // Genera número entre 100000 y 999999 (criptográficamente seguro)
+  const code = randomInt(100000, 1000000);
   return code.toString();
 }
 

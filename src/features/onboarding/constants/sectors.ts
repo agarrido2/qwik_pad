@@ -1,8 +1,8 @@
 /**
  * Industrias/Sectores de Onucall
- * @description Configuración de los 5 sectores verticales que Onucall atiende
+ * @description Configuración de los 7 sectores verticales que Onucall atiende
  * 
- * NOTA: 'despacho' fue eliminado porque el espacio de problemas era demasiado amplio.
+ * ALINEADO CON: schema.ts industrySectorEnum, onboarding.schemas.ts, agents.ts
  * Cada sector tiene su objetivo principal y defaults específicos.
  */
 
@@ -10,7 +10,7 @@ import type { IndustrySector } from '~/lib/db/schema';
 
 /**
  * Opciones de sector para el selector del onboarding
- * @description 5 sectores con objetivos claros y bien definidos
+ * @description 7 sectores con objetivos claros y bien definidos
  */
 export const SECTOR_OPTIONS: {
   value: IndustrySector;
@@ -48,6 +48,18 @@ export const SECTOR_OPTIONS: {
     description: 'Intake técnico, diagnósticos automáticos y agendamiento de visitas',
     icon: '🔧',
   },
+  {
+    value: 'despacho',
+    label: 'Despacho Profesional',
+    description: 'Recepción de consultas, agendamiento de citas y dirección de servicios',
+    icon: '📋',
+  },
+  {
+    value: 'clinica',
+    label: 'Clínica / Centro Médico',
+    description: 'Gestión de citas, información de servicios y atención al paciente',
+    icon: '🏥',
+  },
 ];
 
 /**
@@ -70,4 +82,10 @@ export const TRANSFER_POLICY_DEFAULTS: Record<IndustrySector, string> = {
   
   sat: 
     'Si el cliente tiene una incidencia crítica, transfiere la llamada al técnico de guardia.',
+
+  despacho: 
+    'Si el cliente necesita asesoría legal o contable específica, transfiere la llamada al profesional de guardia.',
+
+  clinica: 
+    'Si el paciente tiene una urgencia médica o necesita hablar con un profesional, transfiere inmediatamente.',
 };

@@ -14,7 +14,7 @@
 export {
   requestDemoVerification,
   verifyAndTriggerDemo,
-  processDemoRequest,
+  // processDemoRequest eliminado: flujo legacy sin OTP (bypass de verificación)
   updateDemoFromWebhook,
   linkDemoToOrganization,
 } from './services/demo.services';

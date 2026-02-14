@@ -5,15 +5,16 @@
  * RUTA: POST /api/demo/webhook
  * 
  * FLUJO:
- * 1. Recibe payload de Retell (call_id, sentiment, recording_url, etc.)
- * 2. Valida que el call_id exista en nuestra BD
+ * 1. Valida firma del webhook (HMAC-SHA256)
+ * 2. Recibe payload de Retell (call_id, sentiment, recording_url, etc.)
  * 3. Actualiza registro con datos de la llamada
  * 4. Calcula satisfaction score basado en sentiment
  * 5. Guarda grabación y metadata
  * 
  * SEGURIDAD:
- * - TODO: Añadir validación de webhook signature de Retell
- * - Por ahora, solo verificamos que call_id exista en BD
+ * - Valida firma HMAC-SHA256 si RETELL_WEBHOOK_SECRET está configurado
+ * - Si no está configurado, logea warning en dev (degradación gradual)
+ * - Verifica que call_id exista en BD
  * 
  * ARQUITECTURA:
  * - Orquesta → updateDemoFromWebhook (features/demo)
@@ -21,7 +22,38 @@
  */
 
 import { type RequestHandler } from '@builder.io/qwik-city';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { updateDemoFromWebhook } from '~/features/demo';
+
+/**
+ * Valida la firma HMAC-SHA256 del webhook de Retell
+ * @param signature - Header x-retell-signature
+ * @param body - Body raw del request
+ * @param secret - RETELL_WEBHOOK_SECRET
+ * @returns true si la firma es válida
+ * 
+ * SEGURIDAD: Usa timingSafeEqual para prevenir timing attacks
+ */
+function validateWebhookSignature(
+  signature: string | null,
+  body: string,
+  secret: string
+): boolean {
+  if (!signature) return false;
+
+  try {
+    const hmac = createHmac('sha256', secret);
+    hmac.update(body);
+    const expectedSignature = hmac.digest('hex');
+    
+    return timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Interfaz del payload de Retell (simplificada)
@@ -54,8 +86,24 @@ export const onPost: RequestHandler = async (requestEvent) => {
   const { json, request } = requestEvent;
 
   try {
-    // 1. Parsear payload de Retell
-    const payload: RetellWebhookPayload = await request.json();
+    // 0. Leer body raw para validar firma ANTES de parsear JSON
+    const rawBody = await request.text();
+
+    // 1. Validar firma si RETELL_WEBHOOK_SECRET está configurado
+    const webhookSecret = process.env.RETELL_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const signature = requestEvent.headers.get('x-retell-signature');
+      if (!validateWebhookSignature(signature, rawBody, webhookSecret)) {
+        console.error('[Retell Webhook] Invalid signature - request rejected');
+        json(401, { success: false, error: 'INVALID_SIGNATURE' });
+        return;
+      }
+    } else if (import.meta.env.DEV) {
+      console.warn('[Retell Webhook] ⚠️ RETELL_WEBHOOK_SECRET no configurado - firma no validada');
+    }
+
+    // 2. Parsear payload de Retell
+    const payload: RetellWebhookPayload = JSON.parse(rawBody);
 
     if (import.meta.env.DEV) {
       console.log('[Retell Webhook] Payload recibido:', {
@@ -65,7 +113,7 @@ export const onPost: RequestHandler = async (requestEvent) => {
       });
     }
 
-    // 2. Validar que existe call_id
+    // 3. Validar que existe call_id
     if (!payload.call_id) {
       console.error('[Retell Webhook] Missing call_id in payload');
       json(400, {
@@ -75,13 +123,6 @@ export const onPost: RequestHandler = async (requestEvent) => {
       });
       return;
     }
-
-    // TODO: Validar signature de Retell
-    // const signature = requestEvent.headers.get('x-retell-signature');
-    // if (!validateRetellSignature(signature, payload)) {
-    //   json(401, { success: false, error: 'INVALID_SIGNATURE' });
-    //   return;
-    // }
 
     // 3. Extraer datos relevantes del payload
     const scoreSentiment = payload.call_analysis?.user_sentiment || null;

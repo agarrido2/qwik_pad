@@ -72,6 +72,10 @@ const envSchema = z.object({
     .min(1, 'RETELL_FROM_NUMBER es obligatorio')
     .regex(/^\+[1-9]\d{8,14}$/, 'RETELL_FROM_NUMBER debe ser formato E.164 (ej: +34919930992)'),
 
+  // Retell Webhook Signature (para validar que los webhooks vienen de Retell)
+  // Opcional: si no está configurado, se logea warning pero no se bloquea
+  RETELL_WEBHOOK_SECRET: z.string().optional(),
+
   // App Config
   PUBLIC_SITE_URL: z.string().url('PUBLIC_SITE_URL debe ser una URL válida'),
   NODE_ENV: z

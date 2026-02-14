@@ -43,6 +43,13 @@
       "when": 1771095329841,
       "tag": "0005_windy_wallow",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771095609917,
+      "tag": "0006_zippy_vapor",
+      "breakpoints": true
     }
   ]
 }
