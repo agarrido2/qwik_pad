@@ -21,7 +21,9 @@ export interface MenuItem {
 
 /**
  * Menú principal del dashboard
- * Aparece en la sección central de navegación del sidebar
+ * 
+ * NOTA: Solo incluir rutas que ESTÁN implementadas en src/routes/(app)/dashboard/
+ * Las rutas comentadas están planificadas para futuras fases.
  */
 export const dashboardMenu: MenuItem[] = [
   {
@@ -29,36 +31,19 @@ export const dashboardMenu: MenuItem[] = [
     href: '/dashboard',
     icon: 'home',
   },
-  {
-    label: 'Llamadas',
-    href: '/dashboard/llamadas',
-    icon: 'phone',
-  },
-  {
-    label: 'Agente',
-    href: '/dashboard/agente',
-    icon: 'bot',
-  },
-  {
-    label: 'Números',
-    href: '/dashboard/numeros',
-    icon: 'hash',
-  },
-  {
-    label: 'Integraciones',
-    href: '/dashboard/integraciones',
-    icon: 'puzzle',
-  },
-  {
-    label: 'Base Conocimiento',
-    href: '/dashboard/base-conocimiento',
-    icon: 'book',
-  },
+  // Rutas planificadas (sin implementar aún):
+  // { label: 'Llamadas', href: '/dashboard/llamadas', icon: 'phone' },
+  // { label: 'Agente', href: '/dashboard/agente', icon: 'bot' },
+  // { label: 'Números', href: '/dashboard/numeros', icon: 'hash' },
+  // { label: 'Integraciones', href: '/dashboard/integraciones', icon: 'puzzle' },
+  // { label: 'Base Conocimiento', href: '/dashboard/base-conocimiento', icon: 'book' },
 ];
 
 /**
  * Menú de workspace/organización
  * Aparece en la sección footer del sidebar (antes del logout)
+ * 
+ * NOTA: Solo rutas implementadas. /dashboard/configuracion planificada.
  */
 export const workspaceMenu: MenuItem[] = [
   {
@@ -66,11 +51,7 @@ export const workspaceMenu: MenuItem[] = [
     href: '/dashboard/usuarios',
     icon: 'users',
   },
-  {
-    label: 'Configuración',
-    href: '/dashboard/configuracion',
-    icon: 'settings',
-  },
+  // { label: 'Configuración', href: '/dashboard/configuracion', icon: 'settings' },
   {
     label: 'Facturación',
     href: '/dashboard/facturacion',

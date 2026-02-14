@@ -12,25 +12,23 @@
  * El toast se implementará cuando haya acciones que requieran feedback
  */
 
-import { component$ } from '@builder.io/qwik';
+import { component$, useComputed$ } from '@builder.io/qwik';
 
 export const DashboardFooter = component$(() => {
   /**
-   * Helper: Formatea la fecha actual en español
+   * Fecha actual memoizada con useComputed$ (derivación síncrona pura)
+   * Evita recalcular en cada render. Se evalúa solo en SSR.
    */
-  const getCurrentDate = () => {
+  const currentDate = useComputed$(() => {
     return new Date().toLocaleDateString('es-ES', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
     });
-  };
+  });
 
-  /**
-   * Helper: Obtiene la versión desde package.json
-   * (En futuro, importar dinámicamente o pasar como prop)
-   */
-  const appVersion = 'v1.0.0'; // TODO: Importar desde package.json
+  /** Versión dinámica desde env o fallback estático */
+  const appVersion = import.meta.env.PUBLIC_APP_VERSION || '1.0.0';
 
   return (
     <footer class="fixed bottom-0 left-0 right-0 h-12 bg-white border-t border-neutral-200 flex items-center z-10">
@@ -42,7 +40,7 @@ export const DashboardFooter = component$(() => {
       {/* ZONA DERECHA: Datos informativos */}
       <div class="flex-1 px-6 flex items-center justify-between text-sm text-neutral-600">
         {/* Fecha actual */}
-        <span class="text-xs">{getCurrentDate()}</span>
+        <span class="text-xs">{currentDate.value}</span>
 
         {/* Soporte IT */}
         <span class="text-xs">
@@ -56,7 +54,7 @@ export const DashboardFooter = component$(() => {
         </span>
 
         {/* Versión de la app */}
-        <span class="text-xs text-neutral-400">{appVersion}</span>
+        <span class="text-xs text-neutral-400">v{appVersion}</span>
       </div>
     </footer>
   );

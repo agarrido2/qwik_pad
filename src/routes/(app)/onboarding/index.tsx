@@ -26,6 +26,11 @@ import { Form, routeAction$, routeLoader$, zod$, type DocumentHead } from '@buil
 import { OnboardingCompleteSchema, OnboardingService } from '~/lib/onboarding';
 import { getAuthGuardData } from '~/lib/auth/auth-guard';
 import type { IndustrySlug } from '~/lib/utils/demo-data-templates';
+import { ProgressIndicator } from '~/features/onboarding/components/ProgressIndicator';
+import { Step1IdentidadCorporativa } from '~/features/onboarding/components/Step1IdentidadCorporativa';
+import { Step2ReglasNegocio } from '~/features/onboarding/components/Step2ReglasNegocio';
+import { Step3PersonalidadAsistente } from '~/features/onboarding/components/Step3PersonalidadAsistente';
+import type { OnboardingFieldErrors } from '~/features/onboarding/components/types';
 
 // ═══════════════════════════════════════════════════════════════════
 // ROUTE LOADER: Exponer usuario a componentes
@@ -106,7 +111,8 @@ export const useOnboardingAction = routeAction$(
 );
 
 // ═══════════════════════════════════════════════════════════════════
-// COMPONENT: Wizard inline (sin componentes externos)
+// COMPONENT: Wizard con componentes de paso extraídos
+// Cada paso vive en features/onboarding/components/ (Orchestrator Pattern)
 // ═══════════════════════════════════════════════════════════════════
 
 export default component$(() => {
@@ -174,8 +180,9 @@ export default component$(() => {
       currentStep.value--;
     }
   });
-  
-  // DEBUG: Log al renderizar (solo en desarrollo) - eliminado para producción
+
+  // Extraer fieldErrors del action para pasar a los componentes de paso
+  const fieldErrors = action.value?.fieldErrors as OnboardingFieldErrors | undefined;
   
   return (
     <main class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 py-12 px-4">
@@ -194,33 +201,7 @@ export default component$(() => {
         </header>
         
         {/* Indicadores de paso */}
-        <div 
-          role="progressbar" 
-          aria-valuenow={currentStep.value + 1} 
-          aria-valuemin={1} 
-          aria-valuemax={3}
-          aria-label={`Paso ${currentStep.value + 1} de 3`}
-          class="flex justify-center gap-4 mb-8"
-        >
-          <div 
-            aria-label={`Paso 1${currentStep.value === 0 ? ' (actual)' : currentStep.value > 0 ? ' (completado)' : ''}`}
-            class={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-all ${currentStep.value === 0 ? 'bg-primary-600 text-white' : currentStep.value > 0 ? 'bg-green-500 text-white' : 'bg-neutral-200 text-neutral-400'}`}
-          >
-            {currentStep.value > 0 ? '✓' : '1'}
-          </div>
-          <div 
-            aria-label={`Paso 2${currentStep.value === 1 ? ' (actual)' : currentStep.value > 1 ? ' (completado)' : ''}`}
-            class={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-all ${currentStep.value === 1 ? 'bg-primary-600 text-white' : currentStep.value > 1 ? 'bg-green-500 text-white' : 'bg-neutral-200 text-neutral-400'}`}
-          >
-            {currentStep.value > 1 ? '✓' : '2'}
-          </div>
-          <div 
-            aria-label={`Paso 3${currentStep.value === 2 ? ' (actual)' : ''}`}
-            class={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-all ${currentStep.value === 2 ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-400'}`}
-          >
-            3
-          </div>
-        </div>
+        <ProgressIndicator currentStep={currentStep} />
         
         {/* Wizard Form */}
         <Form 
@@ -233,274 +214,23 @@ export default component$(() => {
             }
           }}
         >
-          {/* ═══════════════════════════════════════════════════════════
-              PASO 1: Identidad Corporativa (3 campos)
-          ═══════════════════════════════════════════════════════════ */}
+          {/* Paso 1: Identidad Corporativa */}
           {currentStep.value === 0 && (
-            <div class="space-y-6">
-              <h2 class="text-2xl font-bold text-neutral-900 mb-4">
-                1. Identidad Corporativa
-              </h2>
-              
-              {/* Nombre completo */}
-              <div>
-                <label for="fullName" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Tu nombre completo *
-                </label>
-                <input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  placeholder="Ej: Juan Pérez García"
-                  value={formData.fullName}
-                  onInput$={(e: Event, el: HTMLInputElement) => (formData.fullName = el.value)}
-                  required
-                  class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-                {action.value?.fieldErrors?.fullName && (
-                  <p class="text-red-500 text-sm mt-1" role="alert">
-                    {action.value.fieldErrors.fullName[0]}
-                  </p>
-                )}
-              </div>
-              
-              {/* Nombre del negocio */}
-              <div>
-                <label for="organizationName" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Nombre del negocio *
-                </label>
-                <input
-                  id="organizationName"
-                  name="organizationName"
-                  type="text"
-                  placeholder="Ej: Mi Empresa S.A."
-                  value={formData.organizationName}
-                  onInput$={(e: Event, el: HTMLInputElement) => (formData.organizationName = el.value)}
-                  required
-                  class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-                {action.value?.fieldErrors?.organizationName && (
-                  <p class="text-red-500 text-sm mt-1" role="alert">
-                    {action.value.fieldErrors.organizationName[0]}
-                  </p>
-                )}
-              </div>
-              
-              {/* Teléfono */}
-              <div>
-                <label for="phone" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Teléfono de contacto *
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="+34 919 123 456"
-                  value={formData.phone}
-                  onInput$={(e: Event, el: HTMLInputElement) => (formData.phone = el.value)}
-                  required
-                  class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-                <p class="text-xs text-neutral-500 mt-1">
-                  Formato: +34 919 123 456 o similar
-                </p>
-                {action.value?.fieldErrors?.phone && (
-                  <p class="text-red-500 text-sm mt-1" role="alert">
-                    {action.value.fieldErrors.phone[0]}
-                  </p>
-                )}
-              </div>
-            </div>
+            <Step1IdentidadCorporativa formData={formData} fieldErrors={fieldErrors} />
           )}
           
-          {/* ═══════════════════════════════════════════════════════════
-              PASO 2: Reglas de Negocio (2 campos)
-          ═══════════════════════════════════════════════════════════ */}
+          {/* Paso 2: Reglas de Negocio */}
           {currentStep.value === 1 && (
-            <div class="space-y-6">
-              <h2 class="text-2xl font-bold text-neutral-900 mb-4">
-                2. Reglas de Negocio
-              </h2>
-              
-              {/* Sector */}
-              <div>
-                <label for="industrySlug" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Sector de tu negocio *
-                </label>
-                <select
-                  id="industrySlug"
-                  name="industrySlug"
-                  class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  value={formData.industrySlug}
-                  onChange$={(e: Event, el: HTMLSelectElement) => (formData.industrySlug = el.value)}
-                  required
-                >
-                  <option value="">Selecciona un sector</option>
-                  <option value="concesionario">🚗 Concesionario</option>
-                  <option value="inmobiliaria">🏠 Inmobiliaria</option>
-                  <option value="retail">🛍️ Retail</option>
-                  <option value="alquiladora">🚙 Alquiladora de vehículos</option>
-                  <option value="despacho">📋 Despacho profesional</option>
-                  <option value="clinica">🏥 Clínica/Centro médico</option>
-                  <option value="sat">🔧 Servicio Técnico (SAT)</option>
-                </select>
-                {action.value?.fieldErrors?.industrySlug && (
-                  <p class="text-red-500 text-sm mt-1" role="alert">
-                    {action.value.fieldErrors.industrySlug[0]}
-                  </p>
-                )}
-              </div>
-              
-              {/* Descripción */}
-              <div>
-                <label for="businessDescription" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Descripción de tu negocio *
-                </label>
-                <textarea
-                  id="businessDescription"
-                  name="businessDescription"
-                  rows={4}
-                  class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Describe brevemente qué hace tu empresa, productos/servicios principales, horarios, etc. Esto ayudará al asistente a responder mejor a tus clientes."
-                  value={formData.businessDescription}
-                  onInput$={(e: Event, el: HTMLTextAreaElement) => (formData.businessDescription = el.value)}
-                  required
-                />
-                <p class="text-xs text-neutral-500 mt-1">
-                  {formData.businessDescription.length}/500 caracteres (mínimo 20)
-                </p>
-                {action.value?.fieldErrors?.businessDescription && (
-                  <p class="text-red-500 text-sm mt-1" role="alert">
-                    {action.value.fieldErrors.businessDescription[0]}
-                  </p>
-                )}
-              </div>
-            </div>
+            <Step2ReglasNegocio formData={formData} fieldErrors={fieldErrors} />
           )}
           
-          {/* ═══════════════════════════════════════════════════════════
-              PASO 3: Personalidad del Asistente (4 campos)
-          ═══════════════════════════════════════════════════════════ */}
+          {/* Paso 3: Personalidad del Asistente */}
           {currentStep.value === 2 && (
-            <div class="space-y-6">
-              <h2 class="text-2xl font-bold text-neutral-900 mb-4">
-                3. Personalidad del Asistente
-              </h2>
-              
-              {/* Género de voz */}
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-3">
-                  Género de voz *
-                </label>
-                <div class="grid grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    class={`p-4 border-2 rounded-lg text-center transition-all ${formData.assistantGender === 'male' ? 'border-primary-600 bg-primary-50' : 'border-neutral-300 hover:border-primary-300'}`}
-                    onClick$={() => (formData.assistantGender = 'male')}
-                  >
-                    <span class="text-3xl block mb-2" aria-hidden="true">👨</span>
-                    <p class="font-medium">Masculina</p>
-                  </button>
-                  <button
-                    type="button"
-                    class={`p-4 border-2 rounded-lg text-center transition-all ${formData.assistantGender === 'female' ? 'border-primary-600 bg-primary-50' : 'border-neutral-300 hover:border-primary-300'}`}
-                    onClick$={() => (formData.assistantGender = 'female')}
-                  >
-                    <span class="text-3xl block mb-2" aria-hidden="true">👩</span>
-                    <p class="font-medium">Femenina</p>
-                  </button>
-                </div>
-                <input type="hidden" name="assistantGender" value={formData.assistantGender} />
-                {action.value?.fieldErrors?.assistantGender && (
-                  <p class="text-red-500 text-sm mt-1" role="alert">
-                    {action.value.fieldErrors.assistantGender[0]}
-                  </p>
-                )}
-              </div>
-              
-              {/* Nombre del asistente */}
-              <div>
-                <label for="assistantName" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Nombre del asistente *
-                </label>
-                <input
-                  id="assistantName"
-                  name="assistantName"
-                  type="text"
-                  placeholder="Ej: María"
-                  value={formData.assistantName}
-                  onInput$={(e: Event, el: HTMLInputElement) => (formData.assistantName = el.value)}
-                  required
-                  class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-                {action.value?.fieldErrors?.assistantName && (
-                  <p class="text-red-500 text-sm mt-1" role="alert">
-                    {action.value.fieldErrors.assistantName[0]}
-                  </p>
-                )}
-              </div>
-              
-              {/* Nivel de amabilidad */}
-              <div>
-                <label for="assistantKindnessLevel" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Nivel de amabilidad *
-                </label>
-                <div class="flex items-center gap-4">
-                  <span class="text-sm text-neutral-600">Formal</span>
-                  <input
-                    type="range"
-                    id="assistantKindnessLevel"
-                    name="assistantKindnessLevel"
-                    min="1"
-                    max="5"
-                    value={formData.assistantKindnessLevel}
-                    onInput$={(e: Event, el: HTMLInputElement) => {
-                      formData.assistantKindnessLevel = parseInt(el.value);
-                    }}
-                    class="flex-1"
-                  />
-                  <span class="text-sm text-neutral-600">Amable</span>
-                  <span class="text-lg font-bold text-primary-600 w-8 text-center">
-                    {formData.assistantKindnessLevel}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Nivel de simpatía */}
-              <div>
-                <label for="assistantFriendlinessLevel" class="block text-sm font-medium text-neutral-700 mb-2">
-                  Nivel de simpatía *
-                </label>
-                <div class="flex items-center gap-4">
-                  <span class="text-sm text-neutral-600">Neutral</span>
-                  <input
-                    type="range"
-                    id="assistantFriendlinessLevel"
-                    name="assistantFriendlinessLevel"
-                    min="1"
-                    max="5"
-                    value={formData.assistantFriendlinessLevel}
-                    onInput$={(e: Event, el: HTMLInputElement) => {
-                      formData.assistantFriendlinessLevel = parseInt(el.value);
-                    }}
-                    class="flex-1"
-                  />
-                  <span class="text-sm text-neutral-600">Simpático</span>
-                  <span class="text-lg font-bold text-primary-600 w-8 text-center">
-                    {formData.assistantFriendlinessLevel}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Error global del action (si existe) */}
-              {action.value?.message && (
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4" role="alert">
-                  <p class="text-red-700 text-sm">
-                    ❌ {action.value.message}
-                  </p>
-                </div>
-              )}
-            </div>
+            <Step3PersonalidadAsistente 
+              formData={formData} 
+              fieldErrors={fieldErrors}
+              globalError={action.value?.message}
+            />
           )}
           
           {/* ═══════════════════════════════════════════════════════════

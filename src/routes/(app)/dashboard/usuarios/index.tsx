@@ -17,7 +17,6 @@ import { useOrganizationMembersLoader } from '~/lib/auth/rbac-loaders';
 import { usePermissions } from '~/lib/auth/use-permissions';
 import { useAppGuard } from '../../layout';
 import { RBACService } from '~/lib/services/rbac.service';
-import { AuthService } from '~/lib/services/auth.service';
 import { cn } from '~/lib/utils/cn';
 
 // ============================================================================
@@ -36,16 +35,22 @@ export const useOrgMembers = useOrganizationMembersLoader;
 
 /**
  * Action: Invitar nuevo miembro a la organización
+ * 
+ * OPTIMIZACIÓN: Lee authUser y userOrgs desde sharedMap (cacheados por auth-guard)
+ * en lugar de llamar a AuthService.getAuthUser + RBACService.getUserOrganizationsWithRoles
+ * Ref: docs/standards/DB_QUERY_OPTIMIZATION.md § sharedMap
  */
 export const useInviteMemberAction = routeAction$(
   async (formData, requestEvent) => {
-    const authUser = await AuthService.getAuthUser(requestEvent);
+    // Leer desde sharedMap (poblado por auth-guard en el middleware)
+    const authUser = requestEvent.sharedMap.get('authUser');
+    const orgs = requestEvent.sharedMap.get('userOrgs');
+
     if (!authUser) {
       return { success: false, error: 'No autenticado' };
     }
 
-    const orgs = await RBACService.getUserOrganizationsWithRoles(authUser.id);
-    if (orgs.length === 0) {
+    if (!orgs || orgs.length === 0) {
       return { success: false, error: 'Sin organización' };
     }
 
@@ -68,16 +73,18 @@ export const useInviteMemberAction = routeAction$(
 
 /**
  * Action: Cambiar rol de un miembro
+ * OPTIMIZACIÓN: Lee desde sharedMap (cacheado por auth-guard)
  */
 export const useChangeRoleAction = routeAction$(
   async (formData, requestEvent) => {
-    const authUser = await AuthService.getAuthUser(requestEvent);
+    const authUser = requestEvent.sharedMap.get('authUser');
+    const orgs = requestEvent.sharedMap.get('userOrgs');
+
     if (!authUser) {
       return { success: false, error: 'No autenticado' };
     }
 
-    const orgs = await RBACService.getUserOrganizationsWithRoles(authUser.id);
-    if (orgs.length === 0) {
+    if (!orgs || orgs.length === 0) {
       return { success: false, error: 'Sin organización' };
     }
 
@@ -100,16 +107,18 @@ export const useChangeRoleAction = routeAction$(
 
 /**
  * Action: Eliminar miembro de la organización
+ * OPTIMIZACIÓN: Lee desde sharedMap (cacheado por auth-guard)
  */
 export const useRemoveMemberAction = routeAction$(
   async (formData, requestEvent) => {
-    const authUser = await AuthService.getAuthUser(requestEvent);
+    const authUser = requestEvent.sharedMap.get('authUser');
+    const orgs = requestEvent.sharedMap.get('userOrgs');
+
     if (!authUser) {
       return { success: false, error: 'No autenticado' };
     }
 
-    const orgs = await RBACService.getUserOrganizationsWithRoles(authUser.id);
-    if (orgs.length === 0) {
+    if (!orgs || orgs.length === 0) {
       return { success: false, error: 'Sin organización' };
     }
 
