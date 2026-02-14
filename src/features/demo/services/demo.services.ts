@@ -8,8 +8,7 @@
  * - Tracking de IP en tabla ip_trials
  */
 
-import { usersDemo } from '~/lib/db/client';
-import { getDb } from '~/lib/db/client.server';
+import { db, usersDemo } from '~/lib/db/client';
 import { eq, and, desc } from 'drizzle-orm';
 import { triggerDemoCall } from '~/lib/retell';
 import { SECTOR_AGENTS, type SectorType } from '../data/agents';
@@ -45,7 +44,7 @@ export async function requestDemoVerification(
   data: DemoRequestInput,
   ipAddress: string
 ): Promise<DemoServiceResult> {
-  const db = getDb(requestEvent);
+  // db singleton: ya no necesita getDb(requestEvent) per-request
 
   try {
     // 1. Generar código de verificación
@@ -138,7 +137,7 @@ export async function verifyAndTriggerDemo(
   email: string,
   code: string
 ): Promise<VerifyCodeResult> {
-  const db = getDb(requestEvent);
+  // db singleton: ya no necesita getDb(requestEvent) per-request
 
   try {
     // 1. Buscar registro de demo pendiente
@@ -237,7 +236,7 @@ export async function processDemoRequest(
   data: DemoRequestInput,
   ipAddress: string
 ): Promise<DemoServiceResult> {
-  const db = getDb(requestEvent);
+  // db singleton: ya no necesita getDb(requestEvent) per-request
 
   try {
     // 1. Crear registro inicial (el trigger de PostgreSQL valida automáticamente)
@@ -318,7 +317,7 @@ export async function updateDemoFromWebhook(
   urlRecord: string | null,
   retellPayload?: unknown
 ): Promise<boolean> {
-  const db = getDb(requestEvent);
+  // db singleton: ya no necesita getDb(requestEvent) per-request
 
   try {
     // Construir objeto de actualización con todos los datos disponibles
@@ -393,7 +392,7 @@ export async function linkDemoToOrganization(
   email: string,
   organizationId: string
 ): Promise<boolean> {
-  const db = getDb(requestEvent);
+  // db singleton: ya no necesita getDb(requestEvent) per-request
 
   try {
     // Buscar demo completada de este email (ordenar por más reciente)

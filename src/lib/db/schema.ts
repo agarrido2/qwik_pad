@@ -13,6 +13,7 @@
  */
 
 import { pgTable, pgEnum, uuid, text, timestamp, boolean, jsonb, unique, integer, index } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 // ==========================================
 // ENUMS
@@ -105,6 +106,14 @@ export const users = pgTable('users', {
   fullName: text('full_name'),
   phone: text('phone'),
   avatarUrl: text('avatar_url'),
+  
+  // DECISIÓN ARQUITECTÓNICA (2026-02-14):
+  // users.role es un ROL DE PLATAFORMA (invited | active | suspended), NO un rol organizacional.
+  // organization_members.role usa userRoleEnum (owner | admin | member) para RBAC.
+  // Se mantiene como text() porque:
+  // 1. 'invited' no está en userRoleEnum (que es para org members)
+  // 2. Son conceptos diferentes: plataforma vs organización
+  // 3. Los valores podrían evolucionar sin migración de enum
   role: text('role').notNull().default('invited'),
   isActive: boolean('is_active').notNull().default(true),
   subscriptionTier: text('subscription_tier').notNull().default('free'),
@@ -352,6 +361,140 @@ export const assignedNumbers = pgTable('assigned_numbers', {
 }));
 
 // ==========================================
+// TABLA: pending_invitations (Invitaciones N:M)
+// ==========================================
+
+/**
+ * Pending Invitations Table
+ * @description Invitaciones pendientes para unirse a una organización.
+ * Flujo: Owner/Admin invita por email → se crea registro aquí →
+ *        usuario acepta → se crea organization_member → se elimina invitación.
+ * 
+ * Ref: guards.ts - Los usuarios 'invited' no están en organization_members
+ *      hasta que aceptan la invitación via este flujo.
+ */
+export const pendingInvitations = pgTable('pending_invitations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  // Organización que invita
+  organizationId: uuid('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+
+  // Email del invitado (puede no tener cuenta aún)
+  email: text('email').notNull(),
+
+  // Rol que tendrá al aceptar la invitación
+  role: userRoleEnum('role').notNull().default('member'),
+
+  // Quién envió la invitación
+  invitedBy: uuid('invited_by')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
+  // Token único para el link de invitación
+  token: text('token').notNull().unique(),
+
+  // Estado de la invitación
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  // Constraint: solo 1 invitación activa por email+org
+  uniqueEmailOrg: unique().on(table.email, table.organizationId),
+  // Índice para buscar invitaciones por email (login flow)
+  emailIdx: index('idx_pending_invitations_email').on(table.email),
+  // Índice para buscar invitaciones por organización (admin panel)
+  orgIdx: index('idx_pending_invitations_org').on(table.organizationId),
+}));
+
+// ==========================================
+// RELATIONS (Drizzle Query API)
+// ==========================================
+
+/**
+ * Relations mejoran la inferencia de tipos en JOINs y habilitan
+ * la Drizzle Query API (db.query.users.findMany({ with: { ... } }))
+ * 
+ * NOTA: Las relations NO generan constraints SQL. Los FK constraints
+ * están definidos en las tablas con .references().
+ */
+
+export const usersRelations = relations(users, ({ many, one }) => ({
+  /** Organizaciones a las que pertenece (N:M via organization_members) */
+  organizationMemberships: many(organizationMembers),
+  /** Perfil de agente 1:1 */
+  agentProfile: one(agentProfiles, {
+    fields: [users.id],
+    references: [agentProfiles.userId],
+  }),
+  /** Invitaciones enviadas */
+  sentInvitations: many(pendingInvitations),
+}));
+
+export const organizationsRelations = relations(organizations, ({ many }) => ({
+  /** Miembros de la organización (N:M via organization_members) */
+  members: many(organizationMembers),
+  /** Números asignados */
+  assignedNumbers: many(assignedNumbers),
+  /** Invitaciones pendientes */
+  pendingInvitations: many(pendingInvitations),
+}));
+
+export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
+  /** Usuario miembro */
+  user: one(users, {
+    fields: [organizationMembers.userId],
+    references: [users.id],
+  }),
+  /** Organización */
+  organization: one(organizations, {
+    fields: [organizationMembers.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const pendingInvitationsRelations = relations(pendingInvitations, ({ one }) => ({
+  /** Organización que invita */
+  organization: one(organizations, {
+    fields: [pendingInvitations.organizationId],
+    references: [organizations.id],
+  }),
+  /** Usuario que envió la invitación */
+  inviter: one(users, {
+    fields: [pendingInvitations.invitedBy],
+    references: [users.id],
+  }),
+}));
+
+export const agentProfilesRelations = relations(agentProfiles, ({ one }) => ({
+  /** Usuario dueño del perfil */
+  user: one(users, {
+    fields: [agentProfiles.userId],
+    references: [users.id],
+  }),
+  /** Organización asociada */
+  organization: one(organizations, {
+    fields: [agentProfiles.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const assignedNumbersRelations = relations(assignedNumbers, ({ one }) => ({
+  /** Usuario asignado (legacy) */
+  user: one(users, {
+    fields: [assignedNumbers.userId],
+    references: [users.id],
+  }),
+  /** Organización asignada */
+  organization: one(organizations, {
+    fields: [assignedNumbers.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+// ==========================================
 // TIPOS EXPORTADOS (para TypeScript)
 // ==========================================
 
@@ -381,6 +524,9 @@ export type NewAgentProfile = typeof agentProfiles.$inferInsert;
 
 export type AssignedNumber = typeof assignedNumbers.$inferSelect;
 export type NewAssignedNumber = typeof assignedNumbers.$inferInsert;
+
+export type PendingInvitation = typeof pendingInvitations.$inferSelect;
+export type NewPendingInvitation = typeof pendingInvitations.$inferInsert;
 
 // Type helpers para enums
 export type IndustrySector = (typeof industrySectorEnum.enumValues)[number];

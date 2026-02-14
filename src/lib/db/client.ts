@@ -31,6 +31,7 @@ if (isDev) {
       max: 10, // Pool de conexiones en dev
       idle_timeout: 20,
       connect_timeout: 10,
+      prepare: false, // CRÍTICO: Requerido para Supabase Transaction Pooler (pgbouncer)
     });
     global.__db = drizzle(client, { schema });
   }
@@ -41,6 +42,7 @@ if (isDev) {
     max: 20, // Pool más grande en producción
     idle_timeout: 30,
     connect_timeout: 10,
+    prepare: false, // CRÍTICO: Requerido para Supabase Transaction Pooler (pgbouncer)
   });
   db = drizzle(client, { schema });
 }
