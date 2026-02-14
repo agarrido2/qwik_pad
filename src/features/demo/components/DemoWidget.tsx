@@ -12,7 +12,7 @@
  * - 'success': Modal de éxito (después de Step 2 success)
  */
 
-import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, useVisibleTask$, $ } from '@builder.io/qwik';
 import { Form } from '@builder.io/qwik-city';
 import { SECTOR_LABELS } from '../data/agents';
 import { VerificationModal } from './VerificationModal';
@@ -78,9 +78,9 @@ export const DemoWidget = component$<DemoWidgetProps>(
 
     /**
      * Detectar éxito en Step 1 (email enviado) → Mostrar modal de verificación
+     * PATRÓN: useTask$ para lógica reactiva (resumable, sin hidratación)
      */
-    // eslint-disable-next-line qwik/no-use-visible-task
-    useVisibleTask$(({ track }) => {
+    useTask$(({ track }) => {
       const value = track(() => requestAction.value);
 
       if (value?.success && value.email) {
@@ -92,9 +92,11 @@ export const DemoWidget = component$<DemoWidgetProps>(
 
     /**
      * Detectar éxito en Step 2 (código verificado + llamada disparada) → Mostrar modal de éxito
+     * PATRÓN: useVisibleTask$ porque usa setInterval (browser API)
+     * SEGURIDAD: cleanup function previene memory leaks
      */
     // eslint-disable-next-line qwik/no-use-visible-task
-    useVisibleTask$(({ track }) => {
+    useVisibleTask$(({ track, cleanup }) => {
       const value = track(() => verifyAction.value);
 
       if (value?.success) {
@@ -111,7 +113,7 @@ export const DemoWidget = component$<DemoWidgetProps>(
           }
         }, 1000);
 
-        return () => clearInterval(interval);
+        cleanup(() => clearInterval(interval));
       }
     });
 
