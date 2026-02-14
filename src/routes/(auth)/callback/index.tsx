@@ -50,7 +50,9 @@ export const onGet: RequestHandler = async (requestEvent) => {
 
   // Manejar errores de OAuth (usuario canceló o error en Google)
   if (error) {
-    console.error('[OAuth] Error from provider:', error, errorDescription);
+    if (import.meta.env.DEV) {
+      console.error('[OAuth] Error from provider:', error, errorDescription);
+    }
     const errorMessage = encodeURIComponent(
       errorDescription || 'Error en la autenticación con Google'
     );
@@ -59,7 +61,9 @@ export const onGet: RequestHandler = async (requestEvent) => {
 
   // Verificar que existe el código de autorización
   if (!code) {
-    console.error('[OAuth] No authorization code provided');
+    if (import.meta.env.DEV) {
+      console.error('[OAuth] No authorization code provided');
+    }
     throw redirect(302, '/login?error=No se recibió código de autorización');
   }
 
@@ -76,7 +80,9 @@ export const onGet: RequestHandler = async (requestEvent) => {
     const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
-      console.error('[OAuth] Error exchanging code for session:', exchangeError);
+      if (import.meta.env.DEV) {
+        console.error('[OAuth] Error exchanging code for session:', exchangeError);
+      }
       throw redirect(
         302, 
         `/login?error=${encodeURIComponent('Error al procesar autenticación')}`
@@ -84,7 +90,9 @@ export const onGet: RequestHandler = async (requestEvent) => {
     }
 
     if (!data.session) {
-      console.error('[OAuth] No session returned after code exchange');
+      if (import.meta.env.DEV) {
+        console.error('[OAuth] No session returned after code exchange');
+      }
       throw redirect(
         302,
         `/login?error=${encodeURIComponent('No se pudo establecer la sesión')}`
@@ -101,7 +109,9 @@ export const onGet: RequestHandler = async (requestEvent) => {
     const { data: { session: verifySession } } = await supabase.auth.getSession();
     
     if (!verifySession) {
-      console.error('[OAuth] Session not established after exchange');
+      if (import.meta.env.DEV) {
+        console.error('[OAuth] Session not established after exchange');
+      }
       throw redirect(302, '/login?error=session_failed');
     }
 
@@ -128,7 +138,9 @@ export const onGet: RequestHandler = async (requestEvent) => {
   } catch (err) {
     // Solo capturamos errores de Supabase, NO redirects de Qwik City
     // Si es un redirect ya lanzado arriba, se propagará automáticamente
-    console.error('[OAuth] Unexpected error in callback:', err);
+    if (import.meta.env.DEV) {
+      console.error('[OAuth] Unexpected error in callback:', err);
+    }
     throw redirect(
       302,
       `/login?error=${encodeURIComponent('Error inesperado en autenticación')}`

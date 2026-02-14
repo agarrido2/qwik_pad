@@ -49,9 +49,13 @@ export const useRegisterAction = routeAction$(
 // Action: Registro con Google OAuth (Devuelve URL para redirect client-side)
 export const useGoogleRegisterAction = routeAction$(async (_, requestEvent) => {
   try {
-    console.log('🔵 [Register OAuth] Action iniciada');
-    const oauthUrl = await AuthService.getGoogleOAuthUrl(requestEvent, '/onboarding/step-1');
-    console.log('🟢 [Register OAuth] URL obtenida:', oauthUrl);
+    if (import.meta.env.DEV) {
+      console.log('🔵 [Register OAuth] Action iniciada');
+    }
+    const oauthUrl = await AuthService.getGoogleOAuthUrl(requestEvent, '/onboarding');
+    if (import.meta.env.DEV) {
+      console.log('🟢 [Register OAuth] URL obtenida:', oauthUrl);
+    }
     
     // Devolver la URL para redirect client-side
     return {

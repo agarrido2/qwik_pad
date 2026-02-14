@@ -53,9 +53,13 @@ export const useLoginAction = routeAction$(
 // Action: Login con Google OAuth (Devuelve URL para redirect client-side)
 export const useGoogleLoginAction = routeAction$(async (_, requestEvent) => {
   try {
-    console.log('🔵 [Login OAuth] Action iniciada');
-    const oauthUrl = await AuthService.getGoogleOAuthUrl(requestEvent);
-    console.log('🟢 [Login OAuth] URL obtenida:', oauthUrl);
+    if (import.meta.env.DEV) {
+      console.log('🔵 [Login OAuth] Action iniciada');
+    }
+    const oauthUrl = await AuthService.getGoogleOAuthUrl(requestEvent, '/dashboard');
+    if (import.meta.env.DEV) {
+      console.log('🟢 [Login OAuth] URL obtenida:', oauthUrl);
+    }
     
     // Devolver la URL para redirect client-side
     return {

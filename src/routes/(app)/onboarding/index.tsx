@@ -60,7 +60,9 @@ export const useOnboardingAction = routeAction$(
     const data = await getAuthGuardData(requestEvent);
     
     if (!data) {
-      console.error('❌ [OnboardingAction] No hay usuario autenticado');
+      if (import.meta.env.DEV) {
+        console.error('❌ [OnboardingAction] No hay usuario autenticado');
+      }
       return requestEvent.fail(401, { message: 'No hay usuario autenticado' });
     }
     
@@ -92,7 +94,9 @@ export const useOnboardingAction = routeAction$(
       // Si es un redirect, lanzarlo (éxito)
       if (err?.status === 302) throw err;
       
-      console.error('❌ [OnboardingAction] Error al guardar:', err);
+      if (import.meta.env.DEV) {
+        console.error('❌ [OnboardingAction] Error al guardar:', err);
+      }
       return requestEvent.fail(500, { 
         message: err.message || 'Error al completar onboarding. Contacta con soporte.' 
       });
@@ -171,10 +175,7 @@ export default component$(() => {
     }
   });
   
-  // DEBUG: Log al renderizar (solo en desarrollo)
-  if (import.meta.env.DEV) {
-    console.log('🎭 [Render] currentStep:', currentStep.value, '| isStepValid:', isStepValid.value);
-  }
+  // DEBUG: Log al renderizar (solo en desarrollo) - eliminado para producción
   
   return (
     <main class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 py-12 px-4">
