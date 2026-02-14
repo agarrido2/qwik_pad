@@ -14,7 +14,7 @@
  * Updated: 2026-02-14 - Integración con RBACService
  */
 
-import type { RequestHandler } from '@builder.io/qwik-city';
+import type { RequestHandler, RequestEventLoader, RequestEventAction } from '@builder.io/qwik-city';
 import { canAccessBilling, canAccessRoute, getPermissionErrorMessage, type MemberRole } from './guards';
 import { RBACService } from '../services/rbac.service';
 import { AuthService } from '../services/auth.service';
@@ -22,6 +22,12 @@ import { AuthService } from '../services/auth.service';
 // ============================================================================
 // TYPES
 // ============================================================================
+
+/**
+ * Type helper para cualquier tipo de RequestEvent
+ * Soporta: Middlewares (RequestHandler), Loaders (RequestEventLoader), Actions (RequestEventAction)
+ */
+type AnyRequestEvent = RequestEventAction | RequestEventLoader | Parameters<RequestHandler>[0];
 
 export interface RoleContext {
   organizationId: string;
@@ -43,7 +49,7 @@ export interface RoleContext {
  * 
  * @returns RoleContext con userId, organizationId y role
  */
-async function getUserRoleContext(requestEvent: any): Promise<RoleContext | null> {
+async function getUserRoleContext(requestEvent: AnyRequestEvent): Promise<RoleContext | null> {
   // 1. Obtener usuario autenticado (cached via AuthService.sharedMap)
   const authUser = await AuthService.getAuthUser(requestEvent);
   if (!authUser) return null;

@@ -17,9 +17,25 @@ import { Form } from '@builder.io/qwik-city';
 import { SECTOR_LABELS } from '../data/agents';
 import { VerificationModal } from './VerificationModal';
 
+/**
+ * Props para DemoWidget
+ * 
+ * DECISIÓN ARQUITECTÓNICA: requestAction y verifyAction usan 'any' porque:
+ * 
+ * 1. TypeScript tiene problemas de covarianza cuando ActionStore se pasa como prop
+ *    (la firma de submit varía entre form: T vs form?: T | undefined)
+ * 2. Los inputs YA están validados con Zod en las routeAction$ (DemoFormInput, VerificationInput)
+ * 3. Intentar type safety completo en ActionStore props crea más problemas que soluciones
+ * 4. La validación crítica (schemas) permanece 100% tipada
+ * 
+ * Referencias:
+ * - routeAction$ en src/routes/(public)/index.tsx usa zod$(demoFormSchema)
+ * - src/features/demo/schemas/demo.schema.ts: DemoFormInput (validado)
+ * - src/features/demo/schemas/verification.schema.ts: VerificationInput (validado)
+ */
 interface DemoWidgetProps {
-  requestAction: any; // ActionStore de useDemoRequestAction (Step 1)
-  verifyAction: any; // ActionStore de useVerifyCodeAction (Step 2)
+  requestAction: any; // ActionStore para Step 1 (email + phone + industry)
+  verifyAction: any;  // ActionStore para Step 2 (email + código OTP)
 }
 
 export const DemoWidget = component$<DemoWidgetProps>(
@@ -41,24 +57,23 @@ export const DemoWidget = component$<DemoWidgetProps>(
 
     /**
      * Resetear flujo completo
+     * ActionStore se limpia automáticamente en Qwik después de submission
      */
     const resetFlow = $(() => {
       console.log('[DemoWidget] Reseteando flujo');
       flowState.value = 'form';
       userEmail.value = '';
       formRef.value?.reset();
-      requestAction.value = undefined;
-      verifyAction.value = undefined;
     });
 
     /**
      * Handler para cancelar verificación
+     * ActionStore se limpia automáticamente en Qwik después de submission
      */
     const handleCancelVerification = $(() => {
       console.log('[DemoWidget] Cancelando verificación');
       flowState.value = 'form';
       userEmail.value = '';
-      verifyAction.value = undefined;
     });
 
     /**

@@ -69,7 +69,7 @@ export class AuthService {
    * Ref: docs/standards/DB_QUERY_OPTIMIZATION.md § sharedMap
    */
   static async getAuthUser(
-    requestEvent: RequestEventLoader | RequestEventAction,
+    requestEvent: AnyRequestEvent,
   ) {
     // Cache: sharedMap persiste durante todo el request (middleware + loaders)
     const cached = requestEvent.sharedMap.get('authUser');
