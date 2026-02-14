@@ -647,74 +647,144 @@ la arquitectura está mal.
 
 ##### 3.4.1 Organización
 
-- Unit tests junto al archivo testeado
-- Integration y E2E centralizados en `src/tests`
+**TODOS los tests se centralizan en `src/tests/`**, organizados por tipo y feature:
 
 ```md
 src/
 ├── lib/
 │   └── auth/
-│       ├── auth.service.ts
-│       └── auth.service.test.ts
+│       ├── guards.ts
+│       ├── middleware.ts
+│       └── rbac-loaders.ts
 │
 ├── features/
 │   └── billing/
 │       ├── billing.service.ts
-│       └── billing.service.test.ts
+│       └── components/
 │
 └── tests/
-    ├── integration/
+    ├── unit/                    ← Tests unitarios por feature
+    │   ├── auth/
+    │   │   ├── guards.test.ts
+    │   │   ├── middleware.test.ts
+    │   │   └── rbac-loaders.test.ts
+    │   ├── billing/
+    │   │   └── billing.service.test.ts
+    │   └── utils/
+    │       └── cn.test.ts
+    ├── integration/             ← Tests de integración
     │   ├── auth-flow.test.ts
     │   └── payment-flow.test.ts
-    ├── e2e/
+    ├── e2e/                     ← Tests end-to-end
     │   ├── onboarding.spec.ts
     │   └── checkout.spec.ts
-    └── fixtures/
+    └── fixtures/                ← Datos de prueba
         ├── users.ts
         └── products.ts
 ```
 
+**Convención de Paths:**
+- `src/tests/unit/[feature]/` espeja la estructura de `src/lib/` y `src/features/`
+- Los imports usan paths absolutos con alias `~/`
+
 ##### 3.4.2 Estrategia por Capa
 
-- **Unit tests**:
+- **Unit tests** (`src/tests/unit/`):
   - Servicios (`lib/`)
   - Features (`features/`)
+  - Utilities (`utils/`)
+  
     Example:
     ```typescript
-        // src/lib/auth/auth.service.test.ts
-        import { describe, it, expect, vi } from 'vitest';
-        import { AuthService } from './auth.service';
-        import { db } from '~/lib/db/client';
+        // src/tests/unit/auth/guards.test.ts
+        import { describe, it, expect } from 'bun:test';
+        import { hasPermission, canAccessBilling } from '~/lib/auth/guards';
+        import type { MemberRole } from '~/lib/auth/guards';
 
-        // Mock de DB
-        vi.mock('~/lib/db/client', () => ({
-            db: { query: { profiles: { findFirst: vi.fn() } } }
-        }));
+        describe('hasPermission', () => {
+            it('owner has all permissions', () => {
+                expect(hasPermission('owner', 'billing')).toBe(true);
+                expect(hasPermission('owner', 'users:create')).toBe(true);
+            });
 
-        describe('AuthService.getProfile', () => {
-            it('debe retornar perfil existente', async () => {
-            const mockProfile = { id: '1', fullName: 'Test User' };
-            vi.mocked(db.query.profiles.findFirst).mockResolvedValue(mockProfile);
-    
-        const result = await AuthService.getProfile('1');
-        expect(result).toEqual(mockProfile);
+            it('admin has limited permissions', () => {
+                expect(hasPermission('admin', 'calls:write')).toBe(true);
+                expect(hasPermission('admin', 'billing')).toBe(false);
             });
         });
-    ```
-- **Integration tests**:
-  - Flujos completos
+
+        describe('canAccessBilling', () => {
+            it('only ow (`src/tests/integration/`):
+  - Flujos completos entre múltiples servicios
+  - Interacciones base de datos reales
+    
     Example:
     ```typescript
-        // src/tests/integration/auth-flow.test.ts
-        import { test, expect } from '@playwright/test';
+        // src/tests/integration/rbac-flow.test.ts
+        import { describe, it, expect } from 'bun:test';
+        import { RBACService } from '~/lib/services/rbac.service';
+        import { setupTestDB, cleanupTestDB } from '../fixtures/db-helpers';
 
-        test('flujo completo de autenticación', async ({ page }) => {
+        describe('RBAC Integration Flow', () => {
+            beforeEach(async () => {
+                await setupTestDB();
+            });
+
+            afterEach(async () => {
+                await cleanupTestDB();
+            });
+
+            it('owner can add admin and admin can add member', async () => {
+                const ownerId = 'owner-123';
+                const orgId = 'org-456';
+
+                // Owner añade admin
+                const adminResult = await RBACService.addMember(
+    E2E tests** (`src/tests/e2e/`):
+  - User journeys completos
+  - Navegación y flujos críticos
+    
+    Example:
+    ```typescript
+    // src/tests/e2e/auth-flow.spec.ts
+    import { test, expect } from '@playwright/test';
+
+    test('complete authentication flow', async ({ page }) => {
         // 1. Visitar login
         await page.goto('/login');
   
         // 2. Llenar formulario
         await page.fill('[name="email"]', 'test@example.com');
         await page.fill('[name="password"]', 'password123');
+        await page.click('button[type="submit"]');
+  
+   **Ubicación centralizada**: TODOS los tests en `src/tests/`
+2. **Estructura espejo**: `src/tests/unit/[feature]/` refleja `src/lib/` y `src/features/`
+3. **Imports absolutos**: Usar alias `~/` para importar código fuente
+4. **Unit tests obligatorios**: Para servicios críticos (RBAC, Auth, Billing)
+5. **Testear comportamiento**: No implementación ni detalles internos
+6. **Mock dependencies**: Solo dependencias externas (DB, APIs, Supabase)
+7. **E2E para flujos críticos**: Onboarding, checkout, autenticación
+8. **No testear rutas**: Las rutas solo orquestan, testear los servicios que usan
+
+**Comando de ejecución:**
+```bash
+# Todos los tests
+bun test
+
+# Tests específicos por feature
+bun test src/tests/unit/auth/
+
+# Un test específico
+bun test src/tests/unit/auth/guards.test.ts
+
+# Con coverage
+bun test --coverage
+```ext('Dashboard')).toBeVisible(       );
+                expect(memberResult.success).toBe(true);
+            });
+        });
+    await page.fill('[name="password"]', 'password123');
         await page.click('button[type="submit"]');
   
         // 3. Verificar redirección a dashboard

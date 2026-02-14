@@ -63,15 +63,24 @@ export class AuthService {
   /**
    * Obtiene el usuario autenticado (valida JWT)
    * IMPORTANTE: Usa getUser() no getSession() para seguridad
+   * 
+   * OPTIMIZACIÓN: Cache via sharedMap para evitar llamadas duplicadas
+   * a Supabase Auth API dentro del mismo request.
+   * Ref: docs/standards/DB_QUERY_OPTIMIZATION.md § sharedMap
    */
   static async getAuthUser(
     requestEvent: RequestEventLoader | RequestEventAction,
   ) {
+    // Cache: sharedMap persiste durante todo el request (middleware + loaders)
+    const cached = requestEvent.sharedMap.get('authUser');
+    if (cached !== undefined) return cached;
+
     const supabase = createServerSupabaseClient(requestEvent);
     const { data, error } = await supabase.auth.getUser();
     
-    if (error || !data.user) return null;
-    return data.user;
+    const user = (error || !data.user) ? null : data.user;
+    requestEvent.sharedMap.set('authUser', user);
+    return user;
   }
 
   /**

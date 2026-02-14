@@ -42,6 +42,8 @@
   - Integraciones JavaScript puramente cliente
 - Usa `useTask$` para lógica reactiva y efectos resumables (no hidrata).
 - Prefiere `useSignal()` sobre `useStore()` para valores primitivos.
+- **`useComputed$` para estado derivado síncrono** (permisos, labels, badges). NO usar `routeLoader$` para datos que se pueden calcular del state existente.
+- **Pipeline sharedMap obligatorio:** Si un `routeLoader$` en layout obtiene datos, DEBE cachearlos en `sharedMap` para que middleware y loaders hijos NO repitan la query. Ver [DB_QUERY_OPTIMIZATION.md § 1.4](./DB_QUERY_OPTIMIZATION.md).
 - Cualquier uso de `useVisibleTask$` fuera de los casos permitidos se considera **incumplimiento de performance**.
 
 ---
@@ -134,22 +136,70 @@ Todo lo que forme parte del estado **DEBE ser serializable**.
 
 ### Gestión Correcta de Reactividad
 
-- Usa `useSignal()` para valores simples.
-- Usa `useStore()` solo cuando:
-  - Necesites múltiples propiedades reactivas
-  - El estado sea estructural
-- Usa `useTask$()` con `track()` para reaccionar a cambios explícitos.
-- Evita efectos implícitos o dependencias ocultas.
+**Referencia completa:** Ver `CHEATSHEET_QWIK.md` § 1.1 y § 1.2 para documentación exhaustiva con ejemplos.
 
-Ejemplo correcto con `track()`:
+#### State Primitives
+
+| Primitiva | Cuándo | Ejemplo |
+|---|---|---|
+| `useSignal()` | **Default.** Un solo valor reactivo (string, number, boolean) | Contadores, toggles, refs DOM |
+| `useStore()` | Objeto/array con múltiples propiedades reactivas | Formularios multi-campo, listas |
+
+> **Regla:** Prefiere `useSignal` siempre. Usa `useStore` solo cuando necesites estructura con propiedades anidadas.
+
+#### Primitivas de Derivación y Efectos (OBLIGATORIO elegir correctamente)
+
+| Primitiva | Propósito | Tracking | Side-effects | Ejecución |
+|---|---|---|---|---|
+| `useComputed$()` | Derivación **síncrona** pura | Automático | ❌ Prohibidos | Server + Client |
+| `useResource$()` | Derivación **asíncrona** (fetch reactivo) | Manual (`track()`) | ❌ Prohibidos | Server + Client |
+| `useTask$()` | **Side-effects** reactivos (debounce, localStorage, analytics) | Manual (`track()`) | ✅ Permitidos | Server + Client |
+| `useVisibleTask$()` | DOM directo, browser APIs, librerías 3rd-party | Manual (`track()`) | ✅ Permitidos | **Solo Client** |
+
+#### Reglas de selección (NO NEGOCIABLE)
+
+1. **`useComputed$`** es la opción **preferida** para todo valor derivado síncrono (`return f(state)` sin `await`). Usar `useTask$` o `useResource$` para cálculos puros es un **error idiomático**.
+2. **`useResource$`** para async que **devuelve un valor** para renderizar con `<Resource onPending onResolved onRejected>`. Patrón `AbortController` + `cleanup()` es **obligatorio**.
+3. **`useTask$`** para side-effects que **mutan state existente**. Usar `track()` es **obligatorio** cuando el efecto depende de signals. Usar `isServer` guard cuando la lógica es solo para cliente.
+4. **`useVisibleTask$`** es **RESTRINGIDO** — solo para acceso al DOM real, browser APIs, o librerías JS que requieren el browser. Cada uso debe justificarse. Cualquier uso fuera de estos casos es **violación de performance**.
+
+#### Ejemplos correctos
 
 ```ts
+// ✅ useComputed$ — derivar permisos del context (puro, síncrono)
+const permissions = useComputed$(() => ({
+  canEdit: role === 'admin' || role === 'owner',
+  label: getRoleLabel(role),
+}));
+
+// ✅ useResource$ — fetch reactivo con loading states
+const weather = useResource$(async ({ track, cleanup }) => {
+  const city = track(() => selectedCity.value);
+  const ctrl = new AbortController();
+  cleanup(() => ctrl.abort());
+  const res = await fetch(`/api/weather/${city}`, { signal: ctrl.signal });
+  return res.json();
+});
+
+// ✅ useTask$ — debounce de input (side-effect: mutar signal)
 useTask$(({ track }) => {
-  track(() => count.value);
-  console.log(count.value);
+  const query = track(() => searchInput.value);
+  if (isServer) { debouncedQuery.value = query; return; }
+  const timer = setTimeout(() => { debouncedQuery.value = query; }, 300);
+  return () => clearTimeout(timer);
+});
+
+// ✅ useVisibleTask$ — inicializar chart (requiere DOM)
+useVisibleTask$(({ cleanup }) => {
+  const chart = new Chart(canvasRef.value, config);
+  store.chart = noSerialize(chart);
+  cleanup(() => chart.destroy());
 });
 ```
-* No usar track() cuando el efecto depende de señales es un **error idiomático**.
+
+* No usar `track()` cuando el efecto depende de señales es un **error idiomático**.
+* Usar `useVisibleTask$` para lógica que no requiere DOM es una **violación de performance**.
+* Usar `useTask$` donde `useComputed$` basta es **ineficiente** (bloquea render innecesariamente).
 
 ### Anti-patrones a EVITAR (NO NEGOCIABLE)
 

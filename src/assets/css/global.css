@@ -1,0 +1,531 @@
+/**
+ * Global Styles - Qwik OnuCall
+ * Tailwind CSS v4 + Sistema de Diseño con Dark/Light Mode
+ * 
+ * ARQUITECTURA:
+ * 1. Importaciones (Tailwind + Fuentes self-hosted)
+ * 2. Reset CSS y Accesibilidad (WCAG 2.1 AA)
+ * 3. Variables de Color HSL (Light/Dark Mode)
+ * 4. Theme de Tailwind (@theme con escalas numéricas)
+ * 5. Componentes Custom (solo específicos del proyecto)
+ * 6. Animaciones Qwik UI
+ * 
+ * [CITE: TAILWIND_QWIK_GUIDE.md - Tailwind v4 CSS-first configuration]
+ * [CITE: QUALITY_STANDARDS.md - Performance, WCAG AA, CLS < 0.1]
+ */
+
+/* ============================================================================
+   1. IMPORTACIONES
+   ============================================================================ */
+
+@import "tailwindcss";
+@import "./poppins.css";
+@import "./roboto.css";
+
+/* ============================================================================
+   BREAKPOINTS (Tailwind v4 - Estrategia Mobile-First)
+   ============================================================================ */
+
+/**
+ * BREAKPOINTS NATIVOS DE TAILWIND V4:
+ * 
+ * Mobile (base)    →  < 640px  → Sin prefijo: text-base, grid-cols-1
+ * sm (Small)       →  ≥ 640px  → Tablets: sm:text-lg, sm:grid-cols-2
+ * md (Medium)      →  ≥ 768px  → Tablets landscape: md:text-xl, md:grid-cols-3
+ * lg (Large)       →  ≥ 1024px → Laptops: lg:py-24, lg:grid-cols-4
+ * xl (Extra Large) →  ≥ 1280px → Desktops: xl:max-w-7xl
+ * 2xl (2X Large)   →  ≥ 1536px → Pantallas grandes: 2xl:max-w-screen-2xl
+ * 
+ * ESTRATEGIA MOBILE-FIRST (base → sm → md → lg):
+ * ✅ Diseña primero para móvil (sin prefijo)
+ * ✅ Añade estilos para pantallas más grandes con prefijos (sm:, md:, lg:)
+ * ✅ Cada breakpoint sobrescribe el anterior (cascada)
+ * 
+ * EJEMPLOS COMUNES DEL PROYECTO:
+ * 
+ * 1. Grid Responsive (usado 6+ veces):
+ *    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+ *      Mobile: 1 columna
+ *      Tablet: 2 columnas (≥640px)
+ *      Desktop: 3 columnas (≥1024px)
+ * 
+ * 2. Texto Escalado (usado 4+ veces):
+ *    <h1 class="text-4xl md:text-6xl">
+ *      Mobile: 36px
+ *      Desktop: 60px (≥768px)
+ * 
+ * 3. Espaciado Responsive (usado 8+ veces):
+ *    <section class="py-16 md:py-24 lg:py-32">
+ *      Mobile: 64px padding
+ *      Tablet: 96px (≥768px)
+ *      Desktop: 128px (≥1024px)
+ * 
+ * 4. Show/Hide por tamaño:
+ *    <div class="hidden md:flex">         ← Solo visible ≥768px
+ *    <div class="block md:hidden">        ← Solo visible <768px
+ * 
+ * ⚠️ NO CREAR BREAKPOINTS CUSTOM:
+ * - Las variables CSS no funcionan en @media queries
+ * - Tailwind v4 ya provee breakpoints estándar de la industria
+ * - El código actual usa perfectamente los breakpoints nativos
+ * 
+ * 📚 Referencia completa: https://tailwindcss.com/docs/responsive-design
+ */
+
+/* ============================================================================
+   2. RESET CSS Y ACCESIBILIDAD (WCAG 2.1 AA)
+   ============================================================================ */
+
+@layer base {
+  /* Reset básico */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: Poppins, system-ui, -apple-system, sans-serif;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* WCAG 2.1 AA: Respetar preferencias de movimiento reducido */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ==========================================================================
+     3. VARIABLES DE COLOR (Light/Dark Mode con HSL)
+     ========================================================================== */
+
+  /* TEMA LIGHT (Por defecto) */
+  :root {
+    /* Colores Base */
+    --background: 0 0% 100%; /* #ffffff */
+    --foreground: 229 33% 15%; /* #1d2033 */
+
+    /* Primary (Azul Onucall) */
+    --primary: 211 100% 40%; /* #0056b3 - WCAG AA: 5.2:1 */
+    --primary-light: 196 92% 53%; /* #18b6f6 - Hover */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary (Morado) */
+    --secondary: 261 52% 45%; /* #5e2ca5 - WCAG AA: 5.1:1 */
+    --secondary-light: 261 85% 73%; /* #ac7ff4 */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent */
+    --accent: 261 85% 73%; /* #ac7ff4 */
+    --accent-foreground: 229 33% 15%;
+
+    /* Estados Semánticos (WCAG AA) */
+    --success: 142 76% 32%; /* #0f8a3c - WCAG AA: 4.6:1 */
+    --success-foreground: 0 0% 100%;
+
+    --error: 0 72% 50%; /* #dc2626 - WCAG AA: 4.5:1 */
+    --error-foreground: 0 0% 100%;
+
+    --warning: 38 92% 38%; /* #d97706 - WCAG AA: 4.8:1 */
+    --warning-foreground: 0 0% 100%;
+
+    --info: 199 89% 48%; /* #0ea5e9 */
+    --info-foreground: 0 0% 100%;
+
+    /* Neutrales */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 211 100% 46%;
+
+    /* Aliases (compatibilidad shadcn/Qwik UI) */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 229 33% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 229 33% 15%;
+
+    /* Radius */
+    --radius: 0.5rem;
+  }
+
+  /* TEMA DARK */
+  .dark {
+    --background: 229 33% 8%; /* #0f1116 */
+    --foreground: 0 0% 98%; /* #fafafa */
+
+    --primary: 196 92% 53%; /* Azul más brillante */
+    --primary-light: 211 100% 46%;
+    --primary-foreground: 229 33% 8%;
+
+    --secondary: 261 85% 73%;
+    --secondary-light: 261 52% 50%;
+    --secondary-foreground: 229 33% 8%;
+
+    --accent: 261 85% 73%;
+    --accent-foreground: 229 33% 8%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 229 33% 8%;
+
+    --error: 0 84% 65%;
+    --error-foreground: 229 33% 8%;
+
+    --warning: 38 92% 55%;
+    --warning-foreground: 229 33% 8%;
+
+    --info: 199 89% 55%;
+    --info-foreground: 229 33% 8%;
+
+    --muted: 229 33% 12%;
+    --muted-foreground: 215 16% 65%;
+
+    --border: 229 33% 20%;
+    --input: 229 33% 20%;
+    --ring: 196 92% 53%;
+
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 229 33% 8%;
+
+    --card: 229 33% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 229 33% 10%;
+    --popover-foreground: 0 0% 98%;
+  }
+}
+
+/* ============================================================================
+   4. THEME DE TAILWIND (Conectar variables + Escalas numéricas)
+   ============================================================================ */
+
+@theme {
+  /* ==========================================================================
+     ESCALAS NUMÉRICAS (Compatibilidad con código existente)
+     bg-primary-50, text-primary-600, border-primary-700, etc.
+     ========================================================================== */
+
+  /* Primary (Azul Onucall) */
+  --color-primary-50: #f3f6fb;
+  --color-primary-100: #e1e8f5;
+  --color-primary-200: #c3d1eb;
+  --color-primary-300: #95afd9;
+  --color-primary-400: #617fbe;
+  --color-primary-500: #39549b;
+  --color-primary-600: #283d7b;
+  --color-primary-700: #1d2d5d;
+  --color-primary-800: #141f42;
+  --color-primary-900: #0c142b;
+
+  /* Accent (Teal) */
+  --color-accent-50: #f0fdfa;
+  --color-accent-100: #ccfbf1;
+  --color-accent-200: #99f6e4;
+  --color-accent-300: #5eead4;
+  --color-accent-400: #2dd4bf;
+  --color-accent-500: #14b8a6;
+  --color-accent-600: #0d9488;
+  --color-accent-700: #0f766e;
+  --color-accent-800: #115e59;
+  --color-accent-900: #134e4a;
+
+  /* ==========================================================================
+     COLORES SEMÁNTICOS (Conectar variables HSL con Tailwind)
+     bg-background, text-foreground, bg-primary, text-success, etc.
+     ========================================================================== */
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-light: hsl(var(--primary-light));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-light: hsl(var(--secondary-light));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  --color-error: hsl(var(--error));
+  --color-error-foreground: hsl(var(--error-foreground));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  /* ==========================================================================
+     FUENTES (Tailwind v4 syntax)
+     ========================================================================== */
+
+  --font-family-sans: Poppins, system-ui, -apple-system, sans-serif;
+  --font-family-body: Roboto, system-ui, sans-serif;
+  --font-family-mono: "Roboto Mono", ui-monospace, monospace;
+
+  /* ==========================================================================
+     BORDER RADIUS
+     ========================================================================== */
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+/* ============================================================================
+   5. COMPONENTES CUSTOM (Solo específicos del proyecto)
+   ============================================================================ */
+
+/**
+ * ⚠️ CRITERIO PARA COMPONENT CLASSES:
+ * 
+ * ✅ CREAR si:
+ *   - Se repite 3+ veces en el código
+ *   - Tiene 5+ clases de Tailwind
+ *   - Cambiar el diseño requeriría editar múltiples archivos
+ * 
+ * ❌ NO CREAR si:
+ *   - Solo aparece 1-2 veces (usar Tailwind directo)
+ *   - Tiene pocas clases (<5)
+ *   - Tailwind ya lo tiene nativo (container, grid, etc.)
+ * 
+ * Ejemplo MALO: .flex-center { @apply flex items-center justify-center; } ← Solo 3 clases
+ * Ejemplo BUENO: .btn-primary { ... 10+ clases con estados hover/focus/active }
+ */
+
+@layer components {
+  /* ==========================================================================
+     BOTONES (Patrón repetido 10+ veces en Header, Landing, Forms)
+     ========================================================================== */
+
+  /**
+   * Botón primario - Acción principal (CTA, Submit)
+   * Uso: <button class="btn-primary">Crear cuenta</button>
+   * Aparece en: Header, Hero, Contact section, Forms
+   */
+  .btn-primary {
+    @apply inline-flex h-12 items-center justify-center rounded-lg bg-primary-600 px-8 text-base font-semibold text-white shadow-md transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /**
+   * Botón primario tamaño pequeño (navegación, acciones secundarias)
+   * Uso: <button class="btn-primary-sm">Registrarse</button>
+   * Aparece en: Header, Dashboard nav, Cards
+   */
+  .btn-primary-sm {
+    @apply inline-flex h-9 items-center justify-center rounded-md bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  /**
+   * Botón secundario (outline) - Acciones secundarias
+   * Uso: <button class="btn-secondary">Ver demo</button>
+   * Aparece en: Landing, Cards, Dialogs
+   */
+  .btn-secondary {
+    @apply inline-flex h-12 items-center justify-center rounded-lg border-2 border-neutral-300 px-8 text-base font-semibold text-neutral-700 transition-colors hover:border-primary-400 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98];
+  }
+
+  /**
+   * Botón fantasma (solo texto) - Acciones terciarias
+   * Uso: <button class="btn-ghost">Cancelar</button>
+   * Aparece en: Modals, Forms, Cards
+   */
+  .btn-ghost {
+    @apply inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2;
+  }
+
+  /* ==========================================================================
+     BADGES/PILLS (Patrón repetido 8+ veces en Dashboard, Cards)
+     ========================================================================== */
+
+  /**
+   * Badges - Estado, etiquetas, categorías
+   * Uso: <span class="badge-primary">Nuevo</span>
+   * Variantes: badge-primary, badge-success, badge-warning, badge-error
+   */
+  .badge-primary {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary-100 text-primary-700;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-700;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700;
+  }
+
+  .badge-error {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700;
+  }
+
+  .badge-info {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700;
+  }
+
+  /* ==========================================================================
+     NAVIGATION LINKS (Patrón repetido 5+ veces en Dashboard sidebar)
+     ========================================================================== */
+
+  /**
+   * Link de navegación base (sidebar, tabs)
+   * Uso: <a class="nav-link" [class.nav-link-active]="isActive">Dashboard</a>
+   * Aparece en: DashboardLayout sidebar
+   */
+  .nav-link {
+    @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900;
+  }
+
+  .nav-link-active {
+    @apply bg-primary-50 text-primary-700 hover:bg-primary-100;
+  }
+
+  /* ==========================================================================
+     GLASSMORPHISM (Efecto específico del diseño)
+     ========================================================================== */
+
+  /**
+   * Glassmorphism para Dashboard Header
+   * Uso: <header class="glass">...</header>
+   * Aparece en: DashboardLayout
+   */
+  .glass {
+    background: hsl(var(--background) / 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+  }
+}
+
+/* ============================================================================
+   6. ANIMACIONES QWIK UI
+   ============================================================================ */
+
+/**
+ * Keyframes y utility classes para componentes Qwik UI Headless.
+ * Compatible con data-state attributes y Motion One.
+ * [CITE: TAILWIND_QWIK_GUIDE.md - Parte 4, Regla 3]
+ */
+
+@layer utilities {
+  /* ==========================================================================
+     KEYFRAMES
+     ========================================================================== */
+
+  /* Modales/Dialogs */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Tabs/Panels */
+  @keyframes slide-from-right {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Accordion (Qwik UI Headless) */
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--qwikui-collapsible-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--qwikui-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+
+  /* ==========================================================================
+     UTILITY CLASSES (aplicar animaciones en componentes)
+     ========================================================================== */
+
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-slide-in {
+    animation: slide-from-right 0.2s ease-out;
+  }
+
+  .animate-accordion-down {
+    animation: accordion-down 0.2s ease-out;
+  }
+
+  .animate-accordion-up {
+    animation: accordion-up 0.2s ease-out;
+  }
+}

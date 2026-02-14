@@ -66,6 +66,12 @@ export async function getAuthGuardData(
       role: row.orgRole!,
     }));
 
+  // ★ Cachear orgs en sharedMap para middleware y loaders downstream.
+  // Elimina la query redundante de RBACService.getUserOrganizationsWithRoles()
+  // que middleware (requireAdminRole/requireOwnerRole) y useUserRoleLoader
+  // ejecutaban por separado con los mismos datos.
+  requestEvent.sharedMap.set('userOrgs', organizations);
+
   return {
     authUser: { id: authUser.id, email: authUser.email! },
     dbUser,

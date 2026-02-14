@@ -73,6 +73,53 @@ export const useDashboard = routeLoader$(async (req) => {
 
 **Referencia:** [SUPABASE_DRIZZLE_MASTER.md § 8 - sharedMap Pattern](./SUPABASE_DRIZZLE_MASTER.md#8-consumo-seguro-en-rutas-protegidas)
 
+### 1.4 Pipeline Completo: auth-guard → sharedMap → Context → useComputed$ (OBLIGATORIO)
+
+**Contexto:** En apps con Auth + RBAC + multi-tenant, los datos de usuario y organizaciones
+se necesitan en múltiples capas (middleware, loaders, componentes). El pipeline optimizado
+garantiza **máximo 1 API + 1 DB query** por request, independientemente de cuántas capas los consuman.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    REQUEST LIFECYCLE                         │
+│                                                              │
+│  1. auth-guard.ts (routeLoader$ en (app)/layout.tsx)        │
+│     ├─ AuthService.getAuthUser(req)         [API] → cache   │
+│     ├─ OrganizationService.getUserWithOrgs  [DB]  → cache   │
+│     └─ req.sharedMap.set('authUser', user)                  │
+│         req.sharedMap.set('userOrgs', organizations)        │
+│                          │                                   │
+│  2. middleware.ts (onRequest en sub-layouts)                 │
+│     ├─ req.sharedMap.get('authUser')        [HIT] 0 queries │
+│     └─ req.sharedMap.get('userOrgs')        [HIT] 0 queries │
+│                          │                                   │
+│  3. Otros routeLoaders (miembros, billing, etc.)            │
+│     ├─ req.sharedMap.get('authUser')        [HIT] 0 queries │
+│     ├─ req.sharedMap.get('userOrgs')        [HIT] 0 queries │
+│     └─ Query específica del loader          [DB]  necesaria │
+│                          │                                   │
+│  4. Component Tree (client-side)                             │
+│     ├─ OrganizationContext (useStore)       [serializado]   │
+│     └─ usePermissions() → useComputed$()   [0 queries]     │
+│         Deriva permisos del context sin server round-trip    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Reglas del pipeline:**
+
+1. **El primer loader que obtiene datos los cachea en sharedMap** — nunca dejar que downstream repita la query.
+2. **Middleware SIEMPRE lee de sharedMap** — nunca hace queries propias si los datos ya existen.
+3. **Permisos para UI se derivan con `useComputed$`** — no con un `routeLoader$` adicional.
+4. **Solo queries únicas (miembros, billing) justifican un round-trip new** — todo lo demás es cache hit.
+
+**Resultado medido:**
+
+| Ruta | Sin pipeline | Con pipeline | Reducción |
+|------|--------------|--------------|-----------|
+| `/dashboard` | 4 (2 API + 2 DB) | 2 (1 API + 1 DB) | -50% |
+| `/dashboard/usuarios` | 9 (4 API + 5 DB) | 3 (1 API + 2 DB) | -67% |
+| `/dashboard/facturacion` | 6 (3 API + 3 DB) | 2 (1 API + 1 DB) | -67% |
+
 ---
 
 ## 2. PATRONES DE OPTIMIZACIÓN (OBLIGATORIOS)
@@ -250,6 +297,8 @@ Un agente AI debe poder verificar:
 - [ ] Toda secuencia de INSERTs relacionados usa `db.transaction()`
 - [ ] No hay UPDATEs consecutivos al mismo registro en 5 líneas de código
 - [ ] `sharedMap` se usa cuando layout y página necesitan los mismos datos
+- [ ] Auth guard cachea `authUser` y `userOrgs` en `sharedMap` (pipeline § 1.4)
+- [ ] Permisos de UI se derivan con `useComputed$`, NO con `routeLoader$` adicional
 
 ⚠️ **Revisión Manual:**
 - [ ] JOINs complejos tienen índices adecuados en DB
@@ -282,6 +331,8 @@ Antes de aprobar un PR que toca servicios (`lib/services/`) o features con DB:
 - [ ] **JOIN Check:** Queries relacionadas están fusionadas
 - [ ] **Transaction Check:** INSERTs/UPDATEs relacionados usan transacción
 - [ ] **sharedMap Check:** Datos del layout no se re-consultan en rutas hijas
+- [ ] **Pipeline Check:** Auth guard cachea `userOrgs` en sharedMap (§ 1.4)
+- [ ] **Derived State Check:** Permisos UI usan `useComputed$`, no `routeLoader$`
 - [ ] **UPSERT Check:** Lógica SELECT + INSERT condicional usa `onConflictDoUpdate`
 - [ ] **Batch Check:** UPDATEs consecutivos al mismo registro están fusionados
 - [ ] **Index Check:** JOINs en columnas indexadas (verificar con `EXPLAIN`)
@@ -291,11 +342,59 @@ Antes de aprobar un PR que toca servicios (`lib/services/`) o features con DB:
 
 ## 6. CASOS DE USO DOCUMENTADOS
 
-### 6.1 Auth Guard (Referencia Actual)
+### 6.1 Auth Guard + sharedMap Pipeline (Referencia Canónica)
 
 **Ubicación:** `src/lib/auth/auth-guard.ts`  
-**Problema:** 3 queries separadas (getUser + SELECT users + getUserOrganizations)  
-**Solución:** Ver [ANALISIS_QUERIES_DB_2026-02-14.md - Fase 1](../plans/ANALISIS_QUERIES_DB_2026-02-14.md#fase-1-optimizaciones-de-alto-impacto-inmediatas)
+**Problema original:** 3 queries separadas (getUser + SELECT users + getUserOrganizations)  
+**Solución Iter 1:** JOIN query fusionó 3→1 query DB  
+**Solución Iter 2:** Cache en sharedMap eliminó query redundante downstream  
+
+```typescript
+// auth-guard.ts — El "productor" del pipeline
+export async function getAuthGuardData(requestEvent) {
+  // Query 1: Validar JWT (Supabase Auth - cached via sharedMap)
+  const authUser = await AuthService.getAuthUser(requestEvent);
+  if (!authUser) return null;
+
+  // Query 2: User + Orgs en 1 JOIN
+  const userWithOrgs = await OrganizationService.getUserWithOrganizations(authUser.id);
+
+  // ★ Cachear para middleware y loaders downstream
+  const organizations = userWithOrgs.filter(r => r.orgId).map(r => ({...}));
+  requestEvent.sharedMap.set('userOrgs', organizations);
+
+  return { authUser, dbUser, organizations };
+}
+```
+
+```typescript
+// middleware.ts — El "consumidor" del pipeline
+async function getUserRoleContext(requestEvent) {
+  const authUser = await AuthService.getAuthUser(requestEvent); // sharedMap HIT
+  let orgs = requestEvent.sharedMap.get('userOrgs');             // sharedMap HIT
+  if (!orgs) {
+    orgs = await RBACService.getUserOrganizationsWithRoles(authUser.id); // fallback
+    requestEvent.sharedMap.set('userOrgs', orgs);
+  }
+  return { userId: authUser.id, organizationId: orgs[0].id, role: orgs[0].role };
+}
+```
+
+```typescript
+// use-permissions.ts — Derivación client-side (0 server queries)
+export function usePermissions() {
+  const orgContext = useContext(OrganizationContext);
+  return useComputed$(() => ({
+    role: orgContext.active.role,
+    canAccessBilling: canAccessBilling(orgContext.active.role),
+    canWrite: canWrite(orgContext.active.role),
+    // ... más permisos derivados
+  }));
+}
+```
+
+**Queries finales:** 1 API + 1 DB por request (óptimo)  
+**Patrón replicable:** Sí — cualquier app con auth + roles + multi-tenant
 
 ### 6.2 Demo Request (Referencia Excelente)
 

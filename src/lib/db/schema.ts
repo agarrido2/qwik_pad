@@ -125,7 +125,15 @@ export const users = pgTable('users', {
   // Timestamps
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => ({
+  // RBAC Performance Indexes (añadidos 2026-02-14)
+  // Índice para queries de filtrado por role (ej: admin panel listando users)
+  roleIdx: index('idx_users_role').on(table.role),
+  // Índice para queries de usuarios activos
+  isActiveIdx: index('idx_users_is_active').on(table.isActive),
+  // Índice para queries de onboarding completado
+  onboardingIdx: index('idx_users_onboarding').on(table.onboardingCompleted),
+}));
 
 // ==========================================
 // TABLA: organization_members (N:M)
@@ -151,6 +159,18 @@ export const organizationMembers = pgTable('organization_members', {
 }, (table) => ({
   // Constraint: un usuario solo puede tener 1 rol por organización
   uniqueUserOrg: unique().on(table.userId, table.organizationId),
+  
+  // RBAC Performance Indexes (añadidos 2026-02-14)
+  // Índice para buscar miembros por organización
+  orgIdIdx: index('idx_org_members_org_id').on(table.organizationId),
+  // Índice para buscar organizaciones por usuario
+  userIdIdx: index('idx_org_members_user_id').on(table.userId),
+  // Índice para queries por rol (ej: buscar todos los owners)
+  roleIdx: index('idx_org_members_role').on(table.role),
+  // Índice compuesto para "todos los owners de org X" (alta performance)
+  orgRoleIdx: index('idx_org_members_org_role').on(table.organizationId, table.role),
+  // Índice compuesto para "todas las orgs donde soy owner"
+  userRoleIdx: index('idx_org_members_user_role').on(table.userId, table.role),
 }));
 
 // ==========================================

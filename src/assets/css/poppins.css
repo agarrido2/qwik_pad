@@ -1,0 +1,84 @@
+
+/**
+ * Poppins Font Family 
+ * 
+ * 6 Weights included to optimize performance and visual hierarchy:
+ * - Light (300) - Para "Onu" en Header
+ * - Regular (400) - Base
+ * - Italic (400 italic) - Para blockquotes
+ * - Medium (500) - Para navigation y labels
+ * - SemiBold (600) - Para CTAs y subtítulos
+ * - Bold (700) - Para títulos principales
+
+ * 
+ * [CITE: QUALITY_STANDARDS.md - Performance first]
+ */
+
+/* Light 300 - Usado en Header "Onu" */
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 300;
+  font-display: optional;
+  src:
+    local("Poppins Light"),
+    url("/fonts/poppins-webfont/Poppins-Light.woff") format("woff");
+}
+
+/* Regular 400 - Base (fallback universal) */
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 400;
+  font-display: optional;
+  src:
+    local("Poppins Regular"),
+    url("/fonts/poppins-webfont/Poppins-Regular.woff") format("woff");
+}
+
+/* Italic 400 - Usado en blockquotes (OpinionSection, StoriesTabs) */
+@font-face {
+  font-family: "Poppins";
+  font-style: italic;
+  font-weight: 400;
+  font-display: optional;
+  src:
+    local("Poppins Italic"),
+    url("/fonts/poppins-webfont/Poppins-Italic.woff") format("woff");
+}
+
+/* Medium 500 - Usado en navigation, carousel labels, login links */
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 500;
+  font-display: optional;
+  src:
+    local("Poppins Medium"),
+    url("/fonts/poppins-webfont/Poppins-Medium.woff") format("woff");
+}
+
+/* SemiBold 600 - Usado en Hero CTAs, Header, tech carousel */
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 600;
+  font-display: optional;
+  src:
+    local("Poppins SemiBold"),
+    url("/fonts/poppins-webfont/Poppins-SemiBold.woff") format("woff");
+}
+
+/* Bold 700 - Usado en Navigation dropdowns, Hero title, login title */
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 700;
+  font-display: optional;
+  src:
+    local("Poppins Bold"),
+    url("/fonts/poppins-webfont/Poppins-Bold.woff") format("woff");
+}
+
+
+

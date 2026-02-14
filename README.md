@@ -1,23 +1,24 @@
 # Onucall
 
-Onucall es una plataforma SaaS de agentes de voz diseñada para que negocios intensivos en teléfono nunca pierdan una llamada importante y conviertan más leads con el mismo equipo.
+Onucall es una plataforma SaaS de agentes de voz diseñada para que negocios con usos intensivos en teléfono nunca pierdan una llamada importante y conviertan más leads con el mismo equipo.
 
 ## Sectores a los que sirve
 
-Onucall está pensada para siete tipos de negocio donde cada llamada puede ser una venta, una cita o un caso crítico:  
+Onucall está pensada para seis tipos de negocio donde cada llamada puede ser una venta, una cita o un caso crítico:  
 
-- Concesionarios de vehículos  
-- Inmobiliarias  
-- Alquiladoras de vehículos y maquinaria  
-- Despachos profesionales (abogados, asesores, gestorías, etc.)  
-- Retail / distribuidoras  
+- Concesionarios de ventas de vehículos
+- Inmobiliarias
+- Alquiladoras de vehículos y maquinarias  
+- Despachos de Abogados Laborales y de Familia
 - Servicios técnicos (SAT)  
 - Clínicas médicas  
 
 ## Qué hace (solo llamadas entrantes)
 
-Onucall atiende llamadas entrantes 24/7, contesta al primer tono y guía al cliente con voz natural hasta resolver su necesidad o generar un lead listo para el equipo humano.  
-Es capaz de: identificar el motivo de la llamada, responder dudas frecuentes, cualificar al cliente, registrar datos completos y reservar citas o visitas según la agenda real del negocio.  
+Onucall atiende llamadas entrantes 24/7, contesta lo antes posible y guía al cliente con voz natural hasta resolver su necesidad o generar un lead listo para el equipo humano.  
+Es capaz de: identificar el motivo de la llamada, responder dudas frecuentes, cualificar al cliente, registrar datos completos y reservar citas o visitas según la agenda real del negocio. 
+Puede conocer el historial de interacciones con cada cliente, reconocer a clientes recurrentes o importantes, y aprender de cada llamada para mejorar su capacidad de respuesta con el tiempo.
+
 
 ## Qué problemas resuelve
 
@@ -33,7 +34,7 @@ Se integra con las herramientas del negocio (agenda, CRM, inventario, historial 
 
 ## Qué hace diferente a Onucall
 
-- Foco vertical: Onucall está diseñada específicamente para concesionarios, inmobiliarias, alquiladoras, despachos profesionales, retail/distribución, SAT y clínicas médicas, con flujos adaptados a cada sector.  
+- Foco vertical: Onucall está diseñada específicamente para concesionarios, inmobiliarias, alquiladoras, despachos de abogados laborales y de familia, SAT y clínicas médicas, con flujos adaptados a cada sector.  
 - Orientación a ingresos: el objetivo no es solo “responder llamadas”, sino aumentar citas, visitas y casos facturables, midiendo métricas de conversión por tipo de llamada y campaña.  
 - Multi‑tenant desde el diseño: un único producto sirve a muchas organizaciones manteniendo su configuración, datos y métricas perfectamente aislados.  
 

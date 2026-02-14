@@ -122,6 +122,8 @@ export const users = pgTable('users', {
 }, (table) => ({
   isActiveIdx: index('idx_users_is_active').on(table.isActive),
   onboardingIdx: index('idx_users_onboarding').on(table.onboardingCompleted),
+  // RBAC: Índice para queries de superadmin (filtrar por role global)
+  roleIdx: index('idx_users_role').on(table.role),
 }));
 
 /**
@@ -193,6 +195,12 @@ export const members = pgTable('members', {
   orgIdIdx: index('idx_members_org_id').on(table.organizationId),
   // Índice para queries: "Buscar todas las orgs del usuario Y"
   userIdIdx: index('idx_members_user_id').on(table.userId),
+  // RBAC: Índice para queries por rol (ej: buscar todos los owners)
+  roleIdx: index('idx_members_role').on(table.role),
+  // RBAC: Índice compuesto para "todos los owners de org X" (alta performance)
+  orgRoleIdx: index('idx_members_org_role').on(table.organizationId, table.role),
+  // RBAC: Índice compuesto para "todas las orgs donde soy owner"
+  userRoleIdx: index('idx_members_user_role').on(table.userId, table.role),
 }));
 
 

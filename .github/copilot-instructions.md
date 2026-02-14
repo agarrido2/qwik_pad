@@ -78,7 +78,7 @@ bun run db:studio    # Open Drizzle Studio
 ### Query Optimization (OBLIGATORIO)
 - **Target**: 1-2 queries per page load (max 3-4 with justification)
 - **N+1 PROHIBITED**: Use JOINs instead of loops with queries
-- **sharedMap Pattern**: Share layout data with child routes (avoid re-fetching)
+- **sharedMap Pipeline**: Auth guard caches `authUser` + `userOrgs` in sharedMap → middleware reads from cache → loaders read from cache → UI derives via `useComputed$`. See `docs/standards/DB_QUERY_OPTIMIZATION.md` § 1.4
 - **Batch UPDATEs**: Combine multiple UPDATEs to same record
 - **Transactions**: Wrap related INSERTs/UPDATEs for atomicity
 - **Reference**: `docs/standards/DB_QUERY_OPTIMIZATION.md`
@@ -99,12 +99,16 @@ bun run db:studio    # Open Drizzle Studio
 
 ## ⚡ Performance Rules (Resumability)
 
-- **Default**: `useSignal()` (primitives), `useStore()` (objects), `useComputed$()`
+- **Default**: `useSignal()` (primitives), `useStore()` (objects)
+- **Reactive primitives** (elegir correctamente es OBLIGATORIO):
+  - `useComputed$()` → derivación **síncrona** pura (tracking automático, sin side-effects)
+  - `useResource$()` → derivación **asíncrona** (devuelve `ResourceReturn<T>`, usa `<Resource>` para loading/error)
+  - `useTask$()` → **side-effects** reactivos (debounce, localStorage, analytics). Usa `track()` + `cleanup()`
+  - `useVisibleTask$()` → **solo DOM/browser APIs** (Chart.js, timers, geolocation). ⚠️ Rompe resumabilidad
+- **Decision tree**: `useComputed$` (sync pure) > `useResource$` (async value) > `useTask$` (side-effects) > `useVisibleTask$` (DOM only). See `CHEATSHEET_QWIK.md` § 1.2 for complete guide
+- **Derived state**: `useComputed$()` for synchronous derivations (permissions, labels, formatting). **NEVER** use a `routeLoader$` for data that can be calculated from existing state/context
 - **Server data**: `routeLoader$` (SSR, zero client JS)
-- **Reactive effects**: `useTask$()` (resumable, tracks dependencies)
-- **Client-only DOM**: `useVisibleTask$()` ⚠️ **Restricted** — breaks resumability
-  - *Only* for: DOM manipulation, 3rd-party libs (charts/maps), browser APIs
-  - Anything else = performance violation
+- **`useVisibleTask$` restricted**: Only for DOM manipulation, 3rd-party libs, browser APIs. Anything else = performance violation
 
 ### Images
 - Always set `width` + `height` to prevent CLS
