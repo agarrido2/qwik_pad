@@ -75,6 +75,14 @@ bun run db:studio    # Open Drizzle Studio
   - **App**: Port 6543 (Transaction Pooler, `pgbouncer=true`)
   - **Migrations**: Port 5432 (Session Mode, schema changes)
 
+### Query Optimization (OBLIGATORIO)
+- **Target**: 1-2 queries per page load (max 3-4 with justification)
+- **N+1 PROHIBITED**: Use JOINs instead of loops with queries
+- **sharedMap Pattern**: Share layout data with child routes (avoid re-fetching)
+- **Batch UPDATEs**: Combine multiple UPDATEs to same record
+- **Transactions**: Wrap related INSERTs/UPDATEs for atomicity
+- **Reference**: `docs/standards/DB_QUERY_OPTIMIZATION.md`
+
 ### Auth Flow (Supabase SSR)
 1. Sessions via cookies (`@supabase/ssr`)
 2. Signup → `handle_new_auth_user()` trigger → creates `public.users` record
@@ -117,11 +125,12 @@ bun run db:studio    # Open Drizzle Studio
 ## 📚 Documentation Hierarchy
 
 When in doubt, consult in order:
-1. `docs/standards/SUPABASE_DRIZZLE_MASTER.md` (Data/Auth)
-2. `docs/standards/ARQUITECTURA_FOLDER.md` (Structure)
-3. `docs/standards/PROJECT_RULES_CORE.md` (Constitution)
-4. `docs/standards/CHEATSHEET_QWIK.md` (Quick patterns)
-5. `docs/standards/QUALITY_STANDARDS.md` (Performance metrics)
+1. `docs/standards/DB_QUERY_OPTIMIZATION.md` (Query performance)
+2. `docs/standards/SUPABASE_DRIZZLE_MASTER.md` (Data/Auth)
+3. `docs/standards/ARQUITECTURA_FOLDER.md` (Structure)
+4. `docs/standards/PROJECT_RULES_CORE.md` (Constitution)
+5. `docs/standards/CHEATSHEET_QWIK.md` (Quick patterns)
+6. `docs/standards/QUALITY_STANDARDS.md` (Performance metrics)
 
 ---
 

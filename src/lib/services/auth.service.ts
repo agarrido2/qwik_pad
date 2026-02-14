@@ -115,8 +115,12 @@ export class AuthService {
 
   /**
    * Verifica que el usuario existe en public.users después de OAuth
-   * @description Implementa retry logic para evitar race conditions con el trigger
-   * y fallback manual si el trigger falla. Esta es lógica de negocio reutilizable.
+   * @description Usa UPSERT idempotente para eliminar race conditions.
+   * Si el trigger ya creó el usuario, actualiza updated_at.
+   * Si el trigger falló, lo crea directamente.
+   * 
+   * OPTIMIZACIÓN: Elimina retry loop (3-7 queries → 2 queries)
+   * Referencia: docs/standards/DB_QUERY_OPTIMIZATION.md § 2.4
    * 
    * ARQUITECTURA: Esta lógica estaba en routes/(auth)/callback/index.tsx
    * y fue movida aquí para cumplir con el Patrón Orchestrator.
@@ -135,80 +139,61 @@ export class AuthService {
   ): Promise<{ success: true; user: any } | { success: false; error: string }> {
     const supabase = createServerSupabaseClient(requestEvent);
     
-    let retryCount = 0;
-    const maxRetries = 3;
-    let publicUserFound = false;
-    let publicUser: any = null;
+    // UPSERT idempotente: crea usuario si no existe, actualiza si existe
+    // Elimina necesidad de retry loop y delays
+    const fullName = (
+      userMetadata?.full_name ||
+      userMetadata?.name ||
+      email?.split('@')[0] ||
+      'Usuario'
+    );
 
-    // Retry loop: esperar a que el trigger cree el usuario
-    while (retryCount < maxRetries && !publicUserFound) {
-      // Esperar 500ms para dar tiempo al trigger (aumenta con cada retry)
-      if (retryCount > 0) {
-        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
-      }
-
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, email, role, subscription_tier, onboarding_completed')
-        .eq('id', authUserId)
-        .single();
-
-      if (!error && data) {
-        publicUserFound = true;
-        publicUser = data;
-        if (import.meta.env.DEV) {
-          console.log('[AuthService] ✅ User verified in public.users:', data.email);
-        }
-        break;
-      }
-
-      retryCount++;
-      if (import.meta.env.DEV) {
-        console.log(`[AuthService] User not found in public.users, retry ${retryCount}/${maxRetries}`);
-      }
-    }
-
-    // Fallback: Si después de 3 intentos no existe, crear manualmente
-    if (!publicUserFound) {
-      console.error('[AuthService] CRITICAL: Trigger failed after', maxRetries, 'retries. Creating user manually.');
-      
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert({
+    const { error: upsertError } = await supabase
+      .from('users')
+      .upsert(
+        {
           id: authUserId,
           email: email || 'unknown@example.com',
-          full_name: (
-            userMetadata?.full_name ||
-            userMetadata?.name ||
-            email?.split('@')[0] ||
-            'Usuario'
-          ),
+          full_name: fullName,
           role: 'invited',
           subscription_tier: 'free',
           is_active: true,
           onboarding_completed: false,
           timezone: 'Europe/Madrid',
           locale: 'es',
-        });
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'id',
+          ignoreDuplicates: false, // Actualizar si ya existe
+        }
+      );
 
-      if (insertError) {
-        console.error('[AuthService] CRITICAL: Manual user creation failed:', insertError);
-        return {
-          success: false,
-          error: 'Error crítico en registro. Por favor contacta soporte.',
-        };
-      }
+    if (upsertError) {
+      console.error('[AuthService] UPSERT failed:', upsertError);
+      return {
+        success: false,
+        error: 'Error crítico en registro. Por favor contacta soporte.',
+      };
+    }
 
-      console.log('[AuthService] ✅ User created manually (trigger fallback successful)');
-      
-      // Refrescar datos del usuario recién creado
-      const { data: newUser } = await supabase
-        .from('users')
-        .select('id, email, role, subscription_tier, onboarding_completed')
-        .eq('id', authUserId)
-        .single();
-      
-      publicUser = newUser;
+    if (import.meta.env.DEV) {
+      console.log('[AuthService] ✅ User ensured in public.users (UPSERT):', email);
+    }
+
+    // Recuperar datos del usuario (1 query final)
+    const { data: publicUser, error: selectError } = await supabase
+      .from('users')
+      .select('id, email, role, subscription_tier, onboarding_completed')
+      .eq('id', authUserId)
+      .single();
+
+    if (selectError || !publicUser) {
+      console.error('[AuthService] Failed to fetch user after UPSERT:', selectError);
+      return {
+        success: false,
+        error: 'Error al verificar usuario.',
+      };
     }
 
     return { success: true, user: publicUser };

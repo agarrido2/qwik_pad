@@ -1,5 +1,5 @@
 import { db } from '../db/client';
-import { organizations, organizationMembers } from '../db/schema';
+import { organizations, organizationMembers, users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 /**
@@ -7,6 +7,36 @@ import { eq } from 'drizzle-orm';
  */
 
 export class OrganizationService {
+  /**
+   * Obtiene user + organizations en 1 query optimizada (JOIN)
+   * Reduce 2 queries separadas → 1 query con JOIN
+   * 
+   * Referencia: docs/standards/DB_QUERY_OPTIMIZATION.md § 2.1
+   */
+  static async getUserWithOrganizations(userId: string) {
+    const result = await db
+      .select({
+        // User data
+        userId: users.id,
+        userEmail: users.email,
+        userFullName: users.fullName,
+        userAvatarUrl: users.avatarUrl,
+        onboardingCompleted: users.onboardingCompleted,
+        // Organization data (puede ser NULL si LEFT JOIN no encuentra match)
+        orgId: organizations.id,
+        orgName: organizations.name,
+        orgSlug: organizations.slug,
+        orgSubscriptionTier: organizations.subscriptionTier,
+        orgIndustry: organizations.industry,
+        orgRole: organizationMembers.role,
+      })
+      .from(users)
+      .leftJoin(organizationMembers, eq(users.id, organizationMembers.userId))
+      .leftJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
+      .where(eq(users.id, userId));
+
+    return result;
+  }
   /**
    * Crea una nueva organización
    */

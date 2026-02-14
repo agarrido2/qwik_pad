@@ -1,7 +1,6 @@
 import { db } from '../db/client';
-import { users } from '../db/schema';
+import { users, organizations, organizationMembers } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { OrganizationService } from './organization.service';
 import { DemoDataService } from './demo-data.service';
 import type { IndustrySlug } from '../utils/demo-data-templates';
 
@@ -17,6 +16,9 @@ export class OnboardingService {
    * 3. Añade al usuario como owner
    * 4. Marca onboarding como completado
    * 5. Genera datos demo según industria
+   * 
+   * OPTIMIZACIÓN: Transacción atómica (todo o nada)
+   * Referencia: docs/standards/DB_QUERY_OPTIMIZATION.md § 2.3
    */
   static async completeOnboarding(
     userId: string,
@@ -35,13 +37,7 @@ export class OnboardingService {
       assistantFriendlinessLevel: number;
     },
   ) {
-    // 1. Actualizar perfil del usuario
-    await db
-      .update(users)
-      .set({ fullName: data.fullName })
-      .where(eq(users.id, userId));
-
-    // 2. Generar slug único desde el nombre de la organización
+    // Generar slug antes de la transacción (no requiere DB)
     const slug = data.organizationName
       .toLowerCase()
       .normalize('NFD')
@@ -51,39 +47,57 @@ export class OnboardingService {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
-    // 3. Crear organización con todos los datos
-    const organization = await OrganizationService.createOrganization({
-      name: data.organizationName,
-      slug,
-      phone: data.phone,
-      industry: data.industrySlug,
-      businessDescription: data.businessDescription,
-      assistantName: data.assistantName,
-      assistantGender: data.assistantGender,
-      assistantKindnessLevel: data.assistantKindnessLevel,
-      assistantFriendlinessLevel: data.assistantFriendlinessLevel,
+    // Envolver todas las queries en transacción atómica
+    const result = await db.transaction(async (tx) => {
+      // 1. Actualizar perfil del usuario
+      await tx
+        .update(users)
+        .set({ fullName: data.fullName })
+        .where(eq(users.id, userId));
+
+      // 2. Crear organización
+      const [organization] = await tx
+        .insert(organizations)
+        .values({
+          name: data.organizationName,
+          slug,
+          phone: data.phone,
+          industry: data.industrySlug,
+          businessDescription: data.businessDescription,
+          assistantName: data.assistantName,
+          assistantGender: data.assistantGender,
+          assistantKindnessLevel: data.assistantKindnessLevel,
+          assistantFriendlinessLevel: data.assistantFriendlinessLevel,
+          subscriptionTier: 'free',
+          subscriptionStatus: 'active',
+        })
+        .returning();
+
+      // 3. Añadir usuario como owner
+      await tx
+        .insert(organizationMembers)
+        .values({
+          userId,
+          organizationId: organization.id,
+          role: 'owner',
+        });
+
+      // 4. Marcar onboarding completado
+      await tx
+        .update(users)
+        .set({ onboardingCompleted: true })
+        .where(eq(users.id, userId));
+
+      return { organization };
     });
 
-    // 4. Añadir usuario como owner
-    await OrganizationService.addUserToOrganization(
-      userId,
-      organization.id,
-      'owner',
-    );
-
-    // 5. Marcar onboarding completado
-    await db
-      .update(users)
-      .set({ onboardingCompleted: true })
-      .where(eq(users.id, userId));
-
-    // 6. Generar datos demo según industria
+    // 5. Generar datos demo FUERA de transacción (no es crítico)
     const demoData = await DemoDataService.generateForIndustry(
-      organization.id,
+      result.organization.id,
       data.industrySlug,
     );
 
-    return { organization, demoData };
+    return { organization: result.organization, demoData };
   }
 
   /**

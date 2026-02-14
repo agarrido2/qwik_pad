@@ -172,18 +172,9 @@ export async function verifyAndTriggerDemo(
       return { success: false, error: 'INVALID_CODE' };
     }
 
-    // 3. Actualizar status a 'verified'
-    await db
-      .update(usersDemo)
-      .set({
-        status: 'verified',
-        verifiedAt: new Date(),
-      })
-      .where(eq(usersDemo.id, demoRecord.id));
-
     console.log(`[Demo] ✅ Código verificado para ${email}`);
 
-    // 4. Disparar llamada a Retell
+    // 3. Disparar llamada a Retell ANTES de actualizar DB
     const agentId = SECTOR_AGENTS[demoRecord.industry as SectorType];
 
     let callResponse;
@@ -203,12 +194,15 @@ export async function verifyAndTriggerDemo(
       return { success: false, error: 'RETELL_ERROR' };
     }
 
-    // 5. Actualizar con call_id real de Retell (reemplaza el código temporal)
+    // 4. Actualizar DB con verificación + call_id en 1 query optimizada
+    // OPTIMIZACIÓN: 2 UPDATEs consecutivos fusionados → 1 UPDATE
+    // Referencia: docs/standards/DB_QUERY_OPTIMIZATION.md § 2.2
     await db
       .update(usersDemo)
       .set({
-        retellCallId: callResponse.call_id, // Sobrescribe el código temporal
         status: 'call_triggered',
+        verifiedAt: new Date(),
+        retellCallId: callResponse.call_id,
       })
       .where(eq(usersDemo.id, demoRecord.id));
 
