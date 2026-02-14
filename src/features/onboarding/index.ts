@@ -1,19 +1,19 @@
 /**
- * Onboarding Feature - Barrel Export
- * @description Templates, constantes, schemas y servicios para onboarding
+ * Onboarding Feature - Internal Barrel Export
+ * @description Exporta solo constantes internas de la feature
+ * 
+ * ⚠️ IMPORTANTE ARQUITECTURA:
+ * - Este archivo NO es un facade público
+ * - Solo organiza exports internos de features/onboarding/
+ * - routes/ NO debe importar desde aquí
+ * - routes/ debe importar desde lib/onboarding/ (facade oficial)
  */
 
-// Constantes (industries, phone-options)
-export * from './constants';
+// ═══════════════════════════════════════════════════════════════════
+// 📚 CONSTANTES (Uso interno de la feature)
+// ═══════════════════════════════════════════════════════════════════
 
-// Schemas de validación
-export { onboardingSchema, type OnboardingFormData } from './schemas/onboarding.schemas';
-
-// Servicios de negocio
-export { saveOnboardingProfile } from './services/onboarding.services';
-
-// SECTORS export
-export { SECTORS } from './schemas/onboarding.schemas';
-
-// GENDERS export
-export { GENDERS } from './schemas/onboarding.schemas';
+export {
+  SECTOR_OPTIONS,
+  TRANSFER_POLICY_DEFAULTS,
+} from './constants/sectors';

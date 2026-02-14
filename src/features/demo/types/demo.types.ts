@@ -36,7 +36,8 @@ export interface VerifyCodeResult {
  * Códigos de error del servicio de demo
  */
 export type DemoServiceError =
-  | 'RATE_LIMIT_EXCEEDED'  // Demasiadas llamadas desde esta IP/teléfono
+  | 'RATE_LIMIT_EXCEEDED'  // Demasiadas llamadas desde este teléfono
+  | 'IP_BLOCKED'           // IP bloqueada por exceder límite de intentos
   | 'DB_ERROR'             // Error de base de datos
   | 'EMAIL_ERROR'          // Error al enviar email
   | 'EMAIL_SEND_FAILED'    // Fallo específico al enviar email de verificación

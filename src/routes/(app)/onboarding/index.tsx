@@ -22,33 +22,14 @@
  */
 
 import { component$, useSignal, useStore, useTask$, $ } from '@builder.io/qwik';
-import { Form, routeAction$, routeLoader$, zod$, type DocumentHead, type RequestHandler } from '@builder.io/qwik-city';
-import { OnboardingCompleteSchema } from '~/lib/schemas/onboarding.schemas';
-import { OnboardingService } from '~/lib/services/onboarding.service';
+import { Form, routeAction$, routeLoader$, zod$, type DocumentHead } from '@builder.io/qwik-city';
+import { OnboardingCompleteSchema, OnboardingService } from '~/lib/onboarding';
 import { getAuthGuardData } from '~/lib/auth/auth-guard';
 import type { IndustrySlug } from '~/lib/utils/demo-data-templates';
 
 // ═══════════════════════════════════════════════════════════════════
-// MIDDLEWARE: Verificar que NO haya completado onboarding
-// ═══════════════════════════════════════════════════════════════════
-
-export const onRequest: RequestHandler = async (requestEvent) => {
-  const { redirect } = requestEvent;
-
-  const data = await getAuthGuardData(requestEvent);
-
-  if (!data) {
-    throw redirect(302, '/login');
-  }
-
-  // Si ya completó el onboarding, redirigir al dashboard
-  if (data.dbUser.onboardingCompleted) {
-    throw redirect(302, '/dashboard');
-  }
-};
-
-// ═══════════════════════════════════════════════════════════════════
 // ROUTE LOADER: Exponer usuario a componentes
+// NOTA: El auth guard está en layout.tsx (no es necesario duplicarlo aquí)
 // ═══════════════════════════════════════════════════════════════════
 
 export const useOnboardingUser = routeLoader$(async (requestEvent) => {

@@ -1,14 +1,14 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import type { RequestEventLoader, RequestEventAction } from '@builder.io/qwik-city';
+import type { RequestEventCommon } from '@builder.io/qwik-city';
 import { ENV } from '../env.server';
-
-type RequestEvent = RequestEventLoader | RequestEventAction;
 
 /**
  * Creates a Supabase client for server-side operations (SSR)
  * Usa getAll/setAll (v0.5+) para manejo robusto de cookies multi-chunk
+ * 
+ * @param requestEvent - Acepta cualquier tipo de RequestEvent (loader, action, middleware)
  */
-export function createServerSupabaseClient(requestEvent: RequestEvent) {
+export function createServerSupabaseClient(requestEvent: RequestEventCommon) {
   return createServerClient(
     ENV.PUBLIC_SUPABASE_URL,
     ENV.PUBLIC_SUPABASE_ANON_KEY,

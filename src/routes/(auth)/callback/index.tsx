@@ -33,6 +33,7 @@
 import { component$ } from '@builder.io/qwik';
 import { type RequestHandler, type DocumentHead } from '@builder.io/qwik-city';
 import { createServerSupabaseClient } from '~/lib/supabase/client.server';
+import { AuthService } from '~/lib/services/auth.service';
 
 /**
  * Middleware que procesa el código OAuth y establece la sesión
@@ -108,67 +109,20 @@ export const onGet: RequestHandler = async (requestEvent) => {
       console.log('[OAuth] Session verified, redirecting to:', next);
     }
 
-    // ✅ CRÍTICO: Verificar que el trigger creó el usuario en public.users
-    // Evita race condition donde el dashboard intenta leer un usuario que aún no existe
-    let retryCount = 0;
-    const maxRetries = 3;
-    let publicUserFound = false;
+    // ✅ ORQUESTACIÓN: Delegar verificación y creación de usuario al servicio
+    // Esta lógica de negocio ahora vive en AuthService (Patrón Orchestrator)
+    const userResult = await AuthService.ensureUserExistsAfterOAuth(
+      requestEvent,
+      data.user.id,
+      data.user.email,
+      data.user.user_metadata || {}
+    );
 
-    while (retryCount < maxRetries && !publicUserFound) {
-      // Esperar 500ms para dar tiempo al trigger (aumenta con cada retry)
-      if (retryCount > 0) {
-        await new Promise(resolve => setTimeout(resolve, 500 * retryCount));
-      }
-
-      const { data: publicUser, error: publicUserError } = await supabase
-        .from('users')
-        .select('id, email, role, subscription_tier, onboarding_completed')
-        .eq('id', data.user.id)
-        .single();
-
-      if (!publicUserError && publicUser) {
-        publicUserFound = true;
-        if (import.meta.env.DEV) {
-          console.log('[OAuth] ✅ User verified in public.users:', publicUser.email);
-        }
-        break;
-      }
-
-      retryCount++;
-      if (import.meta.env.DEV) {
-        console.log(`[OAuth] User not found in public.users, retry ${retryCount}/${maxRetries}`);
-      }
-    }
-
-    // Si después de 3 intentos no existe, crear manualmente (fallback del trigger)
-    if (!publicUserFound) {
-      console.error('[OAuth] CRITICAL: Trigger failed after', maxRetries, 'retries. Creating user manually.');
-      
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert({
-          id: data.user.id,
-          email: data.user.email,
-          full_name: (data.user.user_metadata?.full_name ||
-                     data.user.user_metadata?.name ||
-                     data.user.email?.split('@')[0]) ?? 'user',
-          role: 'invited',
-          subscription_tier: 'free',
-          is_active: true,
-          onboarding_completed: false,
-          timezone: 'Europe/Madrid',
-          locale: 'es',
-        });
-
-      if (insertError) {
-        console.error('[OAuth] CRITICAL: Manual user creation failed:', insertError);
-        throw redirect(
-          302,
-          `/login?error=${encodeURIComponent('Error crítico en registro. Por favor contacta soporte.')}`
-        );
-      }
-
-      console.log('[OAuth] ✅ User created manually (trigger fallback successful)');
+    if (!userResult.success) {
+      throw redirect(
+        302,
+        `/login?error=${encodeURIComponent(userResult.error)}`
+      );
     }
 
   } catch (err) {

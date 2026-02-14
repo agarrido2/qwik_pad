@@ -1,11 +1,16 @@
 /**
  * Demo Service
  * @description Lógica de negocio para la feature de demo pública
+ * 
+ * ANTI-ABUSE:
+ * - Límite de 200 llamadas por teléfono al mes (modo prueba)
+ * - Límite de 200 intentos por IP al mes (anti-bots)
+ * - Tracking de IP en tabla ip_trials
  */
 
 import { usersDemo } from '~/lib/db/client';
 import { getDb } from '~/lib/db/client.server';
-import { eq, and, gte, count, desc } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { triggerDemoCall } from '~/lib/retell';
 import { SECTOR_AGENTS, type SectorType } from '../data/agents';
 import type { DemoRequestInput, DemoServiceResult, VerifyCodeResult } from '../types/demo.types';
@@ -17,36 +22,13 @@ import {
 } from './verification.service';
 
 /**
- * Límite máximo de llamadas por teléfono en un mes
- * TODO: Volver a poner a 2 después de las pruebas
+ * NOTA: Las funciones checkRateLimit, checkIpRateLimit e incrementIpTrialCount
+ * han sido ELIMINADAS. La validación ahora se hace en PostgreSQL mediante:
+ * - FUNCTION: validate_demo_rate_limits()
+ * - TRIGGER: validate_demo_before_insert (BEFORE INSERT ON users_demo)
+ * 
+ * Ver: drizzle/manual/validate_demo_rate_limits.sql
  */
-const MAX_CALLS_PER_MONTH = 200;
-
-/**
- * Verifica si un teléfono ha excedido el límite de llamadas en el último mes
- * @param db - Cliente de base de datos
- * @param phone - Número de teléfono a verificar
- * @returns true si está bloqueado, false si puede hacer más llamadas
- */
-export async function checkRateLimit(
-  db: ReturnType<typeof getDb>,
-  phone: string
-): Promise<boolean> {
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
-  const result = await db
-    .select({ count: count() })
-    .from(usersDemo)
-    .where(
-      and(
-        eq(usersDemo.phone, phone),
-        gte(usersDemo.createdAt, oneMonthAgo)
-      )
-    );
-
-  return (result[0]?.count ?? 0) >= MAX_CALLS_PER_MONTH;
-}
 
 /**
  * Solicita verificación de demo (Paso 1: Envía código por email)
@@ -54,6 +36,9 @@ export async function checkRateLimit(
  * @param data - Datos del formulario
  * @param ipAddress - IP del cliente
  * @returns Resultado con mensaje de éxito o error
+ * 
+ * NOTA: La validación de rate limits se hace en PostgreSQL vía trigger
+ * validate_demo_before_insert que ejecuta validate_demo_rate_limits()
  */
 export async function requestDemoVerification(
   requestEvent: RequestEventBase,
@@ -63,18 +48,11 @@ export async function requestDemoVerification(
   const db = getDb(requestEvent);
 
   try {
-    // 1. Verificar rate limit
-    const isBlocked = await checkRateLimit(db, data.phone);
-    if (isBlocked) {
-      return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
-    }
-
-    // 2. Generar código de verificación
+    // 1. Generar código de verificación
     const verificationCode = generateVerificationCode();
 
-    // 3. Crear registro con status 'pending_verification'
-    // NOTA: Guardamos el código de verificación en retellCallId temporalmente
-    // Se sobrescribirá con el call_id real de Retell tras verificar
+    // 2. Intentar INSERT (el trigger de PostgreSQL valida automáticamente)
+    // Si falla, lanzará excepción con código RATE_LIMIT_EXCEEDED o IP_BLOCKED
     const [demoRecord] = await db
       .insert(usersDemo)
       .values({
@@ -84,16 +62,16 @@ export async function requestDemoVerification(
         industry: data.industry,
         ipAddress,
         status: 'pending_verification',
-        verificationType: 'email_otp', // Método de verificación actual
-        resourceOrigin: data.resourceOrigin || null, // UTM source
-        utmCampaign: data.utmCampaign || null,       // UTM campaign
-        utmMedium: data.utmMedium || null,           // UTM medium
+        verificationType: 'email_otp',
+        resourceOrigin: data.resourceOrigin || null,
+        utmCampaign: data.utmCampaign || null,
+        utmMedium: data.utmMedium || null,
         retellCallId: verificationCode, // Temporal: Se reemplazará tras verificación
-        satisfaction: 0, // Default: Se actualizará post-llamada
+        satisfaction: 0,
       })
       .returning();
 
-    // 4. Enviar email de verificación
+    // 3. Enviar email de verificación
     const emailResult = await sendVerificationEmail(
       requestEvent,
       data.email,
@@ -123,20 +101,23 @@ export async function requestDemoVerification(
   } catch (error) {
     console.error('[Demo] Error in requestDemoVerification:', error);
     
-    // Proporcionar más contexto sobre el tipo de error
     if (error instanceof Error) {
-      console.error('[Demo] Error details:', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack?.split('\n').slice(0, 3).join('\n')
-      });
+      // Capturar errores específicos del trigger de PostgreSQL
+      if (error.message.includes('RATE_LIMIT_EXCEEDED')) {
+        console.log(`[Demo] ⚠️ Rate limit excedido para: ${data.phone}`);
+        return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
+      }
       
-      // Detectar errores específicos de Supabase/PostgreSQL
+      if (error.message.includes('IP_BLOCKED')) {
+        console.log(`[Demo] ⚠️ IP bloqueada: ${ipAddress}`);
+        return { success: false, error: 'IP_BLOCKED' };
+      }
+
+      // Otros errores de conexión
       if (error.message.includes('Tenant or user not found')) {
         console.error(
           '[Demo] 🚨 DATABASE CONNECTION ERROR: '
-          + 'Invalid DATABASE_URL credentials or Supabase project not found. '
-          + 'Verify your .env file and Supabase project settings.'
+          + 'Invalid DATABASE_URL credentials or Supabase project not found.'
         );
       }
     }
@@ -253,8 +234,9 @@ export async function verifyAndTriggerDemo(
  * @param ipAddress - IP del cliente para auditoría
  * @returns Resultado de la operación
  * 
- * NOTA: Esta función mantiene el flujo original sin verificación
+ * NOTA: Esta función mantiene el flujo original sin verificación por email
  * Para el nuevo flujo con verificación, usar requestDemoVerification + verifyAndTriggerDemo
+ * La validación de rate limits se hace automáticamente en PostgreSQL via trigger
  */
 export async function processDemoRequest(
   requestEvent: RequestEventBase,
@@ -264,13 +246,7 @@ export async function processDemoRequest(
   const db = getDb(requestEvent);
 
   try {
-    // 1. Verificar rate limit
-    const isBlocked = await checkRateLimit(db, data.phone);
-    if (isBlocked) {
-      return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
-    }
-
-    // 2. Crear registro inicial en la base de datos
+    // 1. Crear registro inicial (el trigger de PostgreSQL valida automáticamente)
     const [demoRecord] = await db
       .insert(usersDemo)
       .values({
@@ -279,10 +255,13 @@ export async function processDemoRequest(
         phone: data.phone,
         industry: data.industry,
         ipAddress,
+        status: 'pending_verification',
+        verificationType: 'none', // Sin verificación en este flujo
+        satisfaction: 0,
       })
       .returning();
 
-    // 3. Disparar llamada a Retell
+    // 2. Disparar llamada a Retell
     const agentId = SECTOR_AGENTS[data.industry as SectorType];
     
     let callResponse;
@@ -293,21 +272,38 @@ export async function processDemoRequest(
       // Actualizar registro con error
       await db
         .update(usersDemo)
-        .set({ retellCallId: 'ERROR' })
+        .set({ retellCallId: 'ERROR', status: 'call_failed' })
         .where(eq(usersDemo.id, demoRecord.id));
       
       return { success: false, error: 'RETELL_ERROR' };
     }
 
-    // 4. Actualizar registro con el call_id de Retell
+    // 3. Actualizar registro con el call_id de Retell
     await db
       .update(usersDemo)
-      .set({ retellCallId: callResponse.call_id })
+      .set({ 
+        retellCallId: callResponse.call_id,
+        status: 'call_triggered'
+      })
       .where(eq(usersDemo.id, demoRecord.id));
 
     return { success: true, callId: callResponse.call_id };
   } catch (error) {
     console.error('Error in processDemoRequest:', error);
+    
+    if (error instanceof Error) {
+      // Capturar errores específicos del trigger de PostgreSQL
+      if (error.message.includes('RATE_LIMIT_EXCEEDED')) {
+        console.log(`[Demo] ⚠️ Rate limit excedido para: ${data.phone}`);
+        return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
+      }
+      
+      if (error.message.includes('IP_BLOCKED')) {
+        console.log(`[Demo] ⚠️ IP bloqueada: ${ipAddress}`);
+        return { success: false, error: 'IP_BLOCKED' };
+      }
+    }
+    
     return { success: false, error: 'DB_ERROR' };
   }
 }
