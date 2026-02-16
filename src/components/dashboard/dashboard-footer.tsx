@@ -2,7 +2,7 @@
  * Dashboard Footer - Barra inferior del dashboard
  * 
  * Estructura: fixed bottom-0 left-0 right-0 h-12
- * - Zona izquierda (w-64): Toast messages (alineado con sidebar)
+ * - Zona izquierda (w-72): Toast messages (alineado con sidebar)
  * - Zona derecha (flex-1): Fecha + Soporte IT + Versión
  * 
  * Pattern: El toast se renderiza en la parte izquierda, alineado con el sidebar.
@@ -33,7 +33,7 @@ export const DashboardFooter = component$(() => {
   return (
     <footer class="fixed bottom-0 left-0 right-0 h-12 bg-white border-t border-neutral-200 flex items-center z-10">
       {/* ZONA IZQUIERDA: Toast messages (placeholder) */}
-      <div class="w-64 px-4 border-r border-neutral-200 flex items-center">
+      <div class="w-72 px-4 border-r border-neutral-200 flex items-center">
         <span class="text-xs text-neutral-400">Sistema listo</span>
       </div>
 

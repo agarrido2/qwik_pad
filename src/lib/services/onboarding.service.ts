@@ -83,10 +83,13 @@ export class OnboardingService {
         });
 
       // 4. Marcar onboarding completado
-      await tx
-        .update(users)
-        .set({ onboardingCompleted: true })
-        .where(eq(users.id, userId));
+    await tx
+      .update(users)
+      .set({ 
+        onboardingCompleted: true,
+        role: 'active'  // ← Cambiar de 'invited' a 'active'
+      })
+    .where(eq(users.id, userId));
 
       return { organization };
     });

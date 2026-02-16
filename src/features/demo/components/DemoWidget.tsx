@@ -12,7 +12,7 @@
  * - 'success': Modal de éxito (después de Step 2 success)
  */
 
-import { component$, useSignal, useTask$, useVisibleTask$, $ } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, $ } from '@builder.io/qwik';
 import { Form } from '@builder.io/qwik-city';
 import { SECTOR_LABELS } from '../data/agents';
 import { VerificationModal } from './VerificationModal';
@@ -81,25 +81,30 @@ export const DemoWidget = component$<DemoWidgetProps>(
      * PATRÓN: useTask$ para lógica reactiva (resumable, sin hidratación)
      */
     useTask$(({ track }) => {
-      const value = track(() => requestAction.value);
+      const value = track(() => requestAction.value as unknown);
 
-      if (value?.success && value.email) {
+      if (
+        value &&
+        !(typeof value === 'object' && value !== null && 'failed' in value && (value as { failed?: boolean }).failed === true) &&
+        typeof (value as { email?: unknown }).email === 'string'
+      ) {
         console.log('[DemoWidget] Step 1 success, mostrando modal de verificación');
-        userEmail.value = value.email;
+        userEmail.value = (value as { email: string }).email;
         flowState.value = 'verification';
       }
     });
 
     /**
      * Detectar éxito en Step 2 (código verificado + llamada disparada) → Mostrar modal de éxito
-     * PATRÓN: useVisibleTask$ porque usa setInterval (browser API)
-     * SEGURIDAD: cleanup function previene memory leaks
+     * PATRÓN: useTask$ reactivo con cleanup para evitar leaks del timer
      */
-    // eslint-disable-next-line qwik/no-use-visible-task
-    useVisibleTask$(({ track, cleanup }) => {
-      const value = track(() => verifyAction.value);
+    useTask$(({ track, cleanup }) => {
+      const value = track(() => verifyAction.value as unknown);
 
-      if (value?.success) {
+      if (
+        value &&
+        !(typeof value === 'object' && value !== null && 'failed' in value && (value as { failed?: boolean }).failed === true)
+      ) {
         console.log('[DemoWidget] Step 2 success, mostrando modal de éxito');
         flowState.value = 'success';
         successCountdown.value = 5;
@@ -270,7 +275,10 @@ export const DemoWidget = component$<DemoWidgetProps>(
 
           {/* Error general */}
           {requestAction.value &&
-            !requestAction.value.success &&
+            typeof requestAction.value === 'object' &&
+            requestAction.value !== null &&
+            'failed' in requestAction.value &&
+            requestAction.value.failed === true &&
             requestAction.value.message && (
               <div
                 role="alert"

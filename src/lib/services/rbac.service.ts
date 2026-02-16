@@ -13,17 +13,18 @@ import { db } from '../db/client';
 import { organizationMembers, users, organizations } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
 import {
-  hasPermission,
   canAccessBilling,
   canCreateAdmin,
   canCreateMember,
   canWrite,
   isActionDisabled,
-  canAccessRoute as guardCanAccessRoute,
   canTransferOwnership as guardCanTransferOwnership,
   getAssignableRoles,
+  isOwner,
+  isAdminOrAbove,
   type MemberRole,
 } from '../auth/guards';
+import { canAccessRoute as configCanAccessRoute } from '../config/menu.config';
 
 // ============================================================================
 // ROLE FETCHING
@@ -74,6 +75,7 @@ export async function getUserOrganizationsWithRoles(userId: string) {
       organizationSlug: organizations.slug,
       role: organizationMembers.role,
       subscriptionTier: organizations.subscriptionTier,
+      industry: organizations.industry,
     })
     .from(organizationMembers)
     .innerJoin(
@@ -88,6 +90,7 @@ export async function getUserOrganizationsWithRoles(userId: string) {
     slug: row.organizationSlug,
     role: row.role as MemberRole,
     subscriptionTier: row.subscriptionTier,
+    industry: row.industry,
   }));
 }
 
@@ -149,7 +152,12 @@ export async function userHasPermission(
   const role = await getUserRole(userId, organizationId);
   if (!role) return false;
 
-  return hasPermission(role, permission);
+  // Owner tiene todos los permisos
+  if (isOwner(role)) return true;
+  // Admin tiene todo excepto billing
+  if (isAdminOrAbove(role)) return !permission.includes('billing');
+  // Member: solo lectura
+  return !permission.includes(':write') && !permission.includes(':create') && !permission.includes(':delete');
 }
 
 /**
@@ -189,7 +197,7 @@ export async function userCanAccessRoute(
   const role = await getUserRole(userId, organizationId);
   if (!role) return false;
 
-  return guardCanAccessRoute(role, route);
+  return configCanAccessRoute(role, route);
 }
 
 /**

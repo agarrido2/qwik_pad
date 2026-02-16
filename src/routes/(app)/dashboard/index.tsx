@@ -7,9 +7,10 @@ import { component$, useContext } from '@builder.io/qwik';
 import { type DocumentHead } from '@builder.io/qwik-city';
 import { Card, CardContent, CardHeader, CardTitle, Alert, Button } from '~/components/ui';
 import { MetricCard, RecentCallsTable, type CallRecord } from '~/components/dashboard';
-import { OrganizationContext } from '~/lib/context/organization.context';
+import { AuthContext } from '~/lib/context/auth.context';
 import { useAppGuard } from '../layout';
-import { usePermissions } from '~/lib/auth/use-permissions';
+import { isAdminOrAbove } from '~/lib/auth/guards';
+import { cn } from '~/lib/utils/cn';
 
 /**
  * Datos dummy de llamadas recientes
@@ -60,8 +61,7 @@ const DEMO_CALLS: CallRecord[] = [
 
 export default component$(() => {
   const appData = useAppGuard();
-  const orgCtx = useContext(OrganizationContext);
-  const permissions = usePermissions(); // ★ useComputed$ (0 server queries)
+  const auth = useContext(AuthContext);
 
   return (
     <div class="space-y-6">
@@ -69,19 +69,17 @@ export default component$(() => {
       <div>
         <h1 class="text-2xl font-bold text-neutral-900">
           Hola, {appData.value.user.fullName || 'usuario'} 👋
+          <span class={cn(
+            'ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium align-middle',
+            auth.organization.roleBadgeColor,
+          )}>
+            {auth.organization.roleLabel}
+          </span>
         </h1>
-        <p class="mt-1 text-sm text-neutral-600">
-          Workspace: <strong>{orgCtx.active.name}</strong>
-          {orgCtx.isMultiOrg && (
-            <span class="ml-2 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700">
-              Multi-org
-            </span>
-          )}
-        </p>
       </div>
 
       {/* Banner modo demo */}
-      {orgCtx.isPreviewMode && (
+      {auth.isPreviewMode && (
         <Alert variant="info" title="Modo Demo">
           Estás usando el plan Free con datos de demostración.
           <a href="/dashboard/settings" class="ml-1 font-semibold underline">
@@ -93,7 +91,7 @@ export default component$(() => {
 
       {/* Métricas rápidas - Grid responsive (2 cols móvil, 4 desktop) */}
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {orgCtx.isPreviewMode ? (
+        {auth.isPreviewMode ? (
           <>
             <MetricCard
               title="Llamadas hoy"
@@ -165,8 +163,8 @@ export default component$(() => {
             <Button
               size="sm"
               variant="outline"
-              disabled={permissions.value.permissions.isActionDisabled.create}
-              aria-label={permissions.value.permissions.isActionDisabled.create ? 'Solo owners y admins pueden crear agentes' : 'Crear nuevo agente'}
+              disabled={!isAdminOrAbove(auth.organization.role)}
+              aria-label={!isAdminOrAbove(auth.organization.role) ? 'Solo owners y admins pueden crear agentes' : 'Crear nuevo agente'}
             >
               <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -177,7 +175,7 @@ export default component$(() => {
         </CardHeader>
         <CardContent>
           <RecentCallsTable
-            calls={orgCtx.isPreviewMode ? DEMO_CALLS : []}
+            calls={auth.isPreviewMode ? DEMO_CALLS : []}
             emptyMessage="No hay llamadas registradas. Conecta tu número para empezar."
           />
         </CardContent>

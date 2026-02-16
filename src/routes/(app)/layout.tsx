@@ -1,15 +1,19 @@
 /**
- * App Layout - Auth guard + Organization context provider
+ * App Layout - Auth guard + AuthContext provider
  * Protege todas las rutas (app) excepto onboarding (que tiene su propio guard)
+ *
+ * Provee AuthContext (user + org + role) para toda la app.
+ * El middleware RBAC en dashboard/layout.tsx protege rutas vía menu.config.
+ *
+ * Refactored: 2026-02-15 - AuthContext reemplaza OrganizationContext
  */
 
-import { component$, Slot, useContextProvider, useStore } from '@builder.io/qwik';
+import { component$, Slot, useContextProvider, useStore, useTask$ } from '@builder.io/qwik';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { getAuthGuardData } from '~/lib/auth/auth-guard';
-import {
-  OrganizationContext,
-  type OrganizationContextValue,
-} from '~/lib/context/organization.context';
+import { resolveActiveOrg } from '~/lib/auth/active-org';
+import { getRoleLabel, getRoleBadgeColor } from '~/lib/auth/guards';
+import { AuthContext, type AuthContextValue } from '~/lib/context/auth.context';
 
 /**
  * Auth guard global para rutas (app).
@@ -27,8 +31,10 @@ export const useAppGuard = routeLoader$(async (requestEvent) => {
   // Si no completó onboarding y NO está en /onboarding, redirigir
   const pathname = requestEvent.pathname;
   if (!data.dbUser.onboardingCompleted && !pathname.startsWith('/onboarding')) {
-    throw requestEvent.redirect(302, '/onboarding/step-1');
+    throw requestEvent.redirect(302, '/onboarding');
   }
+
+  const activeOrg = resolveActiveOrg(requestEvent, data.organizations);
 
   return {
     user: {
@@ -38,34 +44,78 @@ export const useAppGuard = routeLoader$(async (requestEvent) => {
       onboardingCompleted: data.dbUser.onboardingCompleted,
     },
     organizations: data.organizations,
+    activeOrganizationId: activeOrg.id,
   };
 });
 
 export default component$(() => {
   const appData = useAppGuard();
 
-  // Crear store reactivo para el contexto de organización
-  const orgContext = useStore<OrganizationContextValue>(() => {
+  // Crear store reactivo para AuthContext
+  const authContext = useStore<AuthContextValue>(() => {
     const orgs = appData.value.organizations;
-    const active = orgs[0] ?? {
+    const activeOrg = orgs.find((org) => org.id === appData.value.activeOrganizationId) ?? orgs[0] ?? {
       id: '',
       name: '',
       slug: '',
       subscriptionTier: 'free',
       industry: null,
-      role: 'owner',
+      role: 'owner' as const,
     };
 
+    // Pre-computar labels de rol para cada org
+    const enrichOrg = (org: (typeof orgs)[0]) => ({
+      ...org,
+      roleLabel: getRoleLabel(org.role),
+      roleBadgeColor: getRoleBadgeColor(org.role),
+    });
+
     return {
-      active,
-      all: orgs,
+      user: {
+        id: appData.value.user.id,
+        email: appData.value.user.email,
+        fullName: appData.value.user.fullName || null,
+      },
+      organization: enrichOrg(activeOrg),
+      allOrganizations: orgs.map(enrichOrg),
       isMultiOrg: orgs.length > 1,
-      isPreviewMode: active.subscriptionTier === 'free',
+      isPreviewMode: activeOrg.subscriptionTier === 'free',
     };
   });
 
-  // Inyectar contexto para que cualquier componente hijo lo consuma
-  useContextProvider(OrganizationContext, orgContext);
+  // ★ Re-sync store cuando el routeLoader re-ejecuta (navegación SPA tras org switch).
+  // useStore initializer solo corre una vez; este task mantiene el store actualizado.
+  useTask$(({ track }) => {
+    const data = track(() => appData.value);
+    const orgs = data.organizations;
+    const newActiveOrg = orgs.find((org) => org.id === data.activeOrganizationId) ?? orgs[0] ?? {
+      id: '',
+      name: '',
+      slug: '',
+      subscriptionTier: 'free',
+      industry: null,
+      role: 'owner' as const,
+    };
+
+    const enrichOrg = (org: (typeof orgs)[0]) => ({
+      ...org,
+      roleLabel: getRoleLabel(org.role),
+      roleBadgeColor: getRoleBadgeColor(org.role),
+    });
+
+    authContext.user = {
+      id: data.user.id,
+      email: data.user.email,
+      fullName: data.user.fullName || null,
+    };
+    authContext.organization = enrichOrg(newActiveOrg);
+    authContext.allOrganizations = orgs.map(enrichOrg);
+    authContext.isMultiOrg = orgs.length > 1;
+    authContext.isPreviewMode = newActiveOrg.subscriptionTier === 'free';
+  });
+
+  // Inyectar AuthContext — consumido por sidebar, header, páginas
+  useContextProvider(AuthContext, authContext);
 
   return <Slot />;
 });

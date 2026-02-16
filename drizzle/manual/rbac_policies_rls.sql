@@ -300,8 +300,8 @@ BEGIN
     ) VALUES (
       NEW.organization_id,
       NEW.user_id,
-      auth.uid(),
-      OLD.role,
+      COALESCE(auth.uid(), NEW.user_id),
+      CASE WHEN TG_OP = 'UPDATE' THEN OLD.role ELSE NULL END,
       NEW.role
     );
   END IF;

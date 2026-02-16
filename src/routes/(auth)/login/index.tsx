@@ -15,7 +15,7 @@ export const useCheckAuth = routeLoader$(async (requestEvent) => {
   const data = await getAuthGuardData(requestEvent);
   if (data) {
     if (!data.dbUser.onboardingCompleted) {
-      throw requestEvent.redirect(302, '/onboarding/step-1');
+      throw requestEvent.redirect(302, '/onboarding');
     }
     throw requestEvent.redirect(302, '/dashboard');
   }
@@ -34,7 +34,7 @@ export const useLoginAction = routeAction$(
       // Verificar onboarding
       const guardData = await getAuthGuardData(requestEvent);
       if (guardData && !guardData.dbUser.onboardingCompleted) {
-        throw requestEvent.redirect(302, '/onboarding/step-1');
+        throw requestEvent.redirect(302, '/onboarding');
       }
 
       throw requestEvent.redirect(302, '/dashboard');

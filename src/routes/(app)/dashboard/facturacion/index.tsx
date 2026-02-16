@@ -7,7 +7,7 @@
  * - Gestión de métodos de pago
  * - Historial de facturas
  * 
- * Protected: requireOwnerRole (layout.tsx)
+ * Protected: checkRouteAccess middleware (dashboard/layout.tsx) + menu.config.ts
  * 
  * Nota: Esta es una implementación básica placeholder.
  * La integración completa con Stripe se implementará en futuras iteraciones.

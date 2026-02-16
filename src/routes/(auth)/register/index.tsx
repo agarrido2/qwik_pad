@@ -15,7 +15,7 @@ export const useCheckAuth = routeLoader$(async (requestEvent) => {
   const data = await getAuthGuardData(requestEvent);
   if (data) {
     if (!data.dbUser.onboardingCompleted) {
-      throw requestEvent.redirect(302, '/onboarding/step-1');
+      throw requestEvent.redirect(302, '/onboarding');
     }
     throw requestEvent.redirect(302, '/dashboard');
   }
@@ -33,7 +33,7 @@ export const useRegisterAction = routeAction$(
       });
 
       // Tras registro exitoso, redirigir a onboarding
-      throw requestEvent.redirect(302, '/onboarding/step-1');
+      throw requestEvent.redirect(302, '/onboarding');
     } catch (err: any) {
       if (err?.status === 302) throw err;
       return requestEvent.fail(400, { message: err.message || 'Error al registrarse' });

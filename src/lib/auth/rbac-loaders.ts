@@ -15,6 +15,7 @@
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { RBACService } from '../services/rbac.service';
 import { AuthService } from '../services/auth.service';
+import { resolveActiveOrg } from './active-org';
 import {
   canWrite,
   getRoleLabel,
@@ -56,16 +57,18 @@ export const useOrganizationMembersLoader = routeLoader$(async (requestEvent) =>
   }
 
   // 2. Obtener org activa (cached via sharedMap)
-  let orgs = requestEvent.sharedMap.get('userOrgs');
+  let orgs = requestEvent.sharedMap.get('userOrgs') as
+    | Awaited<ReturnType<typeof RBACService.getUserOrganizationsWithRoles>>
+    | undefined;
   if (!orgs) {
     orgs = await RBACService.getUserOrganizationsWithRoles(authUser.id);
     requestEvent.sharedMap.set('userOrgs', orgs);
   }
   if (orgs.length === 0) {
-    throw requestEvent.redirect(302, '/onboarding/step-1');
+    throw requestEvent.redirect(302, '/onboarding');
   }
 
-  const activeOrg = orgs[0];
+  const activeOrg = resolveActiveOrg(requestEvent, orgs);
 
   // 3. Verificar permisos (solo admin/owner pueden ver lista de miembros)
   if (!canWrite(activeOrg.role)) {

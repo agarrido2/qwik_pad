@@ -5,9 +5,9 @@ import { DashboardSidebar, DashboardHeader, DashboardFooter } from '~/components
  * DashboardLayout - Shell orquestador del dashboard
  * 
  * Arquitectura de 4 componentes:
- * 1. Sidebar: fixed left-0 (w-64) - Navegación principal
- * 2. Header: fixed top-0 left-64 - Notificaciones + Profile
- * 3. Main: ml-64 mt-16 mb-12 - Contenido dinámico (Slot)
+ * 1. Sidebar: fixed left-0 (w-72) - Navegación principal
+ * 2. Header: fixed top-0 left-72 - Notificaciones + Profile
+ * 3. Main: ml-72 mt-16 mb-12 - Contenido dinámico (Slot)
  * 4. Footer: fixed bottom-0 - Toast messages + Info
  * 
  * Pattern según ARQUITECTURA_FOLDER.md:
@@ -23,11 +23,11 @@ export const DashboardLayout = component$(() => {
       {/* Sidebar - Navegación principal (fixed left) */}
       <DashboardSidebar />
 
-      {/* Header - Barra superior (fixed top, left-64 para respetar sidebar) */}
+      {/* Header - Barra superior (fixed top, left-72 para respetar sidebar) */}
       <DashboardHeader title="Dashboard" notificationCount={0} />
 
-      {/* Main content - Margen para sidebar (ml-64), header (mt-16) y footer (mb-12) */}
-      <main class="ml-64 mt-16 mb-12 p-6 min-h-[calc(100vh-7rem)]">
+      {/* Main content - Margen para sidebar (ml-72), header (mt-16) y footer (mb-12) */}
+      <main class="ml-72 mt-16 mb-12 p-6 min-h-[calc(100vh-7rem)]">
         <Slot />
       </main>
 

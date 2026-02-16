@@ -25,3 +25,5 @@ export {
 } from './card';
 export { Spinner, type SpinnerProps } from './spinner';
 export { Alert, type AlertProps } from './alert';
+export { Dropdown, DropdownItem, DropdownSeparator } from './dropdown';
+export { Avatar, type AvatarProps } from './avatar';

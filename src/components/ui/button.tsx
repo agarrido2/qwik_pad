@@ -112,6 +112,9 @@ export interface ButtonProps extends VariantProps<typeof buttonVariants> {
   
   /** Label accesible para lectores de pantalla */
   'aria-label'?: string;
+  
+  /** Tooltip que aparece al hacer hover */
+  title?: string;
 }
 
 /**
@@ -125,7 +128,7 @@ export interface ButtonProps extends VariantProps<typeof buttonVariants> {
  * - Lógica de negocio vive en services, no en este componente.
  */
 export const Button = component$<ButtonProps>(
-  ({ variant, size, class: className, disabled, type = 'button', onClick$, 'aria-label': ariaLabel, ...props }) => {
+  ({ variant, size, class: className, disabled, type = 'button', onClick$, 'aria-label': ariaLabel, title, ...props }) => {
     return (
       <button
         type={type}
@@ -133,6 +136,7 @@ export const Button = component$<ButtonProps>(
         onClick$={onClick$}
         class={cn(buttonVariants({ variant, size }), className)}
         aria-label={ariaLabel}
+        title={title}
         {...props}
       >
         <Slot />

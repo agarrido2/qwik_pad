@@ -7,17 +7,19 @@
  * - Cambiar roles (respetando jerarquía)
  * - Eliminar miembros (con protección)
  * 
- * Protected: requireAdminRole (layout.tsx)
+ * Protected: checkRouteAccess middleware (dashboard/layout.tsx) + menu.config.ts
  */
 
-import { component$, useSignal } from '@builder.io/qwik';
+import { component$, useSignal, useContext } from '@builder.io/qwik';
 import { routeAction$, zod$, z, type DocumentHead, Form } from '@builder.io/qwik-city';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, FormField, Alert } from '~/components/ui';
 import { useOrganizationMembersLoader } from '~/lib/auth/rbac-loaders';
-import { usePermissions } from '~/lib/auth/use-permissions';
+import { isAdminOrAbove, getAssignableRoles } from '~/lib/auth/guards';
+import { AuthContext } from '~/lib/context/auth.context';
 import { useAppGuard } from '../../layout';
 import { RBACService } from '~/lib/services/rbac.service';
 import { cn } from '~/lib/utils/cn';
+import { resolveActiveOrg } from '~/lib/auth/active-org';
 
 // ============================================================================
 // LOADERS
@@ -54,7 +56,7 @@ export const useInviteMemberAction = routeAction$(
       return { success: false, error: 'Sin organización' };
     }
 
-    const activeOrg = orgs[0];
+    const activeOrg = resolveActiveOrg(requestEvent, orgs);
 
     const result = await RBACService.addMember(
       authUser.id,
@@ -88,7 +90,7 @@ export const useChangeRoleAction = routeAction$(
       return { success: false, error: 'Sin organización' };
     }
 
-    const activeOrg = orgs[0];
+    const activeOrg = resolveActiveOrg(requestEvent, orgs);
 
     const result = await RBACService.changeUserRole(
       authUser.id,
@@ -122,7 +124,7 @@ export const useRemoveMemberAction = routeAction$(
       return { success: false, error: 'Sin organización' };
     }
 
-    const activeOrg = orgs[0];
+    const activeOrg = resolveActiveOrg(requestEvent, orgs);
 
     const result = await RBACService.removeMember(
       authUser.id,
@@ -143,11 +145,16 @@ export const useRemoveMemberAction = routeAction$(
 
 export default component$(() => {
   const members = useOrgMembers();
-  const permissions = usePermissions(); // ★ useComputed$ (0 server queries)
+  const auth = useContext(AuthContext);
   const appData = useAppGuard(); // userId para protección self-edit
   const inviteAction = useInviteMemberAction();
   const changeRoleAction = useChangeRoleAction();
   const removeAction = useRemoveMemberAction();
+
+  // Derived from role — simple, inline
+  const role = auth.organization.role;
+  const assignableRoles = getAssignableRoles(role);
+  const actionsDisabled = !isAdminOrAbove(role);
 
   // UI State
   const inviteFormOpen = useSignal(false);
@@ -168,7 +175,7 @@ export default component$(() => {
         {/* Botón Invitar */}
         <Button
           onClick$={() => (inviteFormOpen.value = !inviteFormOpen.value)}
-          disabled={permissions.value.permissions.isActionDisabled.create}
+          disabled={actionsDisabled}
         >
           <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -234,7 +241,7 @@ export default component$(() => {
                   required
                   aria-label="Seleccionar rol para el nuevo usuario"
                 >
-                  {permissions.value.assignableRoles.map((role) => (
+                  {assignableRoles.map((role) => (
                     <option key={role} value={role}>
                       {role === 'owner' ? 'Propietario' : role === 'admin' ? 'Administrador' : 'Miembro'}
                     </option>
@@ -299,7 +306,7 @@ export default component$(() => {
                             class="px-2 py-1 border border-neutral-300 rounded text-sm"
                             aria-label={`Cambiar rol de ${member.user.email}`}
                           >
-                            {permissions.value.assignableRoles.map((role) => (
+                            {assignableRoles.map((role) => (
                               <option key={role} value={role} selected={role === member.role}>
                                 {role === 'owner' ? 'Propietario' : role === 'admin' ? 'Administrador' : 'Miembro'}
                               </option>
@@ -334,7 +341,7 @@ export default component$(() => {
                         {editingMemberId.value !== member.user.id && (
                           <button
                             onClick$={() => (editingMemberId.value = member.user.id)}
-                            disabled={permissions.value.permissions.isActionDisabled.edit || member.user.id === appData.value.user.id}
+                          disabled={actionsDisabled || member.user.id === appData.value.user.id}
                             class="p-2 text-neutral-600 hover:bg-neutral-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-label={`Editar rol de ${member.user.email}`}
                           >
@@ -363,7 +370,7 @@ export default component$(() => {
                         ) : (
                           <button
                             onClick$={() => (confirmDeleteId.value = member.user.id)}
-                            disabled={permissions.value.permissions.isActionDisabled.delete || member.user.id === appData.value.user.id}
+                            disabled={actionsDisabled || member.user.id === appData.value.user.id}
                             class="p-2 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-label={`Eliminar a ${member.user.email}`}
                           >

@@ -30,22 +30,52 @@ export interface AuthGuardResult {
  * Verifica que el usuario esté autenticado y carga sus datos completos.
  * NO redirige: deja la decisión al caller.
  * Retorna null si no hay sesión válida.
- * 
- * OPTIMIZACIÓN: 2 queries (1 Auth + 1 DB con JOIN) en vez de 3 separadas.
+ *
+ * OPTIMIZACIÓN:
+ * - JWT cached via sharedMap (AuthService.getAuthUser)
+ * - Si el middleware ya cacheó orgs en sharedMap ('userOrgs'), solo
+ *   hace 1 query ligera (user profile por PK) en vez del JOIN completo.
+ * - Fallback al JOIN cuando no hay cache (rutas sin middleware, ej. /onboarding).
  * Referencia: docs/standards/DB_QUERY_OPTIMIZATION.md § 2.1
  */
 export async function getAuthGuardData(
   requestEvent: RequestEventLoader | RequestEventAction,
 ): Promise<AuthGuardResult | null> {
-  // Query 1: Validar JWT (Supabase Auth - no evitable)
+  // Query 1: Validar JWT (Supabase Auth - cached via sharedMap)
   const authUser = await AuthService.getAuthUser(requestEvent);
   if (!authUser) return null;
 
-  // Query 2: Cargar user + organizations en 1 solo JOIN (optimización 3→1)
+  // ★ Fast path: middleware ya cacheó orgs → solo fetch user profile (PK lookup)
+  const cachedOrgs = requestEvent.sharedMap.get('userOrgs') as
+    | AuthGuardResult['organizations']
+    | undefined;
+
+  if (cachedOrgs && cachedOrgs.length > 0) {
+    const [dbUser] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+        avatarUrl: users.avatarUrl,
+        onboardingCompleted: users.onboardingCompleted,
+      })
+      .from(users)
+      .where(eq(users.id, authUser.id))
+      .limit(1);
+
+    if (!dbUser) return null;
+
+    return {
+      authUser: { id: authUser.id, email: authUser.email! },
+      dbUser,
+      organizations: cachedOrgs,
+    };
+  }
+
+  // Slow path: sin cache (rutas sin middleware, ej. /onboarding) → JOIN completo
   const userWithOrgs = await OrganizationService.getUserWithOrganizations(authUser.id);
   if (!userWithOrgs || userWithOrgs.length === 0) return null;
 
-  // Estructurar resultado
   const dbUser = {
     id: userWithOrgs[0].userId,
     email: userWithOrgs[0].userEmail,
@@ -54,9 +84,8 @@ export async function getAuthGuardData(
     onboardingCompleted: userWithOrgs[0].onboardingCompleted,
   };
 
-  // Extraer organizations (puede haber múltiples rows por JOINs)
   const organizations = userWithOrgs
-    .filter((row) => row.orgId !== null) // Filtrar si no tiene orgs (LEFT JOIN)
+    .filter((row) => row.orgId !== null)
     .map((row) => ({
       id: row.orgId!,
       name: row.orgName!,
@@ -66,10 +95,7 @@ export async function getAuthGuardData(
       role: row.orgRole!,
     }));
 
-  // ★ Cachear orgs en sharedMap para middleware y loaders downstream.
-  // Elimina la query redundante de RBACService.getUserOrganizationsWithRoles()
-  // que middleware (requireAdminRole/requireOwnerRole) y useUserRoleLoader
-  // ejecutaban por separado con los mismos datos.
+  // Cachear para loaders downstream
   requestEvent.sharedMap.set('userOrgs', organizations);
 
   return {
