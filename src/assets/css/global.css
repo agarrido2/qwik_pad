@@ -1,17 +1,19 @@
 /**
  * Global Styles - Qwik OnuCall
  * Tailwind CSS v4 + Sistema de Diseño con Dark/Light Mode
- * 
+ *
  * ARQUITECTURA:
  * 1. Importaciones (Tailwind + Fuentes self-hosted)
  * 2. Reset CSS y Accesibilidad (WCAG 2.1 AA)
  * 3. Variables de Color HSL (Light/Dark Mode)
- * 4. Theme de Tailwind (@theme con escalas numéricas)
- * 5. Componentes Custom (solo específicos del proyecto)
- * 6. Animaciones Qwik UI
- * 
+ * 4. Theme de Tailwind (@theme - colores, fuentes, radius)
+ * 5. Componentes Custom (botones, badges, nav-links, dashboard)
+ * 6. Animaciones (fade-in para backdrop)
+ *
  * [CITE: TAILWIND_QWIK_GUIDE.md - Tailwind v4 CSS-first configuration]
  * [CITE: QUALITY_STANDARDS.md - Performance, WCAG AA, CLS < 0.1]
+ *
+ * Última limpieza: 17 Feb 2026 - Eliminadas 400+ líneas de código obsoleto
  */
 
 /* ============================================================================
@@ -21,56 +23,6 @@
 @import "tailwindcss";
 @import "./poppins.css";
 @import "./roboto.css";
-
-/* ============================================================================
-   BREAKPOINTS (Tailwind v4 - Estrategia Mobile-First)
-   ============================================================================ */
-
-/**
- * BREAKPOINTS NATIVOS DE TAILWIND V4:
- * 
- * Mobile (base)    →  < 640px  → Sin prefijo: text-base, grid-cols-1
- * sm (Small)       →  ≥ 640px  → Tablets: sm:text-lg, sm:grid-cols-2
- * md (Medium)      →  ≥ 768px  → Tablets landscape: md:text-xl, md:grid-cols-3
- * lg (Large)       →  ≥ 1024px → Laptops: lg:py-24, lg:grid-cols-4
- * xl (Extra Large) →  ≥ 1280px → Desktops: xl:max-w-7xl
- * 2xl (2X Large)   →  ≥ 1536px → Pantallas grandes: 2xl:max-w-screen-2xl
- * 
- * ESTRATEGIA MOBILE-FIRST (base → sm → md → lg):
- * ✅ Diseña primero para móvil (sin prefijo)
- * ✅ Añade estilos para pantallas más grandes con prefijos (sm:, md:, lg:)
- * ✅ Cada breakpoint sobrescribe el anterior (cascada)
- * 
- * EJEMPLOS COMUNES DEL PROYECTO:
- * 
- * 1. Grid Responsive (usado 6+ veces):
- *    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
- *      Mobile: 1 columna
- *      Tablet: 2 columnas (≥640px)
- *      Desktop: 3 columnas (≥1024px)
- * 
- * 2. Texto Escalado (usado 4+ veces):
- *    <h1 class="text-4xl md:text-6xl">
- *      Mobile: 36px
- *      Desktop: 60px (≥768px)
- * 
- * 3. Espaciado Responsive (usado 8+ veces):
- *    <section class="py-16 md:py-24 lg:py-32">
- *      Mobile: 64px padding
- *      Tablet: 96px (≥768px)
- *      Desktop: 128px (≥1024px)
- * 
- * 4. Show/Hide por tamaño:
- *    <div class="hidden md:flex">         ← Solo visible ≥768px
- *    <div class="block md:hidden">        ← Solo visible <768px
- * 
- * ⚠️ NO CREAR BREAKPOINTS CUSTOM:
- * - Las variables CSS no funcionan en @media queries
- * - Tailwind v4 ya provee breakpoints estándar de la industria
- * - El código actual usa perfectamente los breakpoints nativos
- * 
- * 📚 Referencia completa: https://tailwindcss.com/docs/responsive-design
- */
 
 /* ============================================================================
    2. RESET CSS Y ACCESIBILIDAD (WCAG 2.1 AA)
@@ -222,8 +174,8 @@
 
 @theme {
   /* ==========================================================================
-     ESCALAS NUMÉRICAS (Compatibilidad con código existente)
-     bg-primary-50, text-primary-600, border-primary-700, etc.
+     ESCALAS NUMÉRICAS PRIMARY
+     Compatible con auth, onboarding, formularios legacy
      ========================================================================== */
 
   /* Primary (Azul Onucall) */
@@ -237,18 +189,6 @@
   --color-primary-700: #1d2d5d;
   --color-primary-800: #141f42;
   --color-primary-900: #0c142b;
-
-  /* Accent (Teal) */
-  --color-accent-50: #f0fdfa;
-  --color-accent-100: #ccfbf1;
-  --color-accent-200: #99f6e4;
-  --color-accent-300: #5eead4;
-  --color-accent-400: #2dd4bf;
-  --color-accent-500: #14b8a6;
-  --color-accent-600: #0d9488;
-  --color-accent-700: #0f766e;
-  --color-accent-800: #115e59;
-  --color-accent-900: #134e4a;
 
   /* ==========================================================================
      COLORES SEMÁNTICOS (Conectar variables HSL con Tailwind)
@@ -315,76 +255,50 @@
 }
 
 /* ============================================================================
-   5. COMPONENTES CUSTOM (Solo específicos del proyecto)
+   5. COMPONENTES CUSTOM
    ============================================================================ */
-
-/**
- * ⚠️ CRITERIO PARA COMPONENT CLASSES:
- * 
- * ✅ CREAR si:
- *   - Se repite 3+ veces en el código
- *   - Tiene 5+ clases de Tailwind
- *   - Cambiar el diseño requeriría editar múltiples archivos
- * 
- * ❌ NO CREAR si:
- *   - Solo aparece 1-2 veces (usar Tailwind directo)
- *   - Tiene pocas clases (<5)
- *   - Tailwind ya lo tiene nativo (container, grid, etc.)
- * 
- * Ejemplo MALO: .flex-center { @apply flex items-center justify-center; } ← Solo 3 clases
- * Ejemplo BUENO: .btn-primary { ... 10+ clases con estados hover/focus/active }
- */
 
 @layer components {
   /* ==========================================================================
-     BOTONES (Patrón repetido 10+ veces en Header, Landing, Forms)
+     BOTONES - Acciones principales y secundarias
      ========================================================================== */
 
   /**
-   * Botón primario - Acción principal (CTA, Submit)
+   * Botón primario - CTA, Submit
    * Uso: <button class="btn-primary">Crear cuenta</button>
-   * Aparece en: Header, Hero, Contact section, Forms
    */
   .btn-primary {
     @apply inline-flex h-12 items-center justify-center rounded-lg bg-primary-600 px-8 text-base font-semibold text-white shadow-md transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   /**
-   * Botón primario tamaño pequeño (navegación, acciones secundarias)
+   * Botón primario pequeño - Navegación, acciones compactas
    * Uso: <button class="btn-primary-sm">Registrarse</button>
-   * Aparece en: Header, Dashboard nav, Cards
    */
   .btn-primary-sm {
     @apply inline-flex h-9 items-center justify-center rounded-md bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
 
   /**
-   * Botón secundario (outline) - Acciones secundarias
+   * Botón secundario - Acciones alternativas (outline)
    * Uso: <button class="btn-secondary">Ver demo</button>
-   * Aparece en: Landing, Cards, Dialogs
    */
   .btn-secondary {
     @apply inline-flex h-12 items-center justify-center rounded-lg border-2 border-neutral-300 px-8 text-base font-semibold text-neutral-700 transition-colors hover:border-primary-400 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98];
   }
 
   /**
-   * Botón fantasma (solo texto) - Acciones terciarias
+   * Botón fantasma - Acciones terciarias (solo texto)
    * Uso: <button class="btn-ghost">Cancelar</button>
-   * Aparece en: Modals, Forms, Cards
    */
   .btn-ghost {
     @apply inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2;
   }
 
   /* ==========================================================================
-     BADGES/PILLS (Patrón repetido 8+ veces en Dashboard, Cards)
+     BADGES - Estados, etiquetas, notificaciones
      ========================================================================== */
 
-  /**
-   * Badges - Estado, etiquetas, categorías
-   * Uso: <span class="badge-primary">Nuevo</span>
-   * Variantes: badge-primary, badge-success, badge-warning, badge-error
-   */
   .badge-primary {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary-100 text-primary-700;
   }
@@ -406,54 +320,93 @@
   }
 
   /* ==========================================================================
-     NAVIGATION LINKS (Patrón repetido 5+ veces en Dashboard sidebar)
+     NAVIGATION LINKS - Sidebar, menús
      ========================================================================== */
 
   /**
-   * Link de navegación base (sidebar, tabs)
-   * Uso: <a class="nav-link" [class.nav-link-active]="isActive">Dashboard</a>
-   * Aparece en: DashboardLayout sidebar
+   * Link de navegación base
+   * Uso: <a class="nav-link">Dashboard</a>
    */
   .nav-link {
     @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900;
   }
 
+  /**
+   * Estado activo del link
+   * Uso: <a class="nav-link nav-link-active">Dashboard</a>
+   */
   .nav-link-active {
     @apply bg-primary-50 text-primary-700 hover:bg-primary-100;
   }
 
   /* ==========================================================================
-     GLASSMORPHISM (Efecto específico del diseño)
+     DASHBOARD FOOTER
+     ========================================================================== */
+
+  .dashboard-footer {
+    @apply border-t border-border bg-card px-6 py-4 text-sm text-muted-foreground;
+  }
+
+  /* ==========================================================================
+     SIDEBAR COLLAPSE - Tooltips y transiciones
      ========================================================================== */
 
   /**
-   * Glassmorphism para Dashboard Header
-   * Uso: <header class="glass">...</header>
-   * Aparece en: DashboardLayout
+   * Tooltip para iconos en sidebar colapsado
+   * Uso: <span class="sidebar-tooltip">Texto</span>
+   * Requiere: padre con "group relative"
    */
-  .glass {
-    background: hsl(var(--background) / 0.8);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid hsl(var(--border) / 0.5);
+  .sidebar-tooltip {
+    @apply absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50
+           px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap
+           bg-foreground text-background
+           opacity-0 pointer-events-none
+           transition-opacity duration-200
+           group-hover:opacity-100;
+  }
+
+  /* Flecha del tooltip (CSS puro) */
+  .sidebar-tooltip::before {
+    content: '';
+    @apply absolute right-full top-1/2 -translate-y-1/2
+           border-4 border-transparent;
+    border-right-color: hsl(var(--foreground));
+  }
+
+  /**
+   * Label de item que desaparece en collapse
+   * Usado por: dashboard-sidebar.tsx
+   */
+  .sidebar-item-label {
+    @apply transition-all duration-300 overflow-hidden whitespace-nowrap;
+  }
+
+  /**
+   * Badge de notificaciones que se oculta en collapse
+   */
+  .sidebar-item-badge {
+    @apply transition-all duration-300 overflow-hidden;
+  }
+
+  /**
+   * Backdrop mobile para cerrar sidebar con click fuera
+   * Usado por: dashboard-layout.tsx
+   */
+  .sidebar-backdrop {
+    @apply fixed inset-0 z-20 bg-foreground/30 backdrop-blur-sm lg:hidden;
+    animation: fade-in 0.2s ease-out;
   }
 }
 
 /* ============================================================================
-   6. ANIMACIONES QWIK UI
+   6. ANIMACIONES
    ============================================================================ */
 
-/**
- * Keyframes y utility classes para componentes Qwik UI Headless.
- * Compatible con data-state attributes y Motion One.
- * [CITE: TAILWIND_QWIK_GUIDE.md - Parte 4, Regla 3]
- */
-
 @layer utilities {
-  /* ==========================================================================
-     KEYFRAMES
-     ========================================================================== */
-
-  /* Modales/Dialogs */
+  /**
+   * Fade-in animation para backdrop mobile
+   * Usado por: .sidebar-backdrop
+   */
   @keyframes fade-in {
     from {
       opacity: 0;
@@ -463,69 +416,7 @@
     }
   }
 
-  @keyframes scale-in {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  /* Tabs/Panels */
-  @keyframes slide-from-right {
-    from {
-      opacity: 0;
-      transform: translateX(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  /* Accordion (Qwik UI Headless) */
-  @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--qwikui-collapsible-content-height);
-    }
-  }
-
-  @keyframes accordion-up {
-    from {
-      height: var(--qwikui-collapsible-content-height);
-    }
-    to {
-      height: 0;
-    }
-  }
-
-  /* ==========================================================================
-     UTILITY CLASSES (aplicar animaciones en componentes)
-     ========================================================================== */
-
   .animate-fade-in {
     animation: fade-in 0.2s ease-out;
-  }
-
-  .animate-scale-in {
-    animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .animate-slide-in {
-    animation: slide-from-right 0.2s ease-out;
-  }
-
-  .animate-accordion-down {
-    animation: accordion-down 0.2s ease-out;
-  }
-
-  .animate-accordion-up {
-    animation: accordion-up 0.2s ease-out;
   }
 }
