@@ -86,10 +86,10 @@ export const DashboardSidebar = component$(() => {
               }
             }}
             class={cn(
-              'group relative flex w-full items-center gap-3 px-3 py-2.5 rounded-md',
+              'group relative flex w-full items-center px-3 py-2.5 rounded-md',
               'text-sm font-medium transition-colors',
               'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-              collapsed && 'justify-center px-0'
+              collapsed ? 'justify-center px-0' : 'gap-3'
             )}
             aria-expanded={collapsed ? undefined : isExpanded}
             aria-label={`${isExpanded ? 'Colapsar' : 'Expandir'} ${item.text}`}
@@ -101,8 +101,8 @@ export const DashboardSidebar = component$(() => {
 
             {/* Label (oculto en collapsed) */}
             <span class={cn(
-              'sidebar-item-label flex-1 text-left',
-              collapsed && 'w-0 opacity-0'
+              'sidebar-item-label text-left',
+              collapsed ? 'w-0 opacity-0' : 'flex-1'
             )}>
               {item.text}
             </span>
@@ -164,10 +164,10 @@ export const DashboardSidebar = component$(() => {
           href={item.href!}
           onClick$={sidebar.closeMobile}
           class={cn(
-            'group relative flex items-center gap-3 px-3 py-2.5 rounded-md',
+            'group relative flex items-center px-3 py-2.5 rounded-md',
             'text-sm font-medium transition-colors',
             isChild && 'pl-8',
-            collapsed && 'justify-center px-0',
+            collapsed ? 'justify-center px-0' : 'gap-3',
             isActive(item.href)
               ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
@@ -184,8 +184,8 @@ export const DashboardSidebar = component$(() => {
 
           {/* Label (oculto en collapsed) */}
           <span class={cn(
-            'sidebar-item-label flex-1',
-            collapsed && 'w-0 opacity-0'
+            'sidebar-item-label',
+            collapsed ? 'w-0 opacity-0' : 'flex-1'
           )}>
             {item.text}
           </span>
@@ -288,10 +288,10 @@ export const DashboardSidebar = component$(() => {
         {/* Soporte */}
         <button
           class={cn(
-            'group relative flex w-full items-center gap-3 px-3 py-2.5 rounded-md',
+            'group relative flex w-full items-center px-3 py-2.5 rounded-md',
             'text-sm font-medium text-muted-foreground',
             'hover:bg-accent hover:text-accent-foreground transition-colors',
-            sidebar.isCollapsed.value && 'justify-center px-0'
+            sidebar.isCollapsed.value ? 'justify-center px-0' : 'gap-3'
           )}
           aria-label="Contactar soporte"
         >
@@ -312,10 +312,10 @@ export const DashboardSidebar = component$(() => {
           <button
             type="submit"
             class={cn(
-              'group relative flex w-full items-center gap-3 px-3 py-2.5 rounded-md',
+              'group relative flex w-full items-center px-3 py-2.5 rounded-md',
               'text-sm font-medium text-error',
               'hover:bg-error/10 transition-colors',
-              sidebar.isCollapsed.value && 'justify-center px-0'
+              sidebar.isCollapsed.value ? 'justify-center px-0' : 'gap-3'
             )}
             aria-label="Cerrar sesión"
           >
