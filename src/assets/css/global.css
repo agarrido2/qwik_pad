@@ -23,6 +23,7 @@
 @import "tailwindcss";
 @import "./poppins.css";
 @import "./roboto.css";
+@import "./fullcalendar-theme.css";
 
 /* ============================================================================
    2. RESET CSS Y ACCESIBILIDAD (WCAG 2.1 AA)

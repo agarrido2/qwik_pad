@@ -1,0 +1,84 @@
+/**
+ * FullCalendar Theme - Integración visual con tokens HSL del dashboard.
+ *
+ * Reglas enfocadas en toolbar, grid y eventos para mantener consistencia
+ * con el sistema de diseño existente (light/dark automático).
+ */
+
+.fc {
+  color: hsl(var(--foreground));
+  font-family: Poppins, system-ui, -apple-system, sans-serif;
+}
+
+.fc .fc-toolbar {
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.fc .fc-toolbar-title {
+  color: hsl(var(--foreground));
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.fc .fc-button-primary {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: none;
+}
+
+.fc .fc-button-primary:hover {
+  background-color: hsl(var(--primary-light));
+  border-color: hsl(var(--primary-light));
+}
+
+.fc .fc-button-primary:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.35);
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: hsl(var(--secondary));
+  border-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+.fc .fc-daygrid-day.fc-day-today,
+.fc .fc-timegrid-col.fc-day-today {
+  background-color: hsl(var(--primary) / 0.08);
+}
+
+.fc .fc-scrollgrid,
+.fc .fc-theme-standard td,
+.fc .fc-theme-standard th {
+  border-color: hsl(var(--border));
+}
+
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+  color: hsl(var(--foreground));
+  text-decoration: none;
+}
+
+.fc .fc-list-day-text,
+.fc .fc-list-day-side-text {
+  color: hsl(var(--muted-foreground));
+}
+
+.fc .fc-event {
+  border: 0;
+  border-radius: 0.375rem;
+  font-family: Roboto, system-ui, sans-serif;
+  font-size: 0.8125rem;
+  padding: 0.125rem 0.25rem;
+}
+
+.fc .fc-timegrid-now-indicator-line {
+  border-color: hsl(var(--error));
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+  border-top-color: hsl(var(--error));
+  border-bottom-color: hsl(var(--error));
+}
