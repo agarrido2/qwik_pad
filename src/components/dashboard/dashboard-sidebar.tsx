@@ -80,9 +80,17 @@ export const DashboardSidebar = component$(() => {
         <div key={item.text}>
           <button
             onClick$={() => {
-              // En collapsed no expandir grupos, solo navegar al primer hijo
               if (!collapsed) {
-                expandedGroups[item.text] = !expandedGroups[item.text];
+                const opening = !expandedGroups[item.text];
+                expandedGroups[item.text] = opening;
+                if (opening) {
+                  setTimeout(() => {
+                    const first = document.querySelector<HTMLElement>(
+                      `[data-group="${item.text}"] a`
+                    );
+                    first?.focus();
+                  }, 310);
+                }
               }
             }}
             class={cn(
@@ -123,32 +131,44 @@ export const DashboardSidebar = component$(() => {
             )}
           </button>
 
-          {/* Hijos (solo visibles si expandido Y no collapsed) */}
-          {isExpanded && !collapsed && (
-            <div class="ml-4 mt-1 space-y-1" role="group">
-              {item.children!.map((child) => (
-                <Link
-                  key={child.href ?? child.text}
-                  href={child.href!}
-                  onClick$={sidebar.closeMobile}
-                  class={cn(
-                    'flex items-center gap-3 px-3 py-2.5 pl-8 rounded-md',
-                    'text-sm font-medium transition-colors',
-                    isActive(child.href)
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  )}
-                  aria-current={isActive(child.href) ? 'page' : undefined}
-                >
-                  <span class="shrink-0 text-muted-foreground/60">
-                    {renderIcon(child.icon)}
-                  </span>
-                  <span class="flex-1">{child.text}</span>
-                  {child.badge !== undefined && child.badge > 0 && (
-                    <span class="badge-error">{child.badge}</span>
-                  )}
-                </Link>
-              ))}
+          {/* Hijos — grid-template-rows para transición al tamaño real (sin bounce) */}
+          {!collapsed && (
+            <div
+              data-group={item.text}
+              role="group"
+              aria-hidden={!isExpanded}
+              class={cn(
+                'grid transition-[grid-template-rows,opacity] duration-300 ease-in-out',
+                isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+              )}
+            >
+              <div class="overflow-hidden">
+                <div class="ml-4 mt-1 space-y-1 pb-1">
+                  {item.children!.map((child) => (
+                    <Link
+                      key={child.href ?? child.text}
+                      href={child.href!}
+                      onClick$={sidebar.closeMobile}
+                      class={cn(
+                        'flex items-center gap-3 px-3 py-2.5 pl-8 rounded-md',
+                        'text-sm font-medium transition-colors',
+                        isActive(child.href)
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      )}
+                      aria-current={isActive(child.href) ? 'page' : undefined}
+                    >
+                      <span class="shrink-0 text-muted-foreground/60">
+                        {renderIcon(child.icon)}
+                      </span>
+                      <span class="flex-1">{child.text}</span>
+                      {child.badge !== undefined && child.badge > 0 && (
+                        <span class="badge-error">{child.badge}</span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
@@ -267,7 +287,7 @@ export const DashboardSidebar = component$(() => {
 
       {/* 3. MENU PRINCIPAL ───────────────────────────────────────────────── */}
       <nav class={cn(
-        'flex-1 overflow-y-auto py-4 transition-all duration-300',
+        'flex-1 overflow-y-auto overflow-x-hidden py-4 transition-all duration-300',
         sidebar.isCollapsed.value ? 'px-1' : 'px-3'
       )}
         role="navigation"
@@ -279,7 +299,7 @@ export const DashboardSidebar = component$(() => {
 
       {/* 4. FOOTER — Workspace + Soporte + Logout ───────────────────────── */}
       <div class={cn(
-        'border-t border-border space-y-1 shrink-0',
+        'border-t border-border space-y-1 overflow-x-hidden overflow-y-visible',
         'transition-all duration-300',
         sidebar.isCollapsed.value ? 'py-4 px-1' : 'py-4 px-3'
       )}>
