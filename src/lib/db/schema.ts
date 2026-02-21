@@ -186,6 +186,35 @@ export const organizationMembers = pgTable('organization_members', {
 }));
 
 // ==========================================
+// TABLA: departments (Catálogo por Organización)
+// ==========================================
+
+/**
+ * Departments Table
+ * @description Departamentos operativos por organización para filtrar agenda.
+ */
+export const departments = pgTable('departments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  organizationId: uuid('org_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+
+  name: text('name').notNull(),
+  color: text('color').notNull(),
+  slug: text('slug').notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  uniqueOrgSlug: unique().on(table.organizationId, table.slug),
+  orgIdx: index('idx_departments_org').on(table.organizationId),
+  orgActiveIdx: index('idx_departments_org_active').on(table.organizationId, table.isActive),
+}));
+
+// ==========================================
 // TABLA: industry_types (Catálogo de Sectores)
 // ==========================================
 
@@ -439,10 +468,20 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   /** Miembros de la organización (N:M via organization_members) */
   members: many(organizationMembers),
+  /** Departamentos de agenda */
+  departments: many(departments),
   /** Números asignados */
   assignedNumbers: many(assignedNumbers),
   /** Invitaciones pendientes */
   pendingInvitations: many(pendingInvitations),
+}));
+
+export const departmentsRelations = relations(departments, ({ one }) => ({
+  /** Organización propietaria del departamento */
+  organization: one(organizations, {
+    fields: [departments.organizationId],
+    references: [organizations.id],
+  }),
 }));
 
 export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
@@ -509,6 +548,9 @@ export type NewUser = typeof users.$inferInsert;
 
 export type OrganizationMember = typeof organizationMembers.$inferSelect;
 export type NewOrganizationMember = typeof organizationMembers.$inferInsert;
+
+export type Department = typeof departments.$inferSelect;
+export type NewDepartment = typeof departments.$inferInsert;
 
 export type IndustryType = typeof industryTypes.$inferSelect;
 export type NewIndustryType = typeof industryTypes.$inferInsert;

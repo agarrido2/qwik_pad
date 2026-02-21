@@ -23,7 +23,7 @@ export const CALENDAR_CONFIG: Partial<CalendarOptions> = {
   initialView: 'dayGridMonth',
   firstDay: 1,
   headerToolbar: {
-    left: 'prev,next today',
+    left: 'prev today next',
     center: 'title',
     right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
   },

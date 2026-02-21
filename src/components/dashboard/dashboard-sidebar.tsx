@@ -29,7 +29,7 @@
  * Colores: Sistema HSL (bg-card, border-border, text-foreground)
  */
 
-import { component$, useContext, useStore } from '@builder.io/qwik';
+import { component$, useContext, useStore, useTask$ } from '@builder.io/qwik';
 import { Form, Link, useLocation } from '@builder.io/qwik-city';
 import { cn } from '~/lib/utils/cn';
 import { AuthContext } from '~/lib/context/auth.context';
@@ -59,11 +59,31 @@ export const DashboardSidebar = component$(() => {
 
   const expandedGroups = useStore<Record<string, boolean>>({});
 
-  for (const item of [...mainMenu, ...workspaceMenu]) {
-    if (item.children?.some((c) => c.href && isActive(c.href))) {
-      expandedGroups[item.text] = true;
+  useTask$(({ track }) => {
+    const pathname = track(() => location.url.pathname);
+    const role = track(() => auth.organization.role);
+
+    const resolvedMainMenu = getVisibleMenu(role, 'main');
+    const resolvedWorkspaceMenu = getVisibleMenu(role, 'workspace');
+
+    const isPathActive = (href?: string) => {
+      if (!href) {
+        return false;
+      }
+
+      if (href === '/dashboard') {
+        return pathname === '/dashboard' || pathname === '/dashboard/';
+      }
+
+      return pathname.startsWith(href);
+    };
+
+    for (const item of [...resolvedMainMenu, ...resolvedWorkspaceMenu]) {
+      if (item.children?.some((child) => child.href && isPathActive(child.href))) {
+        expandedGroups[item.text] = true;
+      }
     }
-  }
+  });
 
   const renderIcon = (iconName: string) => {
     return IconMap[iconName] ?? IconMap.home;

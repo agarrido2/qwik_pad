@@ -21,6 +21,9 @@ export interface CalendarEventExtendedProps {
   contactPhone?: string;
   notes?: string;
   status?: CalendarEventStatus;
+  departmentId?: string;
+  departmentName?: string;
+  priority?: 'high' | 'normal';
 }
 
 /**
@@ -44,3 +47,26 @@ export type CalendarViewType =
   | 'timeGridWeek'
   | 'timeGridDay'
   | 'listWeek';
+
+/**
+ * Departamento de la organización para filtrado visual de agenda.
+ */
+export interface Department {
+  id: string;
+  name: string;
+  color: string;
+  slug: string;
+  isActive: boolean;
+}
+
+/**
+ * Evento derivado para el bloque lateral de próximos eventos.
+ */
+export interface UpcomingEvent {
+  id: string;
+  title: string;
+  start: string;
+  departmentColor: string;
+  departmentName: string;
+  priority: 'high' | 'normal';
+}

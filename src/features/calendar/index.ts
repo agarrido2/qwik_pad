@@ -3,6 +3,7 @@
  */
 
 export { CalendarView } from './components/calendar-view';
+export { CalendarSidebar } from './components/calendar-sidebar';
 export { CALENDAR_CONFIG } from './config/calendar.config';
 export type {
   CalendarEvent,
@@ -10,4 +11,6 @@ export type {
   CalendarEventStatus,
   CalendarEventType,
   CalendarViewType,
+  Department,
+  UpcomingEvent,
 } from './types/calendar.types';

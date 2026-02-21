@@ -50,6 +50,13 @@
       "when": 1771095609917,
       "tag": "0006_zippy_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771525427267,
+      "tag": "0007_jazzy_blazing_skull",
+      "breakpoints": true
     }
   ]
 }
