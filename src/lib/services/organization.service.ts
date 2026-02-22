@@ -27,7 +27,7 @@ export class OrganizationService {
         orgName: organizations.name,
         orgSlug: organizations.slug,
         orgSubscriptionTier: organizations.subscriptionTier,
-        orgIndustry: organizations.industry,
+        orgSector: organizations.sector,
         orgRole: organizationMembers.role,
       })
       .from(users)
@@ -44,12 +44,8 @@ export class OrganizationService {
     name: string;
     slug: string;
     phone?: string;
-    industry?: string;
+    sector?: string;
     businessDescription?: string;
-    assistantName?: string;
-    assistantGender?: 'male' | 'female';
-    assistantKindnessLevel?: number;
-    assistantFriendlinessLevel?: number;
   }) {
     const [org] = await db
       .insert(organizations)
@@ -57,12 +53,8 @@ export class OrganizationService {
         name: data.name,
         slug: data.slug,
         phone: data.phone,
-        industry: data.industry,
+        sector: data.sector,
         businessDescription: data.businessDescription,
-        assistantName: data.assistantName,
-        assistantGender: data.assistantGender,
-        assistantKindnessLevel: data.assistantKindnessLevel,
-        assistantFriendlinessLevel: data.assistantFriendlinessLevel,
         subscriptionTier: 'free',
         subscriptionStatus: 'active',
       })
@@ -101,7 +93,7 @@ export class OrganizationService {
         name: organizations.name,
         slug: organizations.slug,
         subscriptionTier: organizations.subscriptionTier,
-        industry: organizations.industry,
+        sector: organizations.sector,
         role: organizationMembers.role,
       })
       .from(organizationMembers)

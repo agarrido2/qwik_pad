@@ -57,6 +57,11 @@ export interface MenuItem {
   children?: MenuItem[];
   /** Renderiza separador visual debajo de este item (solo nivel 1) */
   dividerAfter?: boolean;
+  /**
+   * Interruptor para el programador. Si es false, el item no se renderiza en el menú,
+   * independientemente de los roles. Por defecto es true.
+   */
+  visible?: boolean;
 }
 
 /**
@@ -92,6 +97,7 @@ export const MENU_CONFIG: MenuItem[] = [
     icon: 'home',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
+    visible: true,
     children: [
       { text: 'Agenda', href: '/dashboard/agenda', icon: 'calendar' },
       { text: 'Analítica', href: '/dashboard/analitica', icon: 'chart' },
@@ -99,8 +105,8 @@ export const MENU_CONFIG: MenuItem[] = [
     dividerAfter: true,
   },
   {
-    text: 'Buzón',
-    href: '/dashboard/buzon',
+    text: 'Interacciones',
+    href: '/dashboard/interacciones',
     icon: 'inbox',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
@@ -113,7 +119,7 @@ export const MENU_CONFIG: MenuItem[] = [
     section: 'main',
   },
   {
-    // MVP: hardcoded a primera industria (Concesionarios)
+    // MVP: hardcoded al primer sector (Concesionarios)
     // Futuro: derivar este bloque desde industries.config.ts
     text: 'CMS - Concesionarios',
     icon: 'building',
@@ -132,6 +138,7 @@ export const MENU_CONFIG: MenuItem[] = [
     roles: ['owner', 'admin'],
     section: 'main',
     children: [
+      { text: 'Agentes', href: '/dashboard/agents', icon: 'bot' },
       { text: 'Teléfonos', href: '/dashboard/agente/telefonos', icon: 'hash' },
       { text: 'Prompt / Flujo', href: '/dashboard/agente/flujos', icon: 'workflow' },
       { text: 'Base Conocimiento', href: '/dashboard/agente/kb', icon: 'book' },
@@ -321,7 +328,7 @@ export function getVisibleMenu(
   section: 'main' | 'workspace',
 ): ResolvedMenuItem[] {
   return MENU_CONFIG
-    .filter((item) => item.section === section && (item.roles ?? []).includes(role))
+    .filter((item) => item.visible !== false && item.section === section && (item.roles ?? []).includes(role))
     .map((item) => {
       const parentRoles = item.roles ?? [];
 
@@ -330,6 +337,7 @@ export function getVisibleMenu(
 
       // Item con hijos → filtrar hijos visibles (con roles heredados/intersectados)
       const visibleChildren = item.children.filter((child) => {
+        if (child.visible === false) return false;
         const effectiveRoles = resolveChildRoles(child.roles, parentRoles, child.text);
         return effectiveRoles.includes(role);
       });

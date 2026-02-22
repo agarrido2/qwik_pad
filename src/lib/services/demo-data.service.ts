@@ -1,22 +1,26 @@
-import { DEMO_DATA_BY_INDUSTRY, type IndustrySlug } from '../utils/demo-data-templates';
+import {
+  DEMO_DATA_BY_SECTOR,
+  GENERIC_SECTOR_DEMO_TEMPLATE,
+  type PredefinedSectorSlug,
+} from '../utils/demo-data-templates';
 
 /**
- * Demo Data Service - Genera datos de prueba según industria
+ * Demo Data Service - Genera datos de prueba según sector
  * Para el tier FREE (sin costos de API)
  */
 
 export class DemoDataService {
   /**
-   * Genera datos demo para una organización según su industria
+   * Genera datos demo para una organización según su sector
    * En tier FREE esto se usa para mostrar funcionalidad sin consumir APIs reales
    */
-  static async generateForIndustry(
+  static async generateForSector(
     organizationId: string,
-    industrySlug: IndustrySlug,
+    sector: string,
   ) {
-    const template = DEMO_DATA_BY_INDUSTRY[industrySlug];
+    const template = this.getTemplate(sector);
 
-    console.log(`[DemoDataService] Generando datos para ${industrySlug}:`, {
+    console.log(`[DemoDataService] Generando datos para ${sector}:`, {
       organizationId,
       promptBase: template.promptBase,
       sampleCallsCount: template.sampleCalls.length,
@@ -39,7 +43,7 @@ export class DemoDataService {
   /**
    * Obtiene el template de datos demo (sin guardar en DB)
    */
-  static getTemplate(industrySlug: IndustrySlug) {
-    return DEMO_DATA_BY_INDUSTRY[industrySlug];
+  static getTemplate(sector: string) {
+    return DEMO_DATA_BY_SECTOR[sector as PredefinedSectorSlug] ?? GENERIC_SECTOR_DEMO_TEMPLATE;
   }
 }

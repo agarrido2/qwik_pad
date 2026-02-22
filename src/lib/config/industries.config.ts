@@ -2,7 +2,7 @@
  * Industries Config - Source of Truth para catálogo de sectores
  *
  * Principio "Config as Code":
- * - Sectores/industrias son decisión de producto (owner), no datos operativos.
+ * - Los sectores son decisión de producto (owner), no datos operativos.
  * - Se almacenan como configuración tipada en código, no en base de datos.
  * - Añadir/modificar sectores aquí no requiere migraciones.
  */
@@ -12,7 +12,7 @@
  *
  * `slug` se persiste en entidades de negocio como identificador estable.
  */
-export interface IndustryConfig {
+export interface SectorConfig {
   slug: string;
   name: string;
   icon: string;
@@ -24,7 +24,7 @@ export interface IndustryConfig {
  *
  * MVP: hardcoded por diseño para maximizar velocidad y simplicidad operativa.
  */
-export const INDUSTRIES: IndustryConfig[] = [
+export const SECTORS: SectorConfig[] = [
   {
     slug: 'concesionario',
     name: 'Concesionario de Vehículos',
@@ -72,21 +72,27 @@ export const INDUSTRIES: IndustryConfig[] = [
 /**
  * Busca un sector por slug.
  */
-export function getIndustryBySlug(slug: string): IndustryConfig | undefined {
-  return INDUSTRIES.find((industry) => industry.slug === slug);
+export function getSectorBySlug(slug: string): SectorConfig | undefined {
+  return SECTORS.find((sector) => sector.slug === slug);
 }
 
 /**
  * Devuelve opciones simples para UIs (select, radio, etc.).
  */
-export function getIndustryOptions(): Array<{
+export function getSectorOptions(): Array<{
   value: string;
   label: string;
   icon: string;
 }> {
-  return INDUSTRIES.map((industry) => ({
-    value: industry.slug,
-    label: industry.name,
-    icon: industry.icon,
+  return SECTORS.map((sector) => ({
+    value: sector.slug,
+    label: sector.name,
+    icon: sector.icon,
   }));
 }
+
+// Backward compatibility (MVP): aliases temporales durante la transición.
+export type IndustryConfig = SectorConfig;
+export const INDUSTRIES = SECTORS;
+export const getIndustryBySlug = getSectorBySlug;
+export const getIndustryOptions = getSectorOptions;

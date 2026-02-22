@@ -75,7 +75,7 @@ export async function getUserOrganizationsWithRoles(userId: string) {
       organizationSlug: organizations.slug,
       role: organizationMembers.role,
       subscriptionTier: organizations.subscriptionTier,
-      industry: organizations.industry,
+      sector: organizations.sector,
     })
     .from(organizationMembers)
     .innerJoin(
@@ -90,7 +90,7 @@ export async function getUserOrganizationsWithRoles(userId: string) {
     slug: row.organizationSlug,
     role: row.role as MemberRole,
     subscriptionTier: row.subscriptionTier,
-    industry: row.industry,
+    sector: row.sector,
   }));
 }
 

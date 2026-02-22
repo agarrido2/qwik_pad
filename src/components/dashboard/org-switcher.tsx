@@ -125,7 +125,7 @@ export const OrgSwitcher = component$(() => {
                       name: organization.name,
                       slug: organization.slug,
                       subscriptionTier: organization.subscriptionTier,
-                      industry: organization.industry,
+                      sector: organization.sector,
                       role: organization.role,
                       roleLabel: organization.roleLabel,
                       roleBadgeColor: organization.roleBadgeColor,

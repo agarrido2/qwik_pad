@@ -29,7 +29,7 @@ export const SectorsSection = component$(() => {
             Diseñado para tu sector
           </h2>
           <p class="text-lg text-neutral-600">
-            Agentes preconfigurados para las necesidades de cada industria.
+            Agentes preconfigurados para las necesidades de cada sector.
           </p>
         </div>
 

@@ -38,7 +38,7 @@ TRUNCATE TABLE public.organizations CASCADE;
 TRUNCATE TABLE public.users_demo CASCADE;
 TRUNCATE TABLE public.ip_trials CASCADE;
 TRUNCATE TABLE public.call_flow_templates CASCADE;
-TRUNCATE TABLE public.industry_types CASCADE;
+TRUNCATE TABLE public.sectors CASCADE;
 
 -- Limpiar tablas de auth (sesiones, tokens, identities)
 TRUNCATE TABLE auth.sessions CASCADE;
@@ -61,9 +61,9 @@ COMMIT;
 BEGIN;
 
 -- ----------------------------------------------------------------------------
--- 2.1: INDUSTRY TYPES (Base para organizaciones)
+-- 2.1: SECTORS (Catálogo de sectores sugeridos)
 -- ----------------------------------------------------------------------------
-INSERT INTO public.industry_types (id, slug, name, description, icon) VALUES
+INSERT INTO public.sectors (id, slug, name, description, icon) VALUES
   (gen_random_uuid(), 'concesionario', 'Concesionario de Automóviles', 'Venta y postventa de vehículos', '🚗'),
   (gen_random_uuid(), 'inmobiliaria', 'Agencia Inmobiliaria', 'Compra, venta y alquiler de propiedades', '🏠'),
   (gen_random_uuid(), 'retail', 'Comercio Minorista', 'Tiendas y comercio al por menor', '🛒'),
@@ -208,7 +208,7 @@ DECLARE
     'EuroRent Vehicles',
     'Reparaciones Express'
   ];
-  v_industries text[] := ARRAY[
+  v_sectors text[] := ARRAY[
     'concesionario', 'inmobiliaria', 'retail', 'alquiladora', 'sat',
     'concesionario', 'inmobiliaria', 'retail', 'alquiladora', 'sat',
     'concesionario', 'inmobiliaria', 'retail', 'alquiladora', 'sat',
@@ -230,7 +230,7 @@ BEGIN
       slug,
       subscription_tier,
       subscription_status,
-      industry,
+      sector,
       phone,
       business_description,
       assistant_name,
@@ -245,9 +245,9 @@ BEGIN
       lower(regexp_replace(v_org_names[v_counter], '[^a-zA-Z0-9]', '-', 'g')),
       v_tiers[v_counter]::subscription_tier,
       'active'::subscription_status,
-      v_industries[v_counter],
+      v_sectors[v_counter],
       '+34' || (900000000 + v_counter)::text,
-      'Empresa líder en ' || v_industries[v_counter],
+      'Empresa líder en ' || v_sectors[v_counter],
       CASE 
         WHEN v_counter % 2 = 0 THEN 'Laura'
         ELSE 'Carlos'
@@ -338,13 +338,13 @@ END $$;
 DO $$
 DECLARE
   v_user record;
-  v_industries public.industry_sector[] := ARRAY[
+  v_sectors text[] := ARRAY[
     'concesionario', 'inmobiliaria', 'retail', 'alquiladora', 'sat'
   ];
 BEGIN
   FOR v_user IN 
     -- DISTINCT ON para evitar duplicados (un usuario solo puede tener 1 perfil)
-    SELECT DISTINCT ON (u.id) u.id, om.organization_id, o.industry
+    SELECT DISTINCT ON (u.id) u.id, om.organization_id, o.sector
     FROM public.users u
     JOIN public.organization_members om ON om.user_id = u.id
     JOIN public.organizations o ON o.id = om.organization_id
@@ -359,7 +359,7 @@ BEGIN
       notification_email,
       website,
       handoff_phone,
-      industry,
+      sector,
       agent_phone,
       business_description,
       leads_email,
@@ -373,13 +373,13 @@ BEGIN
     ) VALUES (
       v_user.id,
       v_user.organization_id,
-      'Negocio de ' || v_user.industry,
+      'Negocio de ' || v_user.sector,
       'notificaciones@' || v_user.organization_id::text || '.test',
       'https://example-' || substring(v_user.organization_id::text, 1, 8) || '.com',
       '+34900' || floor(random() * 1000000)::text,
-      v_user.industry::public.industry_sector,
+      v_user.sector,
       '+34910' || floor(random() * 1000000)::text,
-      'Descripción del negocio especializado en ' || v_user.industry,
+      'Descripción del negocio especializado en ' || v_user.sector,
       'leads@' || v_user.organization_id::text || '.test',
       'Transferir llamadas urgentes al gerente',
       CASE WHEN random() > 0.5 THEN 'female'::assistant_gender ELSE 'male'::assistant_gender END,
@@ -449,7 +449,7 @@ DO $$
 DECLARE
   v_counter integer;
   v_statuses text[] := ARRAY['pending_verification', 'verified', 'converted', 'expired'];
-  v_industries public.industry_sector[] := ARRAY['concesionario', 'inmobiliaria', 'retail', 'alquiladora', 'sat'];
+  v_sectors text[] := ARRAY['concesionario', 'inmobiliaria', 'retail', 'alquiladora', 'sat'];
 BEGIN
   FOR v_counter IN 1..30 LOOP
     INSERT INTO public.users_demo (
@@ -457,7 +457,7 @@ BEGIN
       name,
       email,
       phone,
-      industry,
+      sector,
       ip_address,
       retell_call_id,
       duration_call,
@@ -474,7 +474,7 @@ BEGIN
       'Demo Usuario ' || v_counter,
       'demo' || v_counter || '@test.com',
       '+34' || (650000000 + v_counter)::text,
-      v_industries[(v_counter % 5) + 1],
+      v_sectors[(v_counter % 5) + 1],
       '203.0.113.' || (v_counter % 255)::text,
       'call_demo_' || v_counter,
       floor(random() * 300 + 60)::integer, -- 60-360 segundos

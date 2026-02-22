@@ -18,17 +18,10 @@ export const OnboardingStep1Schema = z.object({
 
 // Paso 2: Reglas del Negocio
 export const OnboardingStep2Schema = z.object({
-  industrySlug: z.enum([
-    'concesionario',
-    'inmobiliaria',
-    'retail',
-    'alquiladora',
-    'despacho',
-    'clinica',
-    'sat',
-  ], {
-    errorMap: () => ({ message: 'Selecciona un sector' })
-  }),
+  sector: z
+    .string()
+    .trim()
+    .min(2, 'Selecciona o escribe un sector'),
   businessDescription: z
     .string()
     .min(20, 'La descripción es demasiado corta. Escribe al menos 20 caracteres para que el asistente comprenda mejor tu negocio')

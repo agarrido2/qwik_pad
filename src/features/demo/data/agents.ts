@@ -1,7 +1,7 @@
 /**
  * Demo Agents Configuration
  * @description Mapeo de sectores a IDs de agentes de Retell AI
- * IMPORTANTE: Las claves deben coincidir con el enum industry_sector de la BD (7 sectores)
+ * IMPORTANTE: Las claves representan sectores sugeridos del producto.
  * Alineado con: schema.ts, onboarding.schemas.ts, demo-data-templates.ts
  */
 
@@ -17,8 +17,17 @@ export const SECTOR_AGENTS = {
 
 export type SectorType = keyof typeof SECTOR_AGENTS;
 
+export const DEFAULT_SECTOR_AGENT_ID = SECTOR_AGENTS.retail;
+
 /**
- * Labels para mostrar en el selector de industria
+ * Resuelve el agentId para un sector, incluyendo fallback para sectores personalizados.
+ */
+export function resolveSectorAgentId(sector: string): string {
+  return SECTOR_AGENTS[sector as SectorType] ?? DEFAULT_SECTOR_AGENT_ID;
+}
+
+/**
+ * Labels para mostrar en el selector de sectores sugeridos
  */
 export const SECTOR_LABELS: Record<SectorType, string> = {
   concesionario: 'Concesionario de vehículos',

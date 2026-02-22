@@ -10,10 +10,13 @@
 
 import { component$, Slot, useContextProvider, useStore, useTask$ } from '@builder.io/qwik';
 import { routeLoader$ } from '@builder.io/qwik-city';
+import { eq } from 'drizzle-orm';
 import { getAuthGuardData } from '~/lib/auth/auth-guard';
 import { resolveActiveOrg } from '~/lib/auth/active-org';
 import { getRoleLabel, getRoleBadgeColor } from '~/lib/auth/guards';
 import { AuthContext, type AuthContextValue } from '~/lib/context/auth.context';
+import { db } from '~/lib/db/client';
+import { users } from '~/lib/db/schema';
 
 /**
  * Auth guard global para rutas (app).
@@ -32,6 +35,32 @@ export const useAppGuard = routeLoader$(async (requestEvent) => {
   const pathname = requestEvent.pathname;
   if (!data.dbUser.onboardingCompleted && !pathname.startsWith('/onboarding')) {
     throw requestEvent.redirect(302, '/onboarding');
+  }
+
+  // Edge case: estado inconsistente (onboarding completo sin organizaciones).
+  // Reparar estado para forzar re-onboarding limpio y evitar throw en resolveActiveOrg.
+  if (data.organizations.length === 0 && !pathname.startsWith('/onboarding')) {
+    await db
+      .update(users)
+      .set({ onboardingCompleted: false })
+      .where(eq(users.id, data.authUser.id));
+
+    throw requestEvent.redirect(302, '/onboarding');
+  }
+
+  // Durante onboarding, el usuario no tiene organizaciones todavía.
+  // Retornar datos mínimos para permitir que onboarding funcione.
+  if (pathname.startsWith('/onboarding') && data.organizations.length === 0) {
+    return {
+      user: {
+        id: data.authUser.id,
+        email: data.authUser.email ?? '',
+        fullName: data.dbUser.fullName ?? '',
+        onboardingCompleted: data.dbUser.onboardingCompleted,
+      },
+      organizations: [],
+      activeOrganizationId: null, // No hay org activa durante onboarding
+    };
   }
 
   const activeOrg = resolveActiveOrg(requestEvent, data.organizations);
@@ -54,17 +83,24 @@ export default component$(() => {
   // Crear store reactivo para AuthContext
   const authContext = useStore<AuthContextValue>(() => {
     const orgs = appData.value.organizations;
-    const activeOrg = orgs.find((org) => org.id === appData.value.activeOrganizationId) ?? orgs[0] ?? {
+    
+    // Durante onboarding sin organizaciones, usar valores por defecto
+    const activeOrg = 
+      appData.value.activeOrganizationId
+        ? orgs.find((org) => org.id === appData.value.activeOrganizationId)
+        : orgs[0];
+    
+    const finalOrg = activeOrg ?? {
       id: '',
       name: '',
       slug: '',
-      subscriptionTier: 'free',
-      industry: null,
+      subscriptionTier: 'free' as const,
+      sector: null,
       role: 'owner' as const,
     };
 
     // Pre-computar labels de rol para cada org
-    const enrichOrg = (org: (typeof orgs)[0]) => ({
+    const enrichOrg = (org: typeof finalOrg) => ({
       ...org,
       roleLabel: getRoleLabel(org.role),
       roleBadgeColor: getRoleBadgeColor(org.role),
@@ -76,10 +112,10 @@ export default component$(() => {
         email: appData.value.user.email,
         fullName: appData.value.user.fullName || null,
       },
-      organization: enrichOrg(activeOrg),
+      organization: enrichOrg(finalOrg),
       allOrganizations: orgs.map(enrichOrg),
       isMultiOrg: orgs.length > 1,
-      isPreviewMode: activeOrg.subscriptionTier === 'free',
+      isPreviewMode: finalOrg.subscriptionTier === 'free',
     };
   });
 
@@ -88,16 +124,23 @@ export default component$(() => {
   useTask$(({ track }) => {
     const data = track(() => appData.value);
     const orgs = data.organizations;
-    const newActiveOrg = orgs.find((org) => org.id === data.activeOrganizationId) ?? orgs[0] ?? {
+    
+    // Durante onboarding sin organizaciones, usar valores por defecto
+    const newActiveOrg = 
+      data.activeOrganizationId
+        ? orgs.find((org) => org.id === data.activeOrganizationId)
+        : orgs[0];
+    
+    const finalOrg = newActiveOrg ?? {
       id: '',
       name: '',
       slug: '',
-      subscriptionTier: 'free',
-      industry: null,
+      subscriptionTier: 'free' as const,
+      sector: null,
       role: 'owner' as const,
     };
 
-    const enrichOrg = (org: (typeof orgs)[0]) => ({
+    const enrichOrg = (org: typeof finalOrg) => ({
       ...org,
       roleLabel: getRoleLabel(org.role),
       roleBadgeColor: getRoleBadgeColor(org.role),
@@ -108,10 +151,10 @@ export default component$(() => {
       email: data.user.email,
       fullName: data.user.fullName || null,
     };
-    authContext.organization = enrichOrg(newActiveOrg);
+    authContext.organization = enrichOrg(finalOrg);
     authContext.allOrganizations = orgs.map(enrichOrg);
     authContext.isMultiOrg = orgs.length > 1;
-    authContext.isPreviewMode = newActiveOrg.subscriptionTier === 'free';
+    authContext.isPreviewMode = finalOrg.subscriptionTier === 'free';
   });
 
   // Inyectar AuthContext — consumido por sidebar, header, páginas

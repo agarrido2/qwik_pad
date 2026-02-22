@@ -1,15 +1,20 @@
 /**
  * Drizzle ORM Schema - Onucall SaaS
  * 
- * Arquitectura Multi-Tenant N:M:
+ * Arquitectura Multi-Tenant N:M con Multi-Agente:
  * - Users pueden pertenecer a múltiples Organizations (consultores, franquicias)
  * - Organizations pueden tener múltiples Users con roles diferentes
+ * - Organizations pueden tener N Voice Agents, cada uno con su propia configuración
  * 
  * Free Tier Strategy:
  * - subscription_tier = 'free' → Preview mode, datos demo generados en onboarding
- * - zadarme_phone_number y retell_agent_id son NULL en free tier
+ * - voice_agents.retell_agent_id y voice_agents.phone_number_id son NULL en free tier
  * 
- * Basado en: docs/plans/FASE_01_AUTH_LANDING_V2.md
+ * Refactor Multi-Agente (2026-02-21):
+ * - Eliminada tabla agent_profiles (limitación 1:1 con users)
+ * - Nueva tabla voice_agents (relación N:1 con organizations)
+ * - Renombrada assigned_numbers → phone_numbers
+ * - Simplificada organizations (campos de agente movidos a voice_agents)
  */
 
 import { pgTable, pgEnum, uuid, text, timestamp, boolean, jsonb, unique, integer, index } from 'drizzle-orm/pg-core';
@@ -18,21 +23,6 @@ import { relations } from 'drizzle-orm';
 // ==========================================
 // ENUMS
 // ==========================================
-
-/**
- * Sectores verticales de Onucall (7 sectores)
- * @description Usado en onboarding y demo para determinar plantillas y agentes
- * IMPORTANTE: Debe coincidir con onboarding.schemas.ts y features/demo/data/agents.ts
- */
-export const industrySectorEnum = pgEnum('industry_sector', [
-  'concesionario',    // Concesionarios de Vehículos
-  'inmobiliaria',     // Inmobiliarias
-  'retail',           // Retail y Distribución
-  'alquiladora',      // Empresas Alquiladoras
-  'sat',              // Servicios Técnicos (SAT)
-  'despacho',         // Despachos Profesionales (legal/contable)
-  'clinica',          // Clínicas y Centros Médicos
-]);
 
 export const subscriptionTierEnum = pgEnum('subscription_tier', [
   'free',      // Demo mode, audios estáticos, datos simulados, 0 costos de API
@@ -60,6 +50,12 @@ export const userRoleEnum = pgEnum('user_role', [
   'member'  // Miembro regular (access limitado)
 ]);
 
+export const phoneNumberStatusEnum = pgEnum('phone_number_status', [
+  'available',  // Número disponible para asignar
+  'assigned',   // Número asignado a un agente
+  'suspended'   // Número suspendido temporalmente
+]);
+
 // ==========================================
 // TABLA: organizations
 // ==========================================
@@ -78,19 +74,9 @@ export const organizations = pgTable('organizations', {
   subscriptionTier: subscriptionTierEnum('subscription_tier').notNull().default('free'),
   subscriptionStatus: subscriptionStatusEnum('subscription_status').notNull().default('active'),
   
-  // Integraciones (NULL en free tier)
-  zadarmePhoneNumber: text('zadarme_phone_number'), // +34919930992
-  retellAgentId: text('retell_agent_id'),           // UUID de Retell AI
-  
   // Metadata de negocio (Onboarding Paso 2)
-  industry: text('industry'), // concesionario | inmobiliaria | clinica | ...
+  sector: text('sector'), // concesionario | inmobiliaria | clinica | sector personalizado
   businessDescription: text('business_description'), // Descripción del negocio
-  
-  // Configuración del Asistente (Onboarding Paso 3)
-  assistantName: text('assistant_name'), // Nombre del asistente de voz
-  assistantGender: assistantGenderEnum('assistant_gender'), // Género del asistente
-  assistantKindnessLevel: integer('assistant_kindness_level'), // 1-5
-  assistantFriendlinessLevel: integer('assistant_friendliness_level'), // 1-5
   
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -186,6 +172,49 @@ export const organizationMembers = pgTable('organization_members', {
 }));
 
 // ==========================================
+// TABLA: audit_role_changes (Auditoría RBAC)
+// ==========================================
+
+/**
+ * Audit Role Changes Table
+ * @description Registro de auditoría para cambios de rol en organization_members.
+ * Se alimenta vía trigger log_role_change() para trazabilidad de seguridad.
+ */
+export const auditRoleChanges = pgTable('audit_role_changes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  // Contexto multi-tenant
+  organizationId: uuid('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+
+  // Usuario cuyo rol cambió
+  targetUserId: uuid('target_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
+  // Usuario que ejecutó el cambio (puede ser null en casos legacy)
+  changedByUserId: uuid('changed_by_user_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+
+  // Diff de rol
+  oldRole: userRoleEnum('old_role'),
+  newRole: userRoleEnum('new_role').notNull(),
+
+  // Metadata de auditoría
+  changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  // Queries de historial por organización
+  orgIdx: index('idx_audit_role_changes_org').on(table.organizationId),
+  // Queries de historial por usuario objetivo
+  targetUserIdx: index('idx_audit_role_changes_target_user').on(table.targetUserId),
+  // Queries temporales (últimos cambios)
+  changedAtIdx: index('idx_audit_role_changes_changed_at').on(table.changedAt),
+  // Pattern común: historial de un usuario en una organización
+  orgUserIdx: index('idx_audit_role_changes_org_user').on(table.organizationId, table.targetUserId),
+}));
+
+// ==========================================
 // TABLA: departments (Catálogo por Organización)
 // ==========================================
 
@@ -215,29 +244,14 @@ export const departments = pgTable('departments', {
 }));
 
 // ==========================================
-// TABLA: industry_types (Catálogo de Sectores)
-// ==========================================
-
-export const industryTypes = pgTable('industry_types', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  
-  slug: text('slug').notNull().unique(), // concesionario, inmobiliaria, clinica
-  name: text('name').notNull(),          // "Concesionario de Vehículos"
-  description: text('description'),
-  icon: text('icon'),                    // Emoji: 🚗, 🏠, 🏥
-  
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
-
-// ==========================================
 // TABLA: call_flow_templates (Plantillas de Flujo)
 // ==========================================
 
 export const callFlowTemplates = pgTable('call_flow_templates', {
   id: uuid('id').primaryKey().defaultRandom(),
   
-  // Relación con sector
-  industryTypeId: uuid('industry_type_id').references(() => industryTypes.id),
+  // Slug del sector (concesionario, inmobiliaria, etc.) - alineado con constantes del código
+  sector: text('sector'),
   
   name: text('name').notNull(),
   description: text('description'),
@@ -262,7 +276,7 @@ export const usersDemo = pgTable('users_demo', {
   name: text('name').notNull(),
   email: text('email').notNull(),
   phone: text('phone').notNull(),
-  industry: industrySectorEnum('industry').notNull(),
+  sector: text('sector').notNull(),
   ipAddress: text('ip_address').notNull(),
   retellCallId: text('retell_call_id'), // Nullable hasta que Retell responda
   durationCall: integer('duration_call').default(0),
@@ -315,81 +329,124 @@ export const ipTrials = pgTable('ip_trials', {
 }));
 
 // ==========================================
-// TABLA: agent_profiles (Configuración IA)
+// TABLA: voice_agents (Agentes de Voz IA)
 // ==========================================
 
 /**
- * Agent Profiles Table
- * @description Configuración del agente de IA por usuario (1:1 con users)
- * Estructura: 12 campos en 3 pasos de onboarding
+ * Voice Agents Table
+ * @description Agentes de voz con IA configurables por organización.
+ * Arquitectura Multi-Agente: Una organización puede tener N agentes,
+ * cada uno con su propia personalidad, configuración y número de teléfono.
+ * 
+ * Casos de uso:
+ * - Clínica: Agente "Recepción", Agente "Urgencias 24h", Agente "Seguimiento"
+ * - Concesionario: Agente "Nuevo", Agente "Ocasión", Agente "Taller"
  */
-export const agentProfiles = pgTable('agent_profiles', {
-  // PK/FK - Relación 1:1 con users
-  userId: uuid('user_id')
-    .primaryKey()
-    .references(() => users.id, { onDelete: 'cascade' }),
+export const voiceAgents = pgTable('voice_agents', {
+  id: uuid('id').primaryKey().defaultRandom(),
   
-  // B2B: Agente pertenece a la organización
-  organizationId: uuid('organization_id').references(() => organizations.id),
+  // Propiedad (relación N:1 con organizations)
+  organizationId: uuid('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
   
-  // PASO 1: Identidad Corporativa
-  businessName: text('business_name').notNull(),
-  notificationEmail: text('notification_email').notNull(),
-  website: text('website'),
-  handoffPhone: text('handoff_phone').notNull(),
+  // Identidad del Agente
+  name: text('name').notNull(), // "Recepción Clínica", "Agente Urgencias 24h"
+  description: text('description'), // Descripción interna del propósito
+  sector: text('sector'), // concesionario | inmobiliaria | clinica | custom
   
-  // PASO 2: Configuración del Agente
-  industry: industrySectorEnum('industry').notNull(),
-  agentPhone: text('agent_phone').notNull(),
-  businessDescription: text('business_description').notNull(),
-  leadsEmail: text('leads_email').notNull(),
-  transferPolicy: text('transfer_policy'),
+  // Integración Externa (Retell AI + Número)
+  retellAgentId: text('retell_agent_id').unique(), // UUID del agente en Retell AI
+  phoneNumberId: uuid('phone_number_id').unique(), // FK a phone_numbers (1:1)
   
-  // PASO 3: Personalidad y Voz
+  // Configuración de Voz y Personalidad
+  assistantName: text('assistant_name').notNull().default('Asistente'), // "Ana", "Carlos"
   assistantGender: assistantGenderEnum('assistant_gender').notNull().default('female'),
-  assistantName: text('assistant_name').notNull().default('Asistente'),
-  friendlinessLevel: integer('friendliness_level').notNull().default(3),
-  warmthLevel: integer('warmth_level').notNull().default(3),
+  friendlinessLevel: integer('friendliness_level').notNull().default(3), // 1-5
+  warmthLevel: integer('warmth_level').notNull().default(3), // 1-5 (antes kindness)
   
+  // Configuración de Negocio
+  businessDescription: text('business_description'), // Prompt base del agente
+  promptSystem: text('prompt_system'), // Prompt completo personalizado
+  transferPolicy: text('transfer_policy'), // Cuándo transferir a humano
+  leadsEmail: text('leads_email'), // Email para leads capturados
+  webhookUrl: text('webhook_url'), // Webhook post-llamada (opcional)
+  
+  // Estado y Control
+  isActive: boolean('is_active').notNull().default(true), // Agente activo/inactivo
+  isDefault: boolean('is_default').notNull().default(false), // ¿Agente por defecto?
+  
+  // Auditoría
+  createdBy: uuid('created_by')
+    .notNull()
+    .references(() => users.id, { onDelete: 'restrict' }), // Quién creó el agente
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
-  industryIdx: index('idx_agent_profiles_industry').on(table.industry),
+  // Índice para buscar agentes por organización
+  orgIdIdx: index('idx_voice_agents_org').on(table.organizationId),
+  // Índice para buscar agentes activos por organización
+  orgActiveIdx: index('idx_voice_agents_org_active').on(table.organizationId, table.isActive),
+  // Índice para buscar por retell_agent_id (webhook lookups)
+  retellIdx: index('idx_voice_agents_retell').on(table.retellAgentId),
+  // Índice para buscar agentes por sector
+  sectorIdx: index('idx_voice_agents_sector').on(table.sector),
 }));
 
 // ==========================================
-// TABLA: assigned_numbers (Pool Zadarma)
+// TABLA: phone_numbers (Pool de Números)
 // ==========================================
 
 /**
- * Assigned Numbers Table
- * @description Pool de números virtuales de Zadarma contratados por Onucall
- * Status: 'available' | 'assigned' | 'suspended'
+ * Phone Numbers Table
+ * @description Pool de números virtuales (Zadarma/Twilio) gestionados por Onucall.
+ * Arquitectura: 1 número → 1 agente (voice_agents.phone_number_id → phone_numbers.id)
+ * 
+ * Status:
+ * - available: Número disponible para asignar a un agente
+ * - assigned: Número asignado a un agente activo
+ * - suspended: Número temporalmente suspendido
  */
-export const assignedNumbers = pgTable('assigned_numbers', {
+export const phoneNumbers = pgTable('phone_numbers', {
   id: uuid('id').primaryKey().defaultRandom(),
   
-  phoneNumber: text('phone_number').notNull().unique(),
-  phoneNumberFormatted: text('phone_number_formatted').notNull(),
+  // Identificación del Número
+  phoneNumber: text('phone_number').notNull().unique(), // +34919930992
+  phoneNumberFormatted: text('phone_number_formatted').notNull(), // +34 919 93 09 92
   prefix: text('prefix').notNull().default('+34'),
-  location: text('location').notNull(),
+  location: text('location').notNull(), // Madrid, España
   
-  // Usuario asignado (LEGACY: mantener compatibilidad)
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+  // Proveedor
+  provider: text('provider').notNull().default('zadarma'), // zadarma | twilio | vonage
+  providerId: text('provider_id'), // ID en el sistema del proveedor
   
-  // B2B: Número asignado a organización
-  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'set null' }),
+  // Propiedad (B2B)
+  organizationId: uuid('organization_id')
+    .references(() => organizations.id, { onDelete: 'set null' }),
   
-  assignedAt: timestamp('assigned_at', { withTimezone: true }),
-  status: text('status').notNull().default('available'),
-  zadarmaId: text('zadarma_id'),
+  // Asignación a Agente (establecida desde voice_agents.phone_number_id)
+  assignedToAgentId: uuid('assigned_to_agent_id')
+    .unique() // 1:1 - Un número solo puede estar asignado a un agente
+    .references(() => voiceAgents.id, { onDelete: 'set null' }),
+  
+  // Estado
+  status: phoneNumberStatusEnum('status').notNull().default('available'),
+  
+  // Fechas
   purchasedAt: timestamp('purchased_at', { withTimezone: true }).notNull().defaultNow(),
+  assignedAt: timestamp('assigned_at', { withTimezone: true }),
   
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
-  userIdIdx: index('idx_assigned_numbers_user_id').on(table.userId),
-  statusIdx: index('idx_assigned_numbers_status').on(table.status),
+  // Índice para buscar números por organización
+  orgIdx: index('idx_phone_numbers_org').on(table.organizationId),
+  // Índice para buscar números por agente asignado
+  agentIdx: index('idx_phone_numbers_agent').on(table.assignedToAgentId),
+  // Índice para buscar números por status
+  statusIdx: index('idx_phone_numbers_status').on(table.status),
+  // Índice para buscar números disponibles por organización
+  orgStatusIdx: index('idx_phone_numbers_org_status').on(table.organizationId, table.status),
 }));
 
 // ==========================================
@@ -453,16 +510,13 @@ export const pendingInvitations = pgTable('pending_invitations', {
  * están definidos en las tablas con .references().
  */
 
-export const usersRelations = relations(users, ({ many, one }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
   /** Organizaciones a las que pertenece (N:M via organization_members) */
   organizationMemberships: many(organizationMembers),
-  /** Perfil de agente 1:1 */
-  agentProfile: one(agentProfiles, {
-    fields: [users.id],
-    references: [agentProfiles.userId],
-  }),
   /** Invitaciones enviadas */
   sentInvitations: many(pendingInvitations),
+  /** Agentes de voz creados por este usuario */
+  createdVoiceAgents: many(voiceAgents),
 }));
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({
@@ -470,8 +524,10 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   members: many(organizationMembers),
   /** Departamentos de agenda */
   departments: many(departments),
-  /** Números asignados */
-  assignedNumbers: many(assignedNumbers),
+  /** Agentes de voz de la organización */
+  voiceAgents: many(voiceAgents),
+  /** Números de teléfono contratados */
+  phoneNumbers: many(phoneNumbers),
   /** Invitaciones pendientes */
   pendingInvitations: many(pendingInvitations),
 }));
@@ -497,6 +553,24 @@ export const organizationMembersRelations = relations(organizationMembers, ({ on
   }),
 }));
 
+export const auditRoleChangesRelations = relations(auditRoleChanges, ({ one }) => ({
+  /** Organización donde ocurrió el cambio */
+  organization: one(organizations, {
+    fields: [auditRoleChanges.organizationId],
+    references: [organizations.id],
+  }),
+  /** Usuario cuyo rol fue modificado */
+  targetUser: one(users, {
+    fields: [auditRoleChanges.targetUserId],
+    references: [users.id],
+  }),
+  /** Usuario que realizó el cambio */
+  changedByUser: one(users, {
+    fields: [auditRoleChanges.changedByUserId],
+    references: [users.id],
+  }),
+}));
+
 export const pendingInvitationsRelations = relations(pendingInvitations, ({ one }) => ({
   /** Organización que invita */
   organization: one(organizations, {
@@ -510,29 +584,34 @@ export const pendingInvitationsRelations = relations(pendingInvitations, ({ one 
   }),
 }));
 
-export const agentProfilesRelations = relations(agentProfiles, ({ one }) => ({
-  /** Usuario dueño del perfil */
-  user: one(users, {
-    fields: [agentProfiles.userId],
+export const voiceAgentsRelations = relations(voiceAgents, ({ one }) => ({
+  /** Organización propietaria del agente */
+  organization: one(organizations, {
+    fields: [voiceAgents.organizationId],
+    references: [organizations.id],
+  }),
+  /** Usuario que creó el agente */
+  creator: one(users, {
+    fields: [voiceAgents.createdBy],
     references: [users.id],
   }),
-  /** Organización asociada */
-  organization: one(organizations, {
-    fields: [agentProfiles.organizationId],
-    references: [organizations.id],
+  /** Número de teléfono asignado (1:1) */
+  phoneNumber: one(phoneNumbers, {
+    fields: [voiceAgents.phoneNumberId],
+    references: [phoneNumbers.id],
   }),
 }));
 
-export const assignedNumbersRelations = relations(assignedNumbers, ({ one }) => ({
-  /** Usuario asignado (legacy) */
-  user: one(users, {
-    fields: [assignedNumbers.userId],
-    references: [users.id],
-  }),
-  /** Organización asignada */
+export const phoneNumbersRelations = relations(phoneNumbers, ({ one }) => ({
+  /** Organización propietaria */
   organization: one(organizations, {
-    fields: [assignedNumbers.organizationId],
+    fields: [phoneNumbers.organizationId],
     references: [organizations.id],
+  }),
+  /** Agente al que está asignado */
+  assignedAgent: one(voiceAgents, {
+    fields: [phoneNumbers.assignedToAgentId],
+    references: [voiceAgents.id],
   }),
 }));
 
@@ -549,11 +628,11 @@ export type NewUser = typeof users.$inferInsert;
 export type OrganizationMember = typeof organizationMembers.$inferSelect;
 export type NewOrganizationMember = typeof organizationMembers.$inferInsert;
 
+export type AuditRoleChange = typeof auditRoleChanges.$inferSelect;
+export type NewAuditRoleChange = typeof auditRoleChanges.$inferInsert;
+
 export type Department = typeof departments.$inferSelect;
 export type NewDepartment = typeof departments.$inferInsert;
-
-export type IndustryType = typeof industryTypes.$inferSelect;
-export type NewIndustryType = typeof industryTypes.$inferInsert;
 
 export type CallFlowTemplate = typeof callFlowTemplates.$inferSelect;
 export type NewCallFlowTemplate = typeof callFlowTemplates.$inferInsert;
@@ -564,16 +643,16 @@ export type NewUserDemo = typeof usersDemo.$inferInsert;
 export type IpTrial = typeof ipTrials.$inferSelect;
 export type NewIpTrial = typeof ipTrials.$inferInsert;
 
-export type AgentProfile = typeof agentProfiles.$inferSelect;
-export type NewAgentProfile = typeof agentProfiles.$inferInsert;
+export type VoiceAgent = typeof voiceAgents.$inferSelect;
+export type NewVoiceAgent = typeof voiceAgents.$inferInsert;
 
-export type AssignedNumber = typeof assignedNumbers.$inferSelect;
-export type NewAssignedNumber = typeof assignedNumbers.$inferInsert;
+export type PhoneNumber = typeof phoneNumbers.$inferSelect;
+export type NewPhoneNumber = typeof phoneNumbers.$inferInsert;
 
 export type PendingInvitation = typeof pendingInvitations.$inferSelect;
 export type NewPendingInvitation = typeof pendingInvitations.$inferInsert;
 
 // Type helpers para enums
-export type IndustrySector = (typeof industrySectorEnum.enumValues)[number];
 export type AssistantGender = (typeof assistantGenderEnum.enumValues)[number];
 export type SubscriptionTier = (typeof subscriptionTierEnum.enumValues)[number];
+export type PhoneNumberStatus = (typeof phoneNumberStatusEnum.enumValues)[number];

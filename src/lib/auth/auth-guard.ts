@@ -91,7 +91,7 @@ export async function getAuthGuardData(
       name: row.orgName!,
       slug: row.orgSlug!,
       subscriptionTier: row.orgSubscriptionTier!,
-      industry: row.orgIndustry,
+      sector: row.orgSector,
       role: row.orgRole!,
     }));
 

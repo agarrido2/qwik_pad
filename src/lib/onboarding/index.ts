@@ -67,9 +67,9 @@ export {
 // ═══════════════════════════════════════════════════════════════════
 
 export {
-  IndustrySelector,
-  type IndustrySelectorProps,
-} from '~/features/onboarding/components/industry-selector';
+  SectorSelector,
+  type SectorSelectorProps,
+} from '~/features/onboarding/components/sector-selector';
 
 export {
   OnboardingProgress,

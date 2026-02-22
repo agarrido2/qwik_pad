@@ -1,8 +1,7 @@
 import { db } from '../db/client';
-import { users, organizations, organizationMembers } from '../db/schema';
+import { users, organizations, organizationMembers, voiceAgents } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { DemoDataService } from './demo-data.service';
-import type { IndustrySlug } from '../utils/demo-data-templates';
 
 /**
  * Onboarding Service - Maneja el proceso de onboarding
@@ -15,7 +14,7 @@ export class OnboardingService {
    * 2. Crea la organización con todos los datos
    * 3. Añade al usuario como owner
    * 4. Marca onboarding como completado
-   * 5. Genera datos demo según industria
+  * 5. Genera datos demo según sector
    * 
    * OPTIMIZACIÓN: Transacción atómica (todo o nada)
    * Referencia: docs/standards/DB_QUERY_OPTIMIZATION.md § 2.3
@@ -28,7 +27,7 @@ export class OnboardingService {
       organizationName: string;
       phone: string;
       // Paso 2: Reglas del Negocio
-      industrySlug: IndustrySlug;
+      sector: string;
       businessDescription: string;
       // Paso 3: Su Asistente
       assistantGender: 'male' | 'female';
@@ -62,12 +61,8 @@ export class OnboardingService {
           name: data.organizationName,
           slug,
           phone: data.phone,
-          industry: data.industrySlug,
+          sector: data.sector,
           businessDescription: data.businessDescription,
-          assistantName: data.assistantName,
-          assistantGender: data.assistantGender,
-          assistantKindnessLevel: data.assistantKindnessLevel,
-          assistantFriendlinessLevel: data.assistantFriendlinessLevel,
           subscriptionTier: 'free',
           subscriptionStatus: 'active',
         })
@@ -82,22 +77,41 @@ export class OnboardingService {
           role: 'owner',
         });
 
-      // 4. Marcar onboarding completado
-    await tx
-      .update(users)
-      .set({ 
-        onboardingCompleted: true,
-        role: 'active'  // ← Cambiar de 'invited' a 'active'
-      })
-    .where(eq(users.id, userId));
+      // 4. Crear agente inicial por defecto para la organización.
+      // Mantiene compatibilidad con el flujo de onboarding existente:
+      // los datos del paso 3 ahora viven en voice_agents (no en organizations).
+      await tx
+        .insert(voiceAgents)
+        .values({
+          organizationId: organization.id,
+          createdBy: userId,
+          name: 'Agente Principal',
+          assistantName: data.assistantName,
+          assistantGender: data.assistantGender,
+          sector: data.sector,
+          friendlinessLevel: data.assistantFriendlinessLevel,
+          warmthLevel: data.assistantKindnessLevel,
+          businessDescription: data.businessDescription,
+          isDefault: true,
+          isActive: true,
+        });
+
+      // 5. Marcar onboarding completado
+      await tx
+        .update(users)
+        .set({
+          onboardingCompleted: true,
+          role: 'active',
+        })
+        .where(eq(users.id, userId));
 
       return { organization };
     });
 
     // 5. Generar datos demo FUERA de transacción (no es crítico)
-    const demoData = await DemoDataService.generateForIndustry(
+    const demoData = await DemoDataService.generateForSector(
       result.organization.id,
-      data.industrySlug,
+      data.sector,
     );
 
     return { organization: result.organization, demoData };

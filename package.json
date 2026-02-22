@@ -24,7 +24,12 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:diagnose": "bun run scripts/diagnose_db.ts",
+    "db:inspect": "bun run scripts/inspect_function.ts",
+    "db:cleanup": "bun run scripts/cleanup_db.ts",
+    "db:verify": "bun run scripts/verify_installation.ts",
+    "db:fix-audit": "bun run scripts/fix_audit_role_changes.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.20",

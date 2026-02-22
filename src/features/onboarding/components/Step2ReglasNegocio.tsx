@@ -1,11 +1,11 @@
 /**
  * Step2ReglasNegocio - Paso 2 del wizard: sector y descripción
  * 
- * 2 campos: industrySlug (select), businessDescription (textarea).
- * El select tiene 7 sectores alineados con industrySectorEnum del schema.
+ * 2 campos: sector (híbrido: catálogo + texto libre), businessDescription (textarea).
  */
 
 import { component$ } from '@builder.io/qwik';
+import { SECTOR_OPTIONS } from '~/features/onboarding/constants';
 import type { OnboardingFormData, OnboardingFieldErrors } from './types';
 
 interface Step2Props {
@@ -14,6 +14,8 @@ interface Step2Props {
 }
 
 export const Step2ReglasNegocio = component$<Step2Props>(({ formData, fieldErrors }) => {
+  const hasPresetSelection = SECTOR_OPTIONS.some((option) => option.value === formData.sector);
+
   return (
     <div class="space-y-6">
       <h2 class="text-2xl font-bold text-neutral-900 mb-4">
@@ -22,29 +24,54 @@ export const Step2ReglasNegocio = component$<Step2Props>(({ formData, fieldError
       
       {/* Sector */}
       <div>
-        <label for="industrySlug" class="block text-sm font-medium text-neutral-700 mb-2">
+        <label for="sectorPreset" class="block text-sm font-medium text-neutral-700 mb-2">
           Sector de tu negocio *
         </label>
         <select
-          id="industrySlug"
-          name="industrySlug"
+          id="sectorPreset"
           class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          value={formData.industrySlug}
-          onChange$={(e: Event, el: HTMLSelectElement) => (formData.industrySlug = el.value)}
+          value={hasPresetSelection ? formData.sector : 'otro'}
+          onChange$={(e: Event, el: HTMLSelectElement) => {
+            if (el.value === 'otro') {
+              formData.sector = hasPresetSelection ? '' : formData.sector;
+              return;
+            }
+
+            formData.sector = el.value;
+          }}
           required
         >
           <option value="">Selecciona un sector</option>
-          <option value="concesionario">🚗 Concesionario</option>
-          <option value="inmobiliaria">🏠 Inmobiliaria</option>
-          <option value="retail">🛍️ Retail</option>
-          <option value="alquiladora">🚙 Alquiladora de vehículos</option>
-          <option value="despacho">📋 Despacho profesional</option>
-          <option value="clinica">🏥 Clínica/Centro médico</option>
-          <option value="sat">🔧 Servicio Técnico (SAT)</option>
+          {SECTOR_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>{`${option.icon} ${option.label}`}</option>
+          ))}
+          <option value="otro">✍️ Otro (escribir manualmente)</option>
         </select>
-        {fieldErrors?.industrySlug && (
+
+        {!hasPresetSelection && (
+          <div class="mt-3">
+            <label for="customSector" class="block text-sm font-medium text-neutral-700 mb-2">
+              Escribe tu sector
+            </label>
+            <input
+              id="customSector"
+              type="text"
+              class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              placeholder="Ej: Peluquería canina"
+              value={formData.sector}
+              onInput$={(e: Event, el: HTMLInputElement) => {
+                formData.sector = el.value;
+              }}
+              required
+            />
+          </div>
+        )}
+
+        <input type="hidden" name="sector" value={formData.sector} />
+
+        {fieldErrors?.sector && (
           <p class="text-red-500 text-sm mt-1" role="alert">
-            {fieldErrors.industrySlug[0]}
+            {fieldErrors.sector[0]}
           </p>
         )}
       </div>

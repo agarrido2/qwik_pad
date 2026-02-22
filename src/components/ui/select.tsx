@@ -12,7 +12,7 @@
  * @example
  * // Select con iconos y descripciones
  * <Select
- *   name="industry"
+ *   name="sector"
  *   options={[
  *     { value: 'tech', label: 'Tecnología', icon: '💻', description: 'Software y hardware' }
  *   ]}

@@ -1,7 +1,7 @@
 ---
 name: QwikArchitect
 description: Modo PLANIFICACIÓN. Cerebro del proyecto. Solo lee, piensa y diseña. NO tiene permiso para editar código.
-model: Claude Opus 4.6 (copilot)
+model: Gemini 3.1 Pro (Preview) (copilot)
 # ⚠️ CLAVE: Herramientas de lectura y contexto. Hard-enforced por el entorno.
 tools: ['search', 'edit','read/readFile','upstash/context7/*']
 

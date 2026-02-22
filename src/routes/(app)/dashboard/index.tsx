@@ -4,7 +4,7 @@
  */
 
 import { component$, useContext } from '@builder.io/qwik';
-import { type DocumentHead } from '@builder.io/qwik-city';
+import { Link, type DocumentHead } from '@builder.io/qwik-city';
 import { Card, CardContent, CardHeader, CardTitle, Alert, Button } from '~/components/ui';
 import { MetricCard, RecentCallsTable, type CallRecord } from '~/components/dashboard';
 import { AuthContext } from '~/lib/context/auth.context';
@@ -160,17 +160,19 @@ export default component$(() => {
             <CardTitle>Actividad reciente</CardTitle>
             
             {/* Botón demo: Deshabilitado para members */}
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!isAdminOrAbove(auth.organization.role)}
-              aria-label={!isAdminOrAbove(auth.organization.role) ? 'Solo owners y admins pueden crear agentes' : 'Crear nuevo agente'}
-            >
-              <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              Nuevo Agente
-            </Button>
+            <Link href="/dashboard/agents/new">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!isAdminOrAbove(auth.organization.role)}
+                aria-label={!isAdminOrAbove(auth.organization.role) ? 'Solo owners y admins pueden crear agentes' : 'Crear nuevo agente'}
+              >
+                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Nuevo Agente
+              </Button>
+            </Link>
           </div>
         </CardHeader>
         <CardContent>

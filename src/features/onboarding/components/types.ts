@@ -12,7 +12,7 @@ export interface OnboardingFormData {
   organizationName: string;
   phone: string;
   // Paso 2: Reglas del Negocio
-  industrySlug: string;
+  sector: string;
   businessDescription: string;
   // Paso 3: Su Asistente
   assistantGender: string;
@@ -29,7 +29,7 @@ export interface OnboardingFieldErrors {
   fullName?: string[];
   organizationName?: string[];
   phone?: string[];
-  industrySlug?: string[];
+  sector?: string[];
   businessDescription?: string[];
   assistantGender?: string[];
   assistantName?: string[];

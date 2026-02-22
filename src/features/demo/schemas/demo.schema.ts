@@ -29,9 +29,10 @@ export const demoFormSchema = z.object({
     .string()
     .min(1, 'El teléfono es requerido')
     .regex(phoneRegex, 'Ingresa un número válido (ej: +34612345678)'),
-  industry: z.enum(['concesionario', 'inmobiliaria', 'retail', 'alquiladora', 'sat'], {
-    errorMap: () => ({ message: 'Selecciona una industria' }),
-  }),
+  sector: z
+    .string()
+    .trim()
+    .min(2, 'Selecciona o escribe un sector'),
   // Coerce string 'true' (HTML checkbox) a boolean true
   acceptTerms: z.preprocess(
     (val) => val === 'true' || val === true,

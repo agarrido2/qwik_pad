@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onucall | El Agente de Voz con IA para tu Negocio</title>
+    <meta name="description" content="Onucall gestiona tus llamadas entrantes con un agente de IA que habla, entiende y actúa. Sin esperas. Sin llamadas perdidas.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Tailwind Config & Custom CSS -->
+    <style type="text/tailwindcss">
+        @theme {
+            /* Colores - Paleta Neon Trust */
+            --color-bg-base: #0B0D14;
+            --color-bg-surface: #131620;
+            --color-bg-elevated: #1A1D29;
+            --color-border: #2A2F42;
+            --color-border-subtle: #1C202E;
+            --color-accent: #2F456A;
+            --color-accent-hover: #3E5A8A;
+            --color-accent-secondary: #D6FF38;
+            --color-text-primary: #F4F5F8;
+            --color-text-secondary: #A0A5B5;
+            --color-text-muted: #6B7085;
+
+            /* Tipografía - Tech-Grotesk */
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Manrope', sans-serif;
+
+            /* Radios */
+            --radius-card: 1rem;
+            --radius-button: 0.625rem;
+        }
+
+        /* Keyframes y animaciones base */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(214,255,56,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(214,255,56,0); }
+        }
+        @keyframes soundwave {
+            0% { transform: scaleY(0.3); }
+            100% { transform: scaleY(1); }
+        }
+        @keyframes bounce-dot {
+            0%, 100% { transform: translateY(0); opacity: 0.4; }
+            50% { transform: translateY(-4px); opacity: 1; }
+        }
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Clases utilitarias personalizadas */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .floating-element {
+            animation: float 4s ease-in-out infinite;
+            will-change: transform;
+        }
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(24px);
+        }
+        
+        .animate-fade-in-up {
+            animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .soundwave-bar {
+            animation: soundwave 0.5s ease-in-out infinite alternate;
+            transform-origin: bottom;
+            will-change: transform;
+        }
+
+        .typing-dot {
+            animation: bounce-dot 1s infinite;
+        }
+
+        /* Ocultar scrollbar visualmente pero permitir scroll */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-bg-base text-text-primary font-body antialiased overflow-x-hidden selection:bg-accent/30 selection:text-white">
+
+    <!-- ================== SECTION: NAVBAR ================== -->
+    <header id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-4" role="navigation">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-2 group outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-accent group-hover:text-accent-hover transition-colors">
+                    <path d="M12 2v20M17 5v14M22 10v4M7 5v14M2 10v4"/>
+                </svg>
+                <span class="font-display font-bold text-xl tracking-tight text-text-primary">Onucall</span>
+            </a>
+
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="#features" class="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors outline-none focus-visible:text-accent">Características</a>
+                <a href="#sectores" class="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors outline-none focus-visible:text-accent">Sectores</a>
+                <a href="#demo" class="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors outline-none focus-visible:text-accent">Pruébalo Gratis</a>
+                <a href="#pricing" class="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors outline-none focus-visible:text-accent">Precios</a>
+                <a href="#contacto" class="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors outline-none focus-visible:text-accent">Contacto</a>
+            </nav>
+
+            <!-- CTA Desktop -->
+            <div class="hidden md:block">
+                <a href="#demo" class="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-white transition-all bg-accent rounded-button hover:bg-accent-hover hover:shadow-[0_0_15px_rgba(47,69,106,0.4)] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base focus-visible:ring-accent">
+                    Empezar Gratis
+                </a>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button id="mobile-menu-btn" class="md:hidden p-2 text-text-secondary hover:text-text-primary outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm" aria-label="Abrir menú">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 z-40 bg-bg-surface/95 backdrop-blur-xl border-b border-border transform -translate-y-full transition-transform duration-300 flex flex-col pt-24 px-6 pb-8 md:hidden">
+        <nav class="flex flex-col gap-6 text-lg font-medium">
+            <a href="#features" class="mobile-link text-text-primary hover:text-accent transition-colors">Características</a>
+            <a href="#sectores" class="mobile-link text-text-primary hover:text-accent transition-colors">Sectores</a>
+            <a href="#demo" class="mobile-link text-text-primary hover:text-accent transition-colors">Pruébalo Gratis</a>
+            <a href="#pricing" class="mobile-link text-text-primary hover:text-accent transition-colors">Precios</a>
+            <a href="#contacto" class="mobile-link text-text-primary hover:text-accent transition-colors">Contacto</a>
+        </nav>
+        <div class="mt-8 pt-8 border-t border-border">
+            <a href="#demo" class="mobile-link w-full flex items-center justify-center px-5 py-3.5 font-semibold text-white transition-all bg-accent hover:bg-accent-hover rounded-button">
+                Crear cuenta gratuita
+            </a>
+        </div>
+    </div>
+
+    <!-- ================== SECTION: HERO ================== -->
+    <section class="relative min-h-[100svh] flex items-center pt-24 pb-12 overflow-hidden">
+        <!-- Canvas Background -->
+        <canvas id="hero-canvas" class="absolute inset-0 z-0 opacity-100 sm:opacity-100 pointer-events-none"></canvas>
+        
+        <!-- Mobile static gradient fallback (visible solo si falla el canvas o es mobile muy lento) -->
+        <div class="absolute inset-0 z-0 bg-[radial-gradient(circle_at_top_right,rgba(47,69,106,0.1),transparent_50%)]"></div>
+
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 w-full relative z-10 grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+            
+            <!-- Left Column: Copy -->
+            <div class="flex flex-col items-start space-y-8 max-w-2xl mx-auto lg:mx-0 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 backdrop-blur-md">
+                    <span class="text-accent text-xs font-semibold tracking-wide uppercase">✦ Agente de Voz con IA</span>
+                    <span class="text-text-secondary text-xs">· Disponible 24/7</span>
+                </div>
+
+                <h1 class="font-display font-extrabold text-5xl sm:text-6xl lg:text-[72px] leading-[1.05] tracking-tight">
+                    Tu Negocio Atendido <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent to-accent-secondary" style="background-size: 200% auto; animation: gradient-shift 4s linear infinite;">Siempre. Sin pausas.</span>
+                </h1>
+
+                <p class="text-lg text-text-secondary leading-relaxed max-w-md mx-auto lg:mx-0">
+                    Onucall gestiona tus llamadas entrantes con un agente de IA que habla y actúa. <strong class="text-text-primary font-medium">Configúralo tú mismo en 3 minutos. Sin hablar con ventas. Pruebas gratis, decides después.</strong>
+                </p>
+
+                <div class="flex flex-col sm:flex-row items-center gap-4 w-full justify-center lg:justify-start">
+                    <a href="#demo" class="w-full sm:w-auto px-8 py-4 text-base font-semibold text-white transition-all bg-accent rounded-button hover:bg-accent-hover hover:shadow-[0_0_20px_rgba(47,69,106,0.5)] flex items-center justify-center gap-2 group">
+                        Crear cuenta gratis
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                    <a href="#features" class="w-full sm:w-auto px-8 py-4 text-base font-medium text-text-primary transition-all border border-border rounded-button hover:border-accent hover:text-accent hover:bg-accent/5 flex items-center justify-center">
+                        Ver cómo funciona
+                    </a>
+                </div>
+
+                <!-- Metrics -->
+                <div class="pt-4 flex items-center justify-center lg:justify-start gap-4 sm:gap-6 w-full divide-x divide-border">
+                    <div class="pr-4 sm:pr-6 flex flex-col items-center lg:items-start">
+                        <span class="text-text-primary font-bold text-lg font-display">94%</span>
+                        <span class="text-text-muted text-xs">Llamadas resueltas</span>
+                    </div>
+                    <div class="px-4 sm:px-6 flex flex-col items-center lg:items-start">
+                        <span class="text-text-primary font-bold text-lg font-display">+2.400</span>
+                        <span class="text-text-muted text-xs">Empresas confían</span>
+                    </div>
+                    <div class="pl-4 sm:pl-6 flex flex-col items-center lg:items-start">
+                        <span class="text-text-primary font-bold text-lg font-display">< 1s</span>
+                        <span class="text-text-muted text-xs">Tiempo respuesta</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Floating Mockup -->
+            <div class="relative w-full max-w-md mx-auto lg:mr-0 lg:ml-auto perspective-[1000px] mt-8 lg:mt-0">
+                <!-- Glow background -->
+                <div class="absolute inset-0 bg-accent/20 blur-[80px] rounded-full transform -translate-y-10 scale-90 pointer-events-none"></div>
+                
+                <div class="glass-card rounded-2xl overflow-hidden shadow-2xl shadow-black/50 floating-element relative z-10">
+                    
+                    <!-- Header -->
+                    <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-black/20">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2.5 h-2.5 rounded-full bg-accent-secondary" style="animation: pulse-glow 2s infinite;"></div>
+                            <span class="text-sm font-medium text-text-secondary">Llamada en curso · 1:42</span>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Chat Area -->
+                    <div class="p-5 space-y-5 bg-gradient-to-b from-transparent to-black/40">
+                        
+                        <!-- Agent Bubble -->
+                        <div class="flex gap-3 max-w-[90%]">
+                            <div class="w-8 h-8 rounded-full bg-bg-surface border border-accent flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent/20">
+                                <span class="text-accent font-display font-bold text-xs">IA</span>
+                            </div>
+                            <div class="bg-accent/10 border border-accent/20 rounded-2xl rounded-tl-sm p-3.5 text-sm text-text-primary leading-relaxed shadow-sm">
+                                Buenos días, le atiende el asistente de Clínica Salud Norte. ¿En qué puedo ayudarle hoy?
+                            </div>
+                        </div>
+
+                        <!-- Client Bubble -->
+                        <div class="flex gap-3 max-w-[90%] ml-auto justify-end">
+                            <div class="bg-bg-elevated border border-border-subtle rounded-2xl rounded-tr-sm p-3.5 text-sm text-text-primary leading-relaxed shadow-sm">
+                                Quería pedir cita con el Dr. García para la próxima semana.
+                            </div>
+                        </div>
+
+                        <!-- Agent Typing -->
+                        <div class="flex gap-3 max-w-[90%]">
+                            <div class="w-8 h-8 rounded-full bg-bg-surface border border-accent flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent/20">
+                                <span class="text-accent font-display font-bold text-xs">IA</span>
+                            </div>
+                            <div class="bg-accent/10 border border-accent/20 rounded-2xl rounded-tl-sm p-3.5 flex items-center gap-1.5 shadow-sm h-11 w-16 justify-center">
+                                <div class="w-1.5 h-1.5 bg-accent-secondary rounded-full typing-dot" style="animation-delay: 0ms;"></div>
+                                <div class="w-1.5 h-1.5 bg-accent-secondary rounded-full typing-dot" style="animation-delay: 150ms;"></div>
+                                <div class="w-1.5 h-1.5 bg-accent-secondary rounded-full typing-dot" style="animation-delay: 300ms;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Audio Waves -->
+                    <div class="px-5 py-4 border-t border-white/10 bg-bg-surface/80 flex items-center justify-between">
+                        <div class="flex items-center gap-1.5 h-6">
+                            <div class="w-1 bg-accent-secondary rounded-full soundwave-bar" style="height: 12px; animation-duration: 0.4s;"></div>
+                            <div class="w-1 bg-accent-secondary rounded-full soundwave-bar" style="height: 20px; animation-duration: 0.7s;"></div>
+                            <div class="w-1 bg-accent-secondary rounded-full soundwave-bar" style="height: 8px; animation-duration: 0.3s;"></div>
+                            <div class="w-1 bg-accent-secondary rounded-full soundwave-bar" style="height: 16px; animation-duration: 0.5s;"></div>
+                            <div class="w-1 bg-accent-secondary rounded-full soundwave-bar" style="height: 10px; animation-duration: 0.6s;"></div>
+                            <div class="w-1 bg-accent-secondary rounded-full soundwave-bar" style="height: 18px; animation-duration: 0.45s;"></div>
+                            <div class="w-1 bg-accent-secondary rounded-full soundwave-bar" style="height: 6px; animation-duration: 0.35s;"></div>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent-secondary">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span class="text-xs text-text-muted font-medium">Resumen activado</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================== SECTION: TECH STACK ================== -->
+    <section class="py-12 bg-bg-surface border-y border-border">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <p class="text-center text-sm font-semibold text-text-muted mb-8 uppercase tracking-widest">Infraestructura de vanguardia y seguridad enterprise</p>
+            
+            <div class="relative w-full overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);">
+                <div class="flex flex-wrap items-center justify-center gap-12 md:gap-20 pb-4">
+                    <!-- Qwik -->
+                    <div class="flex items-center gap-2 opacity-50 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 group cursor-default">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-[#18B6F6] transition-colors"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        <span class="font-display font-bold text-xl text-text-secondary group-hover:text-text-primary transition-colors tracking-tight">Qwik</span>
+                    </div>
+                    <!-- Supabase -->
+                    <div class="flex items-center gap-2 opacity-50 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 group cursor-default">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-[#3ECF8E] transition-colors"><circle cx="12" cy="12" r="10"/><path d="M12 6l-4 8h8z"/></svg>
+                        <span class="font-display font-bold text-xl text-text-secondary group-hover:text-text-primary transition-colors tracking-tight">Supabase</span>
+                    </div>
+                    <!-- PostgreSQL -->
+                    <div class="flex items-center gap-2 opacity-50 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 group cursor-default">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-[#336791] transition-colors"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+                        <span class="font-display font-bold text-xl text-text-secondary group-hover:text-text-primary transition-colors tracking-tight">PostgreSQL</span>
+                    </div>
+                    <!-- Drizzle -->
+                    <div class="flex items-center gap-2 opacity-50 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 group cursor-default">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-[#C5F74F] transition-colors"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+                        <span class="font-display font-bold text-xl text-text-secondary group-hover:text-text-primary transition-colors tracking-tight">Drizzle</span>
+                    </div>
+                    <!-- n8n -->
+                    <div class="flex items-center gap-2 opacity-50 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 group cursor-default">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-[#FF6D5A] transition-colors"><path d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="4" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="20"/><line x1="4" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="20" y2="12"/></svg>
+                        <span class="font-display font-bold text-xl text-text-secondary group-hover:text-text-primary transition-colors tracking-tight">n8n</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================== SECTION: FEATURES ================== -->
+    <section id="features" class="py-24 bg-bg-base relative">
+        <!-- Decoración bg -->
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-accent/5 to-transparent opacity-50 pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-3xl mx-auto mb-16 scroll-reveal">
+                <h2 class="font-display font-bold text-3xl md:text-4xl text-text-primary mb-4">Todo lo que necesitas. Nada que no necesitas.</h2>
+                <p class="text-lg text-text-secondary">La inteligencia artificial aplicada con sentido común para resolver problemas operativos reales de tu empresa.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                
+                <!-- Card 1 -->
+                <div class="bg-bg-surface border border-border rounded-card p-8 hover:border-accent/50 hover:shadow-[0_10px_30px_rgba(47,69,106,0.1)] hover:scale-[1.02] transition-all duration-300 group scroll-reveal" style="animation-delay: 100ms;">
+                    <div class="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent/20 transition-colors">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-display font-bold text-xl text-text-primary mb-3">Disponibilidad total</h3>
+                    <p class="text-text-secondary leading-relaxed">Atiende llamadas los 365 días del año, a cualquier hora, sin pausas ni desvíos. Nunca más un "deje su mensaje tras la señal".</p>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-bg-surface border border-border rounded-card p-8 hover:border-accent/50 hover:shadow-[0_10px_30px_rgba(47,69,106,0.1)] hover:scale-[1.02] transition-all duration-300 group scroll-reveal" style="animation-delay: 200ms;">
+                    <div class="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent/20 transition-colors">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="6"></circle>
+                            <circle cx="12" cy="12" r="2"></circle>
+                        </svg>
+                    </div>
+                    <h3 class="font-display font-bold text-xl text-text-primary mb-3">Calificación automática</h3>
+                    <p class="text-text-secondary leading-relaxed">Identifica el motivo de la llamada, recoge datos clave y los clasifica según la urgencia sin intervención humana.</p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-bg-surface border border-border rounded-card p-8 hover:border-accent/50 hover:shadow-[0_10px_30px_rgba(47,69,106,0.1)] hover:scale-[1.02] transition-all duration-300 group scroll-reveal" style="animation-delay: 300ms;">
+                    <div class="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent/20 transition-colors">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                        </svg>
+                    </div>
+                    <h3 class="font-display font-bold text-xl text-text-primary mb-3">Integración con tu flujo</h3>
+                    <p class="text-text-secondary leading-relaxed">Recibe notificaciones al instante por email, CRM o Slack. Perfectamente compatible con las herramientas que ya usas.</p>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-bg-surface border border-border rounded-card p-8 hover:border-accent/50 hover:shadow-[0_10px_30px_rgba(47,69,106,0.1)] hover:scale-[1.02] transition-all duration-300 group scroll-reveal" style="animation-delay: 400ms;">
+                    <div class="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent/20 transition-colors">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <h3 class="font-display font-bold text-xl text-text-primary mb-3">Resumen en tiempo real</h3>
+                    <p class="text-text-secondary leading-relaxed">Cada llamada genera un informe estructurado de forma inmediata: datos de contacto, intención y acción recomendada.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ================== SECTION: DASHBOARD & CRM ================== -->
+    <section class="py-32 bg-bg-surface border-t border-border relative overflow-hidden">
+        <!-- Background Glows -->
+        <div class="absolute top-1/4 -left-40 w-96 h-96 bg-accent/10 blur-[120px] rounded-full pointer-events-none"></div>
+        <div class="absolute bottom-1/4 -right-40 w-96 h-96 bg-accent-secondary/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            
+            <div class="text-center max-w-4xl mx-auto mb-20 scroll-reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/40 bg-accent/10 backdrop-blur-md mb-8">
+                    <span class="text-accent text-xs font-semibold tracking-wide uppercase">El Cerebro de tus Operaciones</span>
+                </div>
+                <h2 class="font-display font-extrabold text-4xl md:text-5xl lg:text-6xl text-text-primary mb-8 leading-tight">
+                    Mucho más que un simple bot.<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent to-accent-secondary">CRM Omnicanal con IA Integrada.</span>
+                </h2>
+                <p class="text-xl text-text-secondary leading-relaxed max-w-3xl mx-auto">
+                    Onucall es una plataforma multi-tenant donde cada interacción con un cliente (Voz, WhatsApp, SMS) converge en un dashboard intuitivo, sin adornos y minimalista. 
+                    <strong class="text-text-primary font-medium">Vectorizamos tu negocio:</strong> introduce tus documentos para entrenar al agente. Haz consultas cruzadas a la IA en tiempo real sobre cualquier lead.
+                </p>
+            </div>
+
+            <!-- Dashboard UI Mockup -->
+            <div class="relative max-w-6xl mx-auto scroll-reveal" style="animation-delay: 200ms;">
+                <!-- Browser/App Chrome -->
+                <div class="rounded-2xl border border-border bg-bg-base overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col">
+                    
+                    <!-- Top Bar -->
+                    <div class="h-12 border-b border-border bg-bg-surface flex items-center px-6 gap-4">
+                        <div class="flex gap-2.5">
+                            <div class="w-3.5 h-3.5 rounded-full bg-border-subtle hover:bg-red-500/80 transition-colors cursor-pointer"></div>
+                            <div class="w-3.5 h-3.5 rounded-full bg-border-subtle hover:bg-yellow-500/80 transition-colors cursor-pointer"></div>
+                            <div class="w-3.5 h-3.5 rounded-full bg-border-subtle hover:bg-green-500/80 transition-colors cursor-pointer"></div>
+                        </div>
+                        <div class="flex-grow flex justify-center">
+                            <div class="px-32 py-1.5 rounded-md bg-bg-base border border-border flex items-center gap-2 text-xs text-text-muted">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                app.onucall.com/workspace
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- App Layout -->
+                    <div class="flex flex-col md:flex-row h-auto md:min-h-[700px] bg-bg-base">
+                        
+                        <!-- Sidebar -->
+                        <div class="w-full md:w-72 border-r border-border bg-bg-surface p-6 flex flex-col gap-6 hidden md:flex">
+                            
+                            <!-- Header Sidebar tipo imagen -->
+                            <div class="flex items-center gap-3 px-1 pb-4 border-b border-border/50">
+                                <div class="w-10 h-10 rounded-full bg-[#E2E8F0] text-[#1E293B] flex items-center justify-center font-bold text-sm">
+                                    IH
+                                </div>
+                                <div class="flex flex-col">
+                                    <div class="text-[15px] font-bold text-text-primary flex items-center gap-1 cursor-pointer hover:text-accent transition-colors">
+                                        InmoHorizonte 
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted mt-0.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="flex gap-2 mt-1">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#F3E8FF] text-[#9333EA]">Propietario</span>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FEF3C7] text-[#D97706]">Demo</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Navegación calcada -->
+                            <nav class="flex flex-col gap-1.5 mt-2">
+                                <div class="px-4 py-2.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-base/50 text-[14px] font-medium flex items-center gap-3 transition-colors cursor-pointer group">
+                                    <span class="text-text-muted group-hover:text-text-primary transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>
+                                    <span class="flex-grow">Dashboard</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted/50"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </div>
+                                
+                                <!-- Divisor sutil opcional -->
+                                <div class="h-px w-full bg-border/50 my-1"></div>
+
+                                <div class="px-4 py-2.5 rounded-lg bg-bg-base text-text-primary text-[14px] font-medium flex items-center gap-3 border border-border shadow-sm">
+                                    <span class="text-accent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
+                                    Interacciones
+                                </div>
+                                
+                                <div class="px-4 py-2.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-base/50 text-[14px] font-medium flex items-center gap-3 transition-colors cursor-pointer group">
+                                    <span class="text-text-muted group-hover:text-text-primary transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg></span>
+                                    Contactos
+                                </div>
+                                
+                                <div class="px-4 py-2.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-base/50 text-[14px] font-medium flex items-center gap-3 transition-colors cursor-pointer group">
+                                    <span class="text-text-muted group-hover:text-text-primary transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg></span>
+                                    <span class="flex-grow">CMS - Inmuebles</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted/50"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </div>
+                                
+                                <div class="px-4 py-2.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-base/50 text-[14px] font-medium flex items-center gap-3 transition-colors cursor-pointer group">
+                                    <span class="text-text-muted group-hover:text-text-primary transition-colors"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M9 12l2 2 4-4"></path></svg></span>
+                                    <span class="flex-grow">Agente IA</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-text-muted/50"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </div>
+                            </nav>
+
+                            <!-- Mini dropzone en sidebar opcional abajo -->
+                            <div class="mt-auto p-5 rounded-xl border-2 border-dashed border-accent/30 bg-accent/5 flex flex-col items-center justify-center text-center gap-3 group cursor-pointer hover:bg-accent/10 hover:border-accent/50 transition-colors">
+                                <div class="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center group-hover:-translate-y-1 transition-transform">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-text-primary font-semibold mb-0.5">Arrastra PDF/DOCX</div>
+                                    <div class="text-xs text-text-muted">Actualiza tu agente (RAG)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Content Area -->
+                        <div class="flex-grow flex flex-col relative">
+                            
+                            <!-- Chat Header -->
+                            <div class="h-20 border-b border-border bg-bg-base flex items-center justify-between px-8 shrink-0">
+                                <div class="flex items-center gap-5">
+                                    <div class="w-12 h-12 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-lg border border-blue-500/20">M</div>
+                                    <div>
+                                        <div class="text-base font-bold text-text-primary flex items-center gap-3 mb-1">
+                                            Mercedes Carranza 
+                                            <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-green-500/10 text-green-400 border border-green-500/20 tracking-wide uppercase">Lead Caliente</span>
+                                        </div>
+                                        <div class="text-xs text-text-muted flex items-center gap-2">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                            Llamada entrante · Hace 5 min
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <button class="px-4 py-2 rounded-lg border border-border bg-bg-surface hover:bg-bg-elevated text-sm text-text-primary font-medium transition-colors shadow-sm">
+                                        Abrir en CRM
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Transcription & RAG Split -->
+                            <div class="flex-grow flex overflow-hidden">
+                                
+                                <!-- Transcription Left -->
+                                <div class="w-full lg:w-3/5 border-r border-border p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8 relative">
+                                    
+                                    <div class="text-xs text-center text-text-muted font-medium mb-2 bg-bg-surface py-1.5 px-4 rounded-full self-center border border-border">Hoy, 10:42 AM</div>
+                                    
+                                    <!-- Agent -->
+                                    <div class="flex gap-4 max-w-[85%]">
+                                        <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 border border-accent/30 shadow-sm"><span class="text-accent text-sm font-bold">IA</span></div>
+                                        <div class="bg-bg-surface border border-border rounded-2xl rounded-tl-sm p-4 text-[15px] text-text-primary leading-relaxed shadow-sm">
+                                            Hola, buenos dias, soy Carlos, el asistente virtual de InmoHorizonte, ¿Cómo puedo ayudarte?
+                                        </div>
+                                    </div>
+
+                                    <!-- Client (AJUSTADO A MAX-W-75% para moverlo más a la derecha) -->
+                                    <div class="flex gap-4 max-w-[75%] ml-auto justify-end">
+                                        <div class="bg-blue-500/10 border border-blue-500/20 rounded-2xl rounded-tr-sm p-4 text-[15px] text-text-primary leading-relaxed shadow-sm">
+                                            Hola, me llamo Mercedes. Quería información sobre el apartamento en primera línea de playa en la zona de Matalascañas que tienen en la web.
+                                        </div>
+                                        <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 border border-blue-500/30 text-blue-400 font-bold text-sm shadow-sm">M</div>
+                                    </div>
+
+                                    <!-- Agent -->
+                                    <div class="flex gap-4 max-w-[85%]">
+                                        <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 border border-accent/30 shadow-sm"><span class="text-accent text-sm font-bold">IA</span></div>
+                                        <div class="bg-bg-surface border border-border rounded-2xl rounded-tl-sm p-4 text-[15px] text-text-primary leading-relaxed shadow-sm">
+                                            Perfecto Mercedes, el residencial "Brisas del Mar". Dispone de 3 habitaciones y plaza de garaje. ¿Le gustaría agendar una visita presencial esta semana?
+                                        </div>
+                                    </div>
+
+                                    <!-- Client (AJUSTADO A MAX-W-75% para moverlo más a la derecha) -->
+                                    <div class="flex gap-4 max-w-[75%] ml-auto justify-end">
+                                        <div class="bg-blue-500/10 border border-blue-500/20 rounded-2xl rounded-tr-sm p-4 text-[15px] text-text-primary leading-relaxed shadow-sm">
+                                            Sí, me vendría bien el viernes por la tarde. ¿Tiene terraza grande?
+                                        </div>
+                                        <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 border border-blue-500/30 text-blue-400 font-bold text-sm shadow-sm">M</div>
+                                    </div>
+
+                                </div>
+
+                                <!-- AI Assistant Right Panel (Contextual) -->
+                                <div class="hidden lg:flex w-2/5 bg-bg-surface flex-col">
+                                    <div class="p-6 border-b border-border bg-bg-base/50 flex items-center justify-between">
+                                        <h4 class="text-sm font-display font-bold text-text-primary flex items-center gap-2.5">
+                                            <span class="text-accent-secondary text-lg">✨</span> Consultar a Onucall IA
+                                        </h4>
+                                        <span class="text-[10px] text-accent-secondary bg-accent-secondary/10 uppercase tracking-widest font-semibold border border-accent-secondary/20 px-2 py-1 rounded-md">Contexto Activo</span>
+                                    </div>
+                                    
+                                    <div class="flex-grow p-6 flex flex-col gap-6 overflow-y-auto">
+                                        <!-- User Prompt -->
+                                        <div class="bg-bg-base border border-border rounded-xl p-4 text-[14px] text-text-primary shadow-sm relative leading-relaxed">
+                                            <div class="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-bg-elevated border border-border flex items-center justify-center text-xs font-semibold text-text-secondary shadow-sm">Tú</div>
+                                            Dime cuántos clientes han preguntado por esta propiedad en el último mes, analiza el mercado de la competencia local y dame su valoración baja, alta y media, analiza todo y me das un resumen.
+                                        </div>
+
+                                        <!-- AI Response -->
+                                        <div class="bg-accent/5 border border-accent/20 rounded-xl p-5 text-[13px] text-text-primary relative shadow-inner leading-relaxed">
+                                            <div class="flex items-center gap-2 mb-4 border-b border-accent/10 pb-3">
+                                                <div class="w-2 h-2 rounded-full bg-accent-secondary animate-pulse shadow-[0_0_8px_rgba(214,255,56,0.8)]"></div>
+                                                <span class="text-sm font-display font-bold text-text-primary">Análisis RAG completado</span>
+                                            </div>
+                                            
+                                            <p class="mb-2 text-text-secondary"><strong class="text-text-primary font-semibold">1. Demanda y Propiedad (Ref: 442A):</strong></p>
+                                            <p class="mb-2 text-text-secondary pl-2 text-[12px]">En los últimos 30 días, <span class="text-text-primary font-bold">14 clientes</span> se han interesado por "Brisas del Mar" en Matalascañas (Huelva). Según tu base de datos, destaca por:</p>
+                                            <ul class="text-text-secondary space-y-1 list-disc pl-6 marker:text-accent/50 mb-5 text-[12px]">
+                                                <li>120m² de espacio útil y libre de cargas.</li>
+                                                <li>Orientación Sur con terraza de 24m² y vistas al exterior.</li>
+                                                <li>3 dormitorios con armarios empotrados y 2 baños completos.</li>
+                                                <li>Plaza de garaje incluida con acceso directo.</li>
+                                                <li>Construido en 2004, estado de conservación: <span class="text-text-primary font-medium">Muy Bueno</span>.</li>
+                                            </ul>
+                                            
+                                            <p class="mb-2 text-text-secondary"><strong class="text-text-primary font-semibold">2. Datos de Competencia Local:</strong></p>
+                                            <div class="grid grid-cols-3 gap-2 mb-5 pl-2 text-center text-[12px]">
+                                                <div class="bg-bg-surface border border-border rounded p-1.5"><span class="block text-text-muted text-[10px] uppercase">Baja</span><span class="font-bold font-display text-text-primary">185.000€</span></div>
+                                                <div class="bg-bg-surface border border-accent-secondary/50 rounded p-1.5 shadow-sm shadow-accent-secondary/10"><span class="block text-accent-secondary text-[10px] uppercase font-bold tracking-wide">Media</span><span class="font-bold font-display text-text-primary">215.000€</span></div>
+                                                <div class="bg-bg-surface border border-border rounded p-1.5"><span class="block text-text-muted text-[10px] uppercase">Alta</span><span class="font-bold font-display text-text-primary">245.000€</span></div>
+                                            </div>
+
+                                            <p class="mb-1 text-text-secondary"><strong class="text-text-primary font-semibold">3. Resumen y Recomendación:</strong></p>
+                                            <p class="text-text-secondary pl-2 text-[12px]">Propiedad altamente competitiva debido a la plaza de garaje y su excelente estado. Sugiero un precio de salida de <strong class="text-text-primary">225.000€</strong>, maximizando rentabilidad pero manteniéndose muy atractiva dentro de la media del mercado.</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Prompt Input box -->
+                                    <div class="p-6 bg-bg-base border-t border-border">
+                                        <div class="relative">
+                                            <input type="text" placeholder="Haz una consulta a tu base de datos..." class="w-full bg-bg-surface border border-border rounded-xl pl-4 pr-12 py-3.5 text-sm text-text-primary focus:border-accent focus:ring-1 focus:ring-accent outline-none shadow-sm transition-all placeholder:text-text-muted">
+                                            <button class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-accent/10 text-accent hover:bg-accent hover:text-white flex items-center justify-center transition-colors">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Badges Flowing around -->
+                <div class="hidden md:flex absolute top-1/4 -left-6 lg:-left-10 bg-bg-elevated border border-border px-5 py-3 rounded-xl shadow-2xl items-center gap-3 floating-element" style="animation-delay: -1s;">
+                    <span class="text-accent text-xl">🤖</span> <span class="text-sm font-bold text-text-primary">Su agente Carlos</span>
+                </div>
+                <!-- RAG Badge Ajustado para evitar sangrado a la derecha (-right-2 lg:-right-4) -->
+                <div class="hidden md:flex absolute bottom-1/4 -right-2 lg:-right-4 bg-bg-elevated border border-accent-secondary/50 px-5 py-3 rounded-xl shadow-2xl items-center gap-3 floating-element" style="animation-delay: -2s;">
+                    <span class="text-accent-secondary text-xl">📚</span> <span class="text-sm font-bold text-text-primary">RAG Vectorial</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ================== SECTION: HOW IT WORKS ================== -->
+    <section class="py-24 bg-bg-base border-t border-border">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-20 scroll-reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent-secondary/40 bg-accent-secondary/10 backdrop-blur-md mb-6">
+                    <span class="text-accent-secondary text-xs font-semibold tracking-wide uppercase">100% Self-Service</span>
+                </div>
+                <h2 class="font-display font-bold text-3xl md:text-4xl text-text-primary mb-4">Tu agente listo en 3 minutos.<br>Sin hablar con ventas.</h2>
+                <p class="text-lg text-text-secondary">Mientras la competencia te obliga a agendar reuniones y perder el tiempo, en Onucall te registras, pruebas y decides tú mismo. Totalmente online.</p>
+            </div>
+
+            <div class="relative grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-8">
+                <!-- Línea conectora Desktop -->
+                <div class="hidden md:block absolute top-[60px] left-[16%] right-[16%] h-[2px] border-t-2 border-dashed border-accent/30 z-0"></div>
+
+                <!-- Paso 1 -->
+                <div class="relative z-10 flex flex-col items-center text-center scroll-reveal" style="animation-delay: 100ms;">
+                    <div class="relative w-24 h-24 flex items-center justify-center mb-6">
+                        <span class="absolute inset-0 flex items-center justify-center font-display font-black text-[80px] text-transparent bg-clip-text bg-gradient-to-b from-accent/20 to-transparent leading-none select-none">01</span>
+                        <div class="w-12 h-12 rounded-full bg-bg-surface border border-accent/50 flex items-center justify-center shadow-[0_0_15px_rgba(47,69,106,0.2)] relative z-10">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <h3 class="font-display font-bold text-xl text-text-primary mb-3">Registro instantáneo</h3>
+                    <p class="text-text-secondary leading-relaxed">Crea tu cuenta gratis en segundos. Sin introducir tarjeta de crédito. Sin fricción. Accedes directamente a la plataforma.</p>
+                </div>
+
+                <!-- Paso 2 -->
+                <div class="relative z-10 flex flex-col items-center text-center scroll-reveal" style="animation-delay: 200ms;">
+                    <div class="relative w-24 h-24 flex items-center justify-center mb-6">
+                        <span class="absolute inset-0 flex items-center justify-center font-display font-black text-[80px] text-transparent bg-clip-text bg-gradient-to-b from-accent/20 to-transparent leading-none select-none">02</span>
+                        <div class="w-12 h-12 rounded-full bg-bg-surface border border-accent/50 flex items-center justify-center shadow-[0_0_15px_rgba(47,69,106,0.2)] relative z-10">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <h3 class="font-display font-bold text-xl text-text-primary mb-3">Eliges una plantilla</h3>
+                    <p class="text-text-secondary leading-relaxed">Selecciona un prompt pre-entrenado para tu sector, dale un nombre a tu agente y ajusta los detalles. Sin programar ni empezar desde cero.</p>
+                </div>
+
+                <!-- Paso 3 -->
+                <div class="relative z-10 flex flex-col items-center text-center scroll-reveal" style="animation-delay: 300ms;">
+                    <div class="relative w-24 h-24 flex items-center justify-center mb-6">
+                        <span class="absolute inset-0 flex items-center justify-center font-display font-black text-[80px] text-transparent bg-clip-text bg-gradient-to-b from-accent/20 to-transparent leading-none select-none">03</span>
+                        <div class="w-12 h-12 rounded-full bg-bg-surface border border-accent/50 flex items-center justify-center shadow-[0_0_15px_rgba(47,69,106,0.2)] relative z-10">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </div>
+                    </div>
+                    <h3 class="font-display font-bold text-xl text-text-primary mb-3">Pruebas antes de pagar</h3>
+                    <p class="text-text-secondary leading-relaxed">Llama a tu propio agente y ponlo a prueba tú mismo. Solo pasas a un plan de pago cuando estés convencido del resultado.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================== SECTION: SECTORES / PLANTILLAS ================== -->
+    <section id="sectores" class="py-24 bg-bg-surface border-t border-border">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12 scroll-reveal">
+                <h2 class="font-display font-bold text-3xl md:text-4xl text-text-primary mb-4">Plantillas listas para usar en tu sector.</h2>
+                <p class="text-lg text-text-secondary">No empieces desde cero. Selecciona un prompt pre-entrenado y optimizado para tu industria, personalízalo a tu gusto y despliega tu agente en minutos sin riesgo a alucinaciones.</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex overflow-x-auto hide-scrollbar justify-start md:justify-center border-b border-border mb-12 scroll-reveal">
+                <div class="flex space-x-2 pb-px min-w-max" role="tablist">
+                    <button class="sector-tab-btn active flex items-center gap-2 px-5 py-3 text-sm font-semibold rounded-t-lg transition-colors bg-accent/20 border-b-2 border-accent text-white" data-sector="inmobiliaria" role="tab" aria-selected="true">
+                        <span>🏠</span> Inmobiliarias
+                    </button>
+                    <button class="sector-tab-btn flex items-center gap-2 px-5 py-3 text-sm font-semibold rounded-t-lg transition-colors text-text-secondary hover:text-text-primary border-b-2 border-transparent hover:border-border" data-sector="clinica" role="tab" aria-selected="false">
+                        <span>🏥</span> Clínicas Médicas
+                    </button>
+                    <button class="sector-tab-btn flex items-center gap-2 px-5 py-3 text-sm font-semibold rounded-t-lg transition-colors text-text-secondary hover:text-text-primary border-b-2 border-transparent hover:border-border" data-sector="abogados" role="tab" aria-selected="false">
+                        <span>⚖️</span> Abogados
+                    </button>
+                    <button class="sector-tab-btn flex items-center gap-2 px-5 py-3 text-sm font-semibold rounded-t-lg transition-colors text-text-secondary hover:text-text-primary border-b-2 border-transparent hover:border-border" data-sector="concesionario" role="tab" aria-selected="false">
+                        <span>🚗</span> Concesionarios
+                    </button>
+                    <button class="sector-tab-btn flex items-center gap-2 px-5 py-3 text-sm font-semibold rounded-t-lg transition-colors text-text-secondary hover:text-text-primary border-b-2 border-transparent hover:border-border" data-sector="rentacar" role="tab" aria-selected="false">
+                        <span>🔑</span> Rent a Car
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel de Contenido -->
+            <div class="grid lg:grid-cols-2 gap-12 items-center min-h-[400px] scroll-reveal">
+                <!-- Izquierda: Textos Dinámicos -->
+                <div id="sector-info-panel" class="transition-opacity duration-300">
+                    <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded border border-accent-secondary/30 bg-accent-secondary/10 mb-4">
+                        <div class="w-1.5 h-1.5 rounded-full bg-accent-secondary animate-pulse shadow-[0_0_8px_rgba(214,255,56,0.8)]"></div>
+                        <span class="text-accent-secondary text-[11px] font-bold tracking-wider uppercase">Plantilla Verificada</span>
+                    </div>
+                    <h3 class="font-display font-bold text-2xl text-text-primary mb-4" id="sector-title">Agente para Inmobiliarias</h3>
+                    <p class="text-text-secondary leading-relaxed mb-8" id="sector-desc">
+                        Cualifica leads interesados en alquiler o compra. Recoge preferencias de zona, presupuesto y agenda visitas automáticamente sin que el comercial pierda tiempo al teléfono.
+                    </p>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-3">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-accent mt-0.5 shrink-0"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="text-text-primary" id="sector-bullet-1">Filtro de presupuesto y zona</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-accent mt-0.5 shrink-0"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="text-text-primary" id="sector-bullet-2">Gestión de agenda para visitas</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-accent mt-0.5 shrink-0"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span class="text-text-primary" id="sector-bullet-3">Recogida de datos del lead al CRM</span>
+                        </li>
+                    </ul>
+                    <a href="#demo" class="inline-flex items-center gap-2 text-accent font-semibold hover:text-accent-hover transition-colors group">
+                        Usar esta plantilla ahora
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+
+                <!-- Derecha: Mockup Conversación Dinámico -->
+                <div class="glass-card rounded-2xl overflow-hidden border border-border bg-bg-elevated/50 shadow-lg relative">
+                    <div class="px-5 py-4 border-b border-border bg-bg-surface/80 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl" id="mockup-icon">🏠</span>
+                            <span class="text-sm font-semibold text-text-primary" id="mockup-header-title">Inmobiliaria Horizonte</span>
+                        </div>
+                        <span class="text-xs text-accent-secondary bg-accent-secondary/10 px-2 py-1 rounded-full border border-accent-secondary/20">En línea</span>
+                    </div>
+
+                    <div class="p-6 space-y-6" id="mockup-chat-area">
+                        <!-- Agent -->
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 border border-accent/30">
+                                <span class="text-accent text-xs font-bold">IA</span>
+                            </div>
+                            <div class="bg-bg-surface border border-border rounded-2xl rounded-tl-sm p-4 text-sm text-text-primary leading-relaxed" id="mockup-agent-1">
+                                Buenos días, le atiende el asistente de Inmobiliaria Horizonte. ¿En qué puedo ayudarle?
+                            </div>
+                        </div>
+                        <!-- Client -->
+                        <div class="flex gap-3 justify-end">
+                            <div class="bg-accent text-white rounded-2xl rounded-tr-sm p-4 text-sm leading-relaxed shadow-md" id="mockup-client-1">
+                                Hola, me interesa ver un piso de 3 habitaciones en el centro, sobre unos 300.000€.
+                            </div>
+                        </div>
+                        <!-- Agent 2 -->
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 border border-accent/30">
+                                <span class="text-accent text-xs font-bold">IA</span>
+                            </div>
+                            <div class="bg-bg-surface border border-border rounded-2xl rounded-tl-sm p-4 text-sm text-text-primary leading-relaxed" id="mockup-agent-2">
+                                Perfecto, tenemos varias opciones disponibles. ¿Cuándo le vendría bien visitar alguna?
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NUEVO: Banner Generador de Prompts IA -->
+            <div class="mt-16 bg-bg-elevated border border-border rounded-2xl p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-8 scroll-reveal shadow-xl shadow-black/20 relative overflow-hidden group">
+                <!-- Glow decorativo -->
+                <div class="absolute right-0 top-0 w-64 h-64 bg-accent-secondary/5 blur-[80px] rounded-full pointer-events-none group-hover:bg-accent-secondary/10 transition-colors duration-500"></div>
+                
+                <div class="flex-grow z-10">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent-secondary/20 bg-accent-secondary/10 mb-5">
+                        <span class="text-lg">✨</span>
+                        <span class="text-accent-secondary text-xs font-bold tracking-wide uppercase">Generador de Prompts IA</span>
+                    </div>
+                    <h3 class="font-display font-bold text-2xl md:text-3xl text-text-primary mb-3">¿Tu sector no está en la lista? No hay problema.</h3>
+                    <p class="text-text-secondary leading-relaxed max-w-3xl text-sm md:text-base">
+                        Olvídate del "síndrome de la página en blanco". Si tu negocio es muy específico (ej. una peluquería canina), nuestro asistente <strong>IA-Onucall</strong> te hará una rápida auditoría en línea. Con solo responder 3 preguntas sobre cómo quieres que se comporte tu agente, <strong class="text-text-primary font-medium">redactaremos el System Prompt perfecto, estructurado y anti-alucinaciones por ti.</strong>
+                    </p>
+                </div>
+                
+                <div class="shrink-0 z-10 w-full md:w-auto">
+                    <button class="w-full md:w-auto px-6 py-4 bg-bg-base border border-border hover:border-accent text-text-primary font-semibold rounded-button transition-all shadow-sm flex items-center justify-center gap-2 demo-sector-btn-trigger" onclick="document.querySelector('[data-sector=\'otro\']').click(); document.getElementById('demo').scrollIntoView({behavior: 'smooth'});">
+                        Simular auditoría IA
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ================== SECTION: TESTIMONIOS ================== -->
+    <section class="py-24 bg-bg-base border-t border-border">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-16 scroll-reveal">
+                <h2 class="font-display font-bold text-3xl md:text-4xl text-text-primary">Lo que dicen nuestros clientes.</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Testimonio 1 -->
+                <div class="glass-card rounded-card p-8 flex flex-col relative scroll-reveal" style="animation-delay: 100ms;">
+                    <div class="absolute top-6 right-8 text-accent/20 font-display text-6xl leading-none font-black">"</div>
+                    <div class="flex gap-1 mb-6">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <p class="text-text-secondary italic leading-relaxed mb-8 flex-grow">
+                        "Desde que implantamos Onucall, no perdemos ni una llamada. Nuestros pacientes siempre son atendidos de forma impecable aunque todo el equipo esté ocupado en consulta."
+                    </p>
+                    <div class="h-px bg-border w-full mb-6"></div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-accent/80 to-accent-secondary/80 flex items-center justify-center text-white font-bold text-lg">LV</div>
+                        <div>
+                            <div class="font-semibold text-text-primary text-sm">Dra. Laura Vega</div>
+                            <div class="text-xs text-text-muted">Directora Clínica Salud+</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonio 2 -->
+                <div class="glass-card rounded-card p-8 flex flex-col relative scroll-reveal" style="animation-delay: 200ms;">
+                    <div class="absolute top-6 right-8 text-accent/20 font-display text-6xl leading-none font-black">"</div>
+                    <div class="flex gap-1 mb-6">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <p class="text-text-secondary italic leading-relaxed mb-8 flex-grow">
+                        "El agente gestiona las consultas iniciales con una precisión asombrosa. Llego a la reunión con el cliente ya habiendo filtrado el caso y con un resumen perfecto en mi CRM."
+                    </p>
+                    <div class="h-px bg-border w-full mb-6"></div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-bg-surface to-border flex items-center justify-center text-text-primary font-bold text-lg border border-border">JM</div>
+                        <div>
+                            <div class="font-semibold text-text-primary text-sm">Javier Morales</div>
+                            <div class="text-xs text-text-muted">Despacho Morales & Cía</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonio 3 -->
+                <div class="glass-card rounded-card p-8 flex flex-col relative scroll-reveal" style="animation-delay: 300ms;">
+                    <div class="absolute top-6 right-8 text-accent/20 font-display text-6xl leading-none font-black">"</div>
+                    <div class="flex gap-1 mb-6">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-accent-secondary"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    </div>
+                    <p class="text-text-secondary italic leading-relaxed mb-8 flex-grow">
+                        "Multiplicamos por tres los leads cualificados de vehículos sin aumentar plantilla. La IA no descansa, atiende a la primera, y eso se nota inmediatamente en las ventas mensuales."
+                    </p>
+                    <div class="h-px bg-border w-full mb-6"></div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-bg-surface to-border flex items-center justify-center text-text-primary font-bold text-lg border border-border">MR</div>
+                        <div>
+                            <div class="font-semibold text-text-primary text-sm">Marcos Ruiz</div>
+                            <div class="text-xs text-text-muted">AutoPremium Motor</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================== SECTION: DEMO INTERACTIVA (HERO 2) ================== -->
+    <section id="demo" class="py-24 relative overflow-hidden border-t border-border">
+        <!-- Radial Gradient Background -->
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(47,69,106,0.08)_0%,rgba(11,13,20,1)_70%)] pointer-events-none z-0"></div>
+
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-3xl mx-auto mb-16 scroll-reveal">
+                <h2 class="font-display font-extrabold text-4xl md:text-5xl text-text-primary mb-6">Regístrate y crea tu agente ahora.</h2>
+                <p class="text-lg text-text-secondary leading-relaxed">Elige tu sector, crea tu cuenta gratuita y accede al panel de control para interactuar con tu agente de IA personalizado. Sin esperas. Totalmente online.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+                
+                <!-- Columna Izquierda: Contexto Visual -->
+                <div class="space-y-8 scroll-reveal" style="animation-delay: 100ms;">
+                    <div>
+                        <h3 class="font-display font-bold text-2xl text-text-primary mb-6">Al registrarte, podrás:</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-center gap-3">
+                                <div class="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center shrink-0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                <span class="text-text-primary">Acceder al dashboard de configuración</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <div class="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center shrink-0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                <span class="text-text-primary">Darle instrucciones personalizadas a tu IA</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <div class="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center shrink-0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                <span class="text-text-primary">Realizar llamadas de prueba ilimitadas</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <div class="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center shrink-0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                <span class="text-text-primary">Ver los informes y transcripciones generados</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="h-px w-full bg-gradient-to-r from-border via-border to-transparent"></div>
+
+                    <!-- Panel Visual Dinámico de la Demo -->
+                    <div class="glass-card rounded-2xl p-6 relative overflow-hidden transition-all duration-300 border border-accent/20 bg-accent/5">
+                        <div class="absolute -right-10 -top-10 w-32 h-32 bg-accent/20 blur-3xl rounded-full"></div>
+                        
+                        <div class="flex items-center gap-4 mb-6 relative z-10">
+                            <div class="text-5xl" id="demo-visual-icon">🏠</div>
+                            <div>
+                                <h4 class="font-display font-bold text-lg text-text-primary" id="demo-visual-title">Inmobiliarias</h4>
+                                <span class="text-xs text-accent-secondary flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-accent-secondary animate-pulse"></span>
+                                    Agente preparado
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 mb-6 relative z-10">
+                            <div class="bg-bg-elevated/80 border border-white/5 rounded-xl p-3 text-sm text-text-secondary italic" id="demo-visual-q">"Hola, busco un piso céntrico..."</div>
+                            <div class="bg-accent/10 border border-accent/20 rounded-xl p-3 text-sm text-text-primary flex items-start gap-2" id="demo-visual-a">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent shrink-0 mt-0.5"><path d="M12 2v20M17 5v14M22 10v4M7 5v14M2 10v4"/></svg>
+                                <span>"Perfecto. Tenemos opciones. ¿Cuándo le gustaría visitar?"</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between border-t border-white/10 pt-4 relative z-10">
+                            <span class="text-xs text-text-muted">Así suena tu agente de Onucall</span>
+                            <div class="flex items-center gap-1 h-4 opacity-50">
+                                <div class="w-0.5 bg-accent rounded-full soundwave-bar" style="height: 6px;"></div>
+                                <div class="w-0.5 bg-accent rounded-full soundwave-bar" style="height: 12px;"></div>
+                                <div class="w-0.5 bg-accent rounded-full soundwave-bar" style="height: 8px;"></div>
+                                <div class="w-0.5 bg-accent rounded-full soundwave-bar" style="height: 14px;"></div>
+                                <div class="w-0.5 bg-accent rounded-full soundwave-bar" style="height: 10px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-text-muted flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        Tus datos están protegidos. No hacemos spam.
+                    </p>
+                </div>
+
+                <!-- Columna Derecha: Formulario -->
+                <div class="bg-bg-elevated border border-border rounded-2xl p-6 sm:p-8 shadow-2xl shadow-accent/5 scroll-reveal" style="animation-delay: 200ms;">
+                    <form onsubmit="event.preventDefault();" class="space-y-6">
+                        
+                        <!-- Selector de Sector -->
+                        <div>
+                            <label class="block text-sm font-medium text-text-secondary mb-3">1. Elige una plantilla o empieza de cero</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="demo-sector-selector">
+                                <button type="button" class="demo-sector-btn active bg-accent/15 border border-accent text-white shadow-[0_0_10px_rgba(47,69,106,0.15)] rounded-button px-3 py-3 flex flex-col items-center justify-center gap-1 transition-all" data-sector="inmobiliaria">
+                                    <span class="text-xl">🏠</span>
+                                    <span class="text-xs font-semibold">Inmobiliaria</span>
+                                </button>
+                                <button type="button" class="demo-sector-btn bg-bg-surface border border-border text-text-secondary hover:border-accent/50 rounded-button px-3 py-3 flex flex-col items-center justify-center gap-1 transition-all" data-sector="clinica">
+                                    <span class="text-xl">🏥</span>
+                                    <span class="text-xs font-medium">Clínica</span>
+                                </button>
+                                <button type="button" class="demo-sector-btn bg-bg-surface border border-border text-text-secondary hover:border-accent/50 rounded-button px-3 py-3 flex flex-col items-center justify-center gap-1 transition-all" data-sector="abogados">
+                                    <span class="text-xl">⚖️</span>
+                                    <span class="text-xs font-medium">Abogados</span>
+                                </button>
+                                <button type="button" class="demo-sector-btn bg-bg-surface border border-border text-text-secondary hover:border-accent/50 rounded-button px-3 py-3 flex flex-col items-center justify-center gap-1 transition-all" data-sector="concesionario">
+                                    <span class="text-xl">🚗</span>
+                                    <span class="text-xs font-medium">Motor</span>
+                                </button>
+                                <button type="button" class="demo-sector-btn bg-bg-surface border border-border text-text-secondary hover:border-accent/50 rounded-button px-3 py-3 flex flex-col items-center justify-center gap-1 transition-all" data-sector="rentacar">
+                                    <span class="text-xl">🔑</span>
+                                    <span class="text-xs font-medium">Rent a Car</span>
+                                </button>
+                                <button type="button" class="demo-sector-btn bg-bg-surface border border-border text-text-secondary hover:border-accent/50 rounded-button px-3 py-3 flex flex-col items-center justify-center gap-1 transition-all" data-sector="otro">
+                                    <span class="text-xl">✨</span>
+                                    <span class="text-xs font-medium">Otro Sector</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Campos -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-text-secondary mb-1.5">2. Crea tu cuenta gratuita</label>
+                                <input type="text" placeholder="Nombre completo" class="w-full bg-bg-surface border border-border rounded-button px-4 py-3 text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all mb-4">
+                            </div>
+                            <div>
+                                <input type="email" placeholder="Email profesional" class="w-full bg-bg-surface border border-border rounded-button px-4 py-3 text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all mb-4">
+                            </div>
+                            <div>
+                                <input type="password" placeholder="Crea una contraseña" class="w-full bg-bg-surface border border-border rounded-button px-4 py-3 text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Checkbox -->
+                        <label class="flex items-start gap-3 cursor-pointer group">
+                            <div class="relative flex items-center justify-center mt-0.5">
+                                <input type="checkbox" class="peer appearance-none w-5 h-5 border border-border rounded bg-bg-surface checked:bg-accent checked:border-accent transition-colors cursor-pointer">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                            <span class="text-sm text-text-secondary leading-tight">Acepto recibir información sobre Onucall y sus servicios. Conozco la <a href="#" class="text-accent hover:underline">política de privacidad</a>.</span>
+                        </label>
+
+                        <!-- Botón CTA -->
+                        <button type="submit" class="w-full py-4 bg-accent font-display font-semibold text-white rounded-button text-lg hover:bg-accent-hover hover:shadow-[0_0_20px_rgba(47,69,106,0.4)] transition-all">
+                            Crear mi cuenta gratis →
+                        </button>
+
+                        <!-- Garantías -->
+                        <div class="flex items-center justify-center gap-4 text-xs text-text-muted divide-x divide-border pt-2">
+                            <span class="pr-4 flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Sin tarjeta</span>
+                            <span class="px-4 flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Configuración 3 min</span>
+                            <span class="pl-4 flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Acceso inmediato</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================== SECTION: PRICING ================== -->
+    <section id="pricing" class="py-24 bg-bg-surface border-t border-border">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-16 scroll-reveal">
+                <h2 class="font-display font-bold text-3xl md:text-4xl text-text-primary mb-4">Planes transparentes. Sin sorpresas.</h2>
+                <p class="text-lg text-text-secondary">Paga solo por el valor que te aporta. Cancela cuando quieras.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-5xl mx-auto scroll-reveal">
+                
+                <!-- Plan Starter -->
+                <div class="bg-bg-base border border-border rounded-2xl p-8 flex flex-col h-full">
+                    <h3 class="font-display font-semibold text-xl text-text-primary mb-2">Starter</h3>
+                    <div class="flex items-baseline gap-1 mb-4">
+                        <span class="font-display font-bold text-4xl text-text-primary">49€</span>
+                        <span class="text-text-secondary text-sm">/mes</span>
+                    </div>
+                    <p class="text-sm text-text-secondary mb-8">Ideal para pequeños negocios que no quieren perder oportunidades.</p>
+                    
+                    <ul class="space-y-4 mb-8 flex-grow">
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> 1 agente de voz
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Hasta 200 llamadas/mes
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> 1 sector configurado
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Resúmenes por email
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Soporte por chat
+                        </li>
+                    </ul>
+                    
+                    <a href="#demo" class="w-full py-3.5 border border-border text-text-primary font-medium rounded-button hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors text-center mt-auto">Comenzar gratis</a>
+                </div>
+
+                <!-- Plan Profesional (Destacado) -->
+                <div class="bg-bg-elevated border border-accent rounded-2xl p-8 flex flex-col h-full relative shadow-[0_0_30px_rgba(47,69,106,0.15)] md:scale-105 z-10">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-accent text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">Más Popular</div>
+                    
+                    <h3 class="font-display font-semibold text-xl text-text-primary mb-2 mt-2">Profesional</h3>
+                    <div class="flex items-baseline gap-1 mb-4">
+                        <span class="font-display font-bold text-4xl text-text-primary">149€</span>
+                        <span class="text-text-secondary text-sm">/mes</span>
+                    </div>
+                    <p class="text-sm text-text-secondary mb-8">Para empresas que basan sus ventas en la atención telefónica.</p>
+                    
+                    <ul class="space-y-4 mb-8 flex-grow">
+                        <li class="flex items-start gap-3 text-sm text-text-primary font-medium">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> 3 agentes de voz
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary font-medium">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Llamadas ilimitadas
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Hasta 3 sectores/departamentos
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Integración CRM básica
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Resúmenes + Grabaciones
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Soporte prioritario
+                        </li>
+                    </ul>
+                    
+                    <a href="#demo" class="w-full py-3.5 bg-accent text-white font-semibold rounded-button hover:bg-accent-hover hover:shadow-[0_0_15px_rgba(47,69,106,0.4)] transition-all text-center mt-auto">Empezar prueba gratuita</a>
+                </div>
+
+                <!-- Plan Empresa -->
+                <div class="bg-bg-base border border-border rounded-2xl p-8 flex flex-col h-full">
+                    <h3 class="font-display font-semibold text-xl text-text-primary mb-2">Empresa</h3>
+                    <div class="flex items-baseline gap-1 mb-4">
+                        <span class="font-display font-bold text-3xl text-text-primary">A medida</span>
+                    </div>
+                    <p class="text-sm text-text-secondary mb-8">Volumen alto, múltiples sedes y requisitos técnicos complejos.</p>
+                    
+                    <ul class="space-y-4 mb-8 flex-grow">
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Agentes ilimitados
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Multi-sede y multi-idioma
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Integraciones API avanzadas
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> SLA garantizado (99.9%)
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-accent shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Manager de cuenta dedicado
+                        </li>
+                    </ul>
+                    
+                    <a href="#demo" class="w-full py-3.5 border border-border text-text-primary font-medium rounded-button hover:border-accent hover:text-accent hover:bg-accent/5 transition-colors text-center mt-auto">Contactar ventas</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================== SECTION: FAQ ================== -->
+    <section class="py-24 bg-bg-base border-t border-border relative">
+        <!-- Elemento decorativo sutil -->
+        <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-bg-surface to-transparent opacity-50 pointer-events-none z-0"></div>
+
+        <div class="max-w-4xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16 scroll-reveal">
+                <h2 class="font-display font-bold text-3xl md:text-4xl text-text-primary mb-4">Preguntas Frecuentes.</h2>
+                <p class="text-lg text-text-secondary">Resolvemos tus dudas operativas y técnicas para que empieces con total seguridad.</p>
+            </div>
+
+            <div class="space-y-4 scroll-reveal" style="animation-delay: 100ms;" id="faq-container">
+                
+                <!-- FAQ Item 1 -->
+                <div class="faq-item glass-card rounded-xl border border-border overflow-hidden transition-colors hover:border-accent/30">
+                    <button class="faq-button flex w-full items-center justify-between text-left px-6 py-5 focus:outline-none group cursor-pointer">
+                        <span class="text-lg font-semibold text-text-primary group-hover:text-accent transition-colors pr-8">¿Cuánto se tarda realmente en configurar el agente?</span>
+                        <div class="w-8 h-8 rounded-full bg-bg-surface border border-border flex items-center justify-center shrink-0 group-hover:border-accent/50 transition-colors">
+                            <svg class="faq-icon w-5 h-5 text-text-secondary transform transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </button>
+                    <div class="faq-content grid grid-rows-[0fr] transition-all duration-300 ease-in-out">
+                        <div class="overflow-hidden">
+                            <p class="px-6 pb-6 text-text-secondary leading-relaxed border-t border-border/50 pt-4 mt-1">
+                                Menos de 3 minutos. Gracias a nuestras <strong>plantillas pre-entrenadas</strong>, solo tienes que seleccionar tu sector, añadir el nombre de tu empresa y estarás listo para hacer la primera llamada de prueba. Más adelante puedes refinar las instrucciones (el <em>prompt</em>) a tu gusto.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="faq-item glass-card rounded-xl border border-border overflow-hidden transition-colors hover:border-accent/30">
+                    <button class="faq-button flex w-full items-center justify-between text-left px-6 py-5 focus:outline-none group cursor-pointer">
+                        <span class="text-lg font-semibold text-text-primary group-hover:text-accent transition-colors pr-8">¿Qué pasa si el agente no sabe la respuesta a una pregunta?</span>
+                        <div class="w-8 h-8 rounded-full bg-bg-surface border border-border flex items-center justify-center shrink-0 group-hover:border-accent/50 transition-colors">
+                            <svg class="faq-icon w-5 h-5 text-text-secondary transform transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </button>
+                    <div class="faq-content grid grid-rows-[0fr] transition-all duration-300 ease-in-out">
+                        <div class="overflow-hidden">
+                            <p class="px-6 pb-6 text-text-secondary leading-relaxed border-t border-border/50 pt-4 mt-1">
+                                Hemos diseñado a los agentes con una directiva estricta anti-alucinaciones. Si el usuario hace una pregunta fuera de su base de conocimiento, el agente responderá algo como: <em>"No dispongo de esa información exacta ahora mismo, pero tomaré nota para que un compañero le llame y se lo aclare"</em>. Nunca inventará datos.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="faq-item glass-card rounded-xl border border-border overflow-hidden transition-colors hover:border-accent/30">
+                    <button class="faq-button flex w-full items-center justify-between text-left px-6 py-5 focus:outline-none group cursor-pointer">
+                        <span class="text-lg font-semibold text-text-primary group-hover:text-accent transition-colors pr-8">¿Puedo integrarlo con mi CRM actual (Salesforce, HubSpot) o flujos n8n?</span>
+                        <div class="w-8 h-8 rounded-full bg-bg-surface border border-border flex items-center justify-center shrink-0 group-hover:border-accent/50 transition-colors">
+                            <svg class="faq-icon w-5 h-5 text-text-secondary transform transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </button>
+                    <div class="faq-content grid grid-rows-[0fr] transition-all duration-300 ease-in-out">
+                        <div class="overflow-hidden">
+                            <p class="px-6 pb-6 text-text-secondary leading-relaxed border-t border-border/50 pt-4 mt-1">
+                                Absolutamente. Onucall está construido con una mentalidad <em>API-first</em>. Disponemos de Webhooks de salida que envían el JSON estructurado con el resumen de la llamada, intención y datos del lead al instante. Es 100% compatible con flujos de <strong>n8n, Make, Zapier</strong> o tu propio backend.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="faq-item glass-card rounded-xl border border-border overflow-hidden transition-colors hover:border-accent/30">
+                    <button class="faq-button flex w-full items-center justify-between text-left px-6 py-5 focus:outline-none group cursor-pointer">
+                        <span class="text-lg font-semibold text-text-primary group-hover:text-accent transition-colors pr-8">¿Tengo que cambiar el número de teléfono de mi empresa?</span>
+                        <div class="w-8 h-8 rounded-full bg-bg-surface border border-border flex items-center justify-center shrink-0 group-hover:border-accent/50 transition-colors">
+                            <svg class="faq-icon w-5 h-5 text-text-secondary transform transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </button>
+                    <div class="faq-content grid grid-rows-[0fr] transition-all duration-300 ease-in-out">
+                        <div class="overflow-hidden">
+                            <p class="px-6 pb-6 text-text-secondary leading-relaxed border-t border-border/50 pt-4 mt-1">
+                                No es necesario. Te proporcionaremos un número virtual Onucall asociado a tu agente. Simplemente tienes que configurar un <strong>desvío de llamadas</strong> desde tu centralita o línea actual hacia ese nuevo número. Puedes desviar todas las llamadas o solo cuando comuniques/no respondas.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="faq-item glass-card rounded-xl border border-border overflow-hidden transition-colors hover:border-accent/30">
+                    <button class="faq-button flex w-full items-center justify-between text-left px-6 py-5 focus:outline-none group cursor-pointer">
+                        <span class="text-lg font-semibold text-text-primary group-hover:text-accent transition-colors pr-8">¿La prueba gratuita requiere introducir tarjeta de crédito?</span>
+                        <div class="w-8 h-8 rounded-full bg-bg-surface border border-border flex items-center justify-center shrink-0 group-hover:border-accent/50 transition-colors">
+                            <svg class="faq-icon w-5 h-5 text-text-secondary transform transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </button>
+                    <div class="faq-content grid grid-rows-[0fr] transition-all duration-300 ease-in-out">
+                        <div class="overflow-hidden">
+                            <p class="px-6 pb-6 text-text-secondary leading-relaxed border-t border-border/50 pt-4 mt-1">
+                                <strong>No. Cero fricción.</strong> Te registras solo con tu nombre y email, configuras tu agente y lo pruebas haciendo llamadas tú mismo. Solo te pediremos los datos de pago si decides pasar a un plan de producción para atender a tus clientes reales.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ================== SECTION: CONTACTO ================== -->
+    <section id="contacto" class="py-24 bg-bg-base border-t border-border relative overflow-hidden">
+        <!-- Glow sutil de fondo centrado -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+        <div class="max-w-3xl mx-auto px-6 lg:px-8 relative z-10">
+            
+            <div class="text-center mb-10 scroll-reveal">
+                <div class="w-16 h-16 bg-bg-surface border border-border rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-black/20">
+                    <span class="text-2xl">👋</span>
+                </div>
+                <h2 class="font-display font-extrabold text-3xl md:text-4xl text-text-primary mb-4 tracking-tight">Estamos aquí para ayudarte.</h2>
+                <p class="text-lg text-text-secondary leading-relaxed">No dudes en contactar con nosotros para cualquier duda, sugerencia técnica o si necesitas estudiar una integración a medida para tu negocio. Estamos a tu entera disposición.</p>
+            </div>
+
+            <!-- Formulario de Contacto Centrado -->
+            <div class="bg-bg-elevated border border-border rounded-2xl p-6 sm:p-10 shadow-2xl shadow-black/50 scroll-reveal" style="animation-delay: 100ms;">
+                <form onsubmit="event.preventDefault();" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-text-secondary mb-2">Nombre completo</label>
+                            <input type="text" placeholder="¿Cómo te llamamos?" class="w-full bg-bg-surface border border-border rounded-button px-4 py-3.5 text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-secondary mb-2">Email profesional</label>
+                            <input type="email" placeholder="tu@empresa.com" class="w-full bg-bg-surface border border-border rounded-button px-4 py-3.5 text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-text-secondary mb-2">¿En qué podemos ayudarte?</label>
+                        <textarea rows="5" placeholder="Escribe aquí tu duda, sugerencia o caso de uso..." class="w-full bg-bg-surface border border-border rounded-button px-4 py-3.5 text-text-primary placeholder-text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all resize-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-4 bg-bg-surface border border-border hover:border-accent text-text-primary hover:text-accent font-semibold rounded-button transition-all flex items-center justify-center gap-2 group shadow-sm hover:shadow-[0_0_15px_rgba(47,69,106,0.15)]">
+                        Enviar mensaje al equipo
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                    <p class="text-xs text-center text-text-muted mt-4">
+                        Solemos responder en menos de 2 horas en horario laboral.
+                    </p>
+                </form>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ================== SECTION: CTA FINAL ================== -->
+    <section class="py-24 relative overflow-hidden bg-gradient-to-b from-bg-surface via-accent/5 to-bg-base border-t border-border">
+        <!-- Glow radial detrás del botón -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/20 blur-[100px] rounded-full pointer-events-none"></div>
+
+        <div class="max-w-4xl mx-auto px-6 text-center relative z-10 scroll-reveal">
+            <h2 class="font-display font-extrabold text-4xl md:text-5xl lg:text-6xl text-text-primary mb-6 tracking-tight">¿Listo para dejar de perder llamadas?</h2>
+            <p class="text-xl text-text-secondary mb-10 max-w-2xl mx-auto">La competencia exige reuniones y esperas. Nosotros te damos el control. Regístrate, configura en 3 minutos y empieza gratis hoy mismo.</p>
+            <a href="#demo" class="inline-flex px-10 py-5 text-lg font-bold text-white transition-all bg-accent rounded-button hover:bg-accent-hover hover:shadow-[0_0_25px_rgba(47,69,106,0.5)] hover:-translate-y-1">
+                Crear cuenta gratuita ahora →
+            </a>
+        </div>
+    </section>
+
+    <!-- ================== SECTION: FOOTER ================== -->
+    <footer class="bg-bg-base border-t border-border pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                <!-- Col 1 -->
+                <div>
+                    <a href="#" class="flex items-center gap-2 mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-accent">
+                            <path d="M12 2v20M17 5v14M22 10v4M7 5v14M2 10v4"/>
+                        </svg>
+                        <span class="font-display font-bold text-xl text-text-primary">Onucall</span>
+                    </a>
+                    <p class="text-sm text-text-secondary mb-6">El agente que nunca descansa. Soluciones de IA conversacional para el sector servicios.</p>
+                    <div class="flex gap-4">
+                        <a href="#" class="text-text-muted hover:text-accent transition-colors" aria-label="LinkedIn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                        </a>
+                        <a href="#" class="text-text-muted hover:text-accent transition-colors" aria-label="Twitter">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg>
+                        </a>
+                        <a href="#" class="text-text-muted hover:text-accent transition-colors" aria-label="Instagram">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Col 2 -->
+                <div>
+                    <h4 class="font-display font-semibold text-text-primary mb-4">Producto</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#features" class="text-sm text-text-secondary hover:text-text-primary transition-colors">Características</a></li>
+                        <li><a href="#pricing" class="text-sm text-text-secondary hover:text-text-primary transition-colors">Precios</a></li>
+                        <li><a href="#demo" class="text-sm text-text-secondary hover:text-text-primary transition-colors">Registro gratuito</a></li>
+                        <li><a href="#" class="text-sm text-text-secondary hover:text-text-primary transition-colors">API & Integraciones</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3 -->
+                <div>
+                    <h4 class="font-display font-semibold text-text-primary mb-4">Sectores</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#sectores" class="text-sm text-text-secondary hover:text-text-primary transition-colors" onclick="document.querySelector('[data-sector=\'inmobiliaria\']').click()">Inmobiliarias</a></li>
+                        <li><a href="#sectores" class="text-sm text-text-secondary hover:text-text-primary transition-colors" onclick="document.querySelector('[data-sector=\'clinica\']').click()">Clínicas Médicas</a></li>
+                        <li><a href="#sectores" class="text-sm text-text-secondary hover:text-text-primary transition-colors" onclick="document.querySelector('[data-sector=\'abogados\']').click()">Abogados</a></li>
+                        <li><a href="#sectores" class="text-sm text-text-secondary hover:text-text-primary transition-colors" onclick="document.querySelector('[data-sector=\'concesionario\']').click()">Concesionarios</a></li>
+                        <li><a href="#sectores" class="text-sm text-text-secondary hover:text-text-primary transition-colors" onclick="document.querySelector('[data-sector=\'rentacar\']').click()">Rent a Car</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4 -->
+                <div>
+                    <h4 class="font-display font-semibold text-text-primary mb-4">Legal</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-sm text-text-secondary hover:text-text-primary transition-colors">Política de Privacidad</a></li>
+                        <li><a href="#" class="text-sm text-text-secondary hover:text-text-primary transition-colors">Términos de Uso</a></li>
+                        <li><a href="#" class="text-sm text-text-secondary hover:text-text-primary transition-colors">Política de Cookies</a></li>
+                        <li><a href="#contacto" class="text-sm text-text-secondary hover:text-text-primary transition-colors">Contacto</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-border pt-8 text-center">
+                <p class="text-sm text-text-muted">© 2026 Onucall. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================== JAVASCRIPT ================== -->
+    <script>
+        // Data Copy por Sector
+        const sectorData = {
+            inmobiliaria: {
+                icon: "🏠",
+                name: "Plantilla: Inmobiliarias",
+                desc: "Cualifica leads interesados en alquiler o compra. Recoge preferencias de zona, presupuesto y agenda visitas automáticamente sin que el comercial pierda tiempo al teléfono.",
+                bullets: ["Filtro de presupuesto y zona", "Gestión de agenda para visitas", "Recogida de datos del lead al CRM"],
+                agentLine1: "Buenos días, le atiende el asistente de Inmobiliaria Horizonte. ¿En qué puedo ayudarle?",
+                clientLine1: "Hola, me interesa ver un piso de 3 habitaciones en el centro, sobre unos 300.000€.",
+                agentLine2: "Perfecto, tenemos varias opciones disponibles. ¿Cuándo le vendría bien visitar alguna?",
+                visualQ: "\"Hola, busco un piso céntrico...\"",
+                visualA: "\"Perfecto. Tenemos opciones. ¿Cuándo le gustaría visitar?\""
+            },
+            clinica: {
+                icon: "🏥",
+                name: "Plantilla: Clínicas Médicas",
+                desc: "Atiende a tus pacientes 24/7. Resuelve dudas frecuentes, gestiona citas, cancelaciones y derivaciones al especialista adecuado automáticamente.",
+                bullets: ["Gestión automática de citas", "Triaje básico y derivación", "Recordatorios y confirmaciones"],
+                agentLine1: "Clínica Salud Norte, buenos días. ¿En qué puedo ayudarle?",
+                clientLine1: "Quería pedir cita con el Dr. García, es para una revisión rutinaria.",
+                agentLine2: "Por supuesto. Tengo disponibilidad el martes 25 a las 10:30h. ¿Le viene bien?",
+                visualQ: "\"Quería pedir cita con el doctor...\"",
+                visualA: "\"Tengo hueco el martes a las 10:30h. ¿Le reservo?\""
+            },
+            abogados: {
+                icon: "⚖️",
+                name: "Plantilla: Abogados Laborales",
+                desc: "Filtra el tipo de caso antes de pasar la llamada a un letrado. Recoge información vital sobre plazos, tipo de despido o consulta para preparar la reunión.",
+                bullets: ["Clasificación por tipo de caso", "Alerta de plazos urgentes", "Filtro previo para el letrado"],
+                agentLine1: "Despacho Morales & Asociados, buenos días. ¿Con qué le podemos ayudar?",
+                clientLine1: "Me han despedido hoy y no sé si el despido es procedente. Necesito asesoramiento.",
+                agentLine2: "Entendido. Déjeme recoger sus datos para que un abogado le llame hoy mismo con prioridad.",
+                visualQ: "\"Me han despedido y busco asesor...\"",
+                visualA: "\"Tomo nota. Un letrado le llamará con prioridad hoy mismo.\""
+            },
+            concesionario: {
+                icon: "🚗",
+                name: "Plantilla: Concesionarios",
+                desc: "No pierdas ventas por no contestar. El agente atiende consultas de stock, cierra pruebas de conducción y filtra leads interesados en financiación.",
+                bullets: ["Reserva de Test Drives", "Consultas básicas de stock", "Cualificación para venta/taller"],
+                agentLine1: "AutoPremium, le atiende nuestro asistente. ¿Está buscando algún modelo en concreto?",
+                clientLine1: "Sí, me interesa el nuevo SUV híbrido. ¿Podría hacer un test drive esta semana?",
+                agentLine2: "¡Claro! Tenemos unidades disponibles. ¿Prefiere mañana por la mañana o por la tarde?",
+                visualQ: "\"Quería probar el nuevo SUV...\"",
+                visualA: "\"¡Claro! ¿Le viene bien mañana por la mañana o de tarde?\""
+            },
+            rentacar: {
+                icon: "🔑",
+                name: "Plantilla: Rent a Car",
+                desc: "Gestiona reservas, dudas sobre seguros, disponibilidad y puntos de recogida sin necesidad de personal extra en mostrador.",
+                bullets: ["Disponibilidad por fechas", "Explicación de seguros y extras", "Gestión de reservas directas"],
+                agentLine1: "Rentacar Express, buenos días. ¿Para qué fechas necesita el vehículo?",
+                clientLine1: "Del 15 al 22 de marzo, preferiblemente un SUV automático para 5 personas.",
+                agentLine2: "Perfecto, tenemos disponibilidad. El precio para esas fechas sería desde 289€. ¿Le reservo?",
+                visualQ: "\"Busco coche del 15 al 22 de marzo...\"",
+                visualA: "\"Tenemos disponibilidad. Serían 289€. ¿Procedo a reservar?\""
+            },
+            otro: {
+                icon: "✨",
+                name: "Auditoría IA (Generador)",
+                desc: "Evita la hoja en blanco. Nuestro asistente IA-Onucall te hará unas simples preguntas sobre tu negocio y redactará automáticamente el System Prompt perfecto para tu agente.",
+                bullets: ["Auditoría interactiva en 2 minutos", "Prompt engineering automático", "Optimizado para evitar alucinaciones"],
+                agentLine1: "¡Hola! Soy IA-Onucall. Para crear tu agente perfecto, ¿a qué se dedica tu negocio y qué objetivo principal tienen tus llamadas?",
+                clientLine1: "Tengo una peluquería canina y necesito que el agente coja citas, pida la raza del perro y dé precios de baños.",
+                agentLine2: "¡Entendido! He generado un System Prompt especializado en estética canina, con extracción de variables (raza, fecha, servicio). ¿Hacemos una llamada de prueba?",
+                visualQ: "\"Tengo una peluquería canina...\"",
+                visualA: "\"Generando prompt especializado... ¡Listo!\""
+            }
+        };
+
+        // 1. Navbar Scroll Effect
+        function initNavbar() {
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('bg-bg-surface/80', 'backdrop-blur-xl', 'border-b', 'border-border', 'py-3');
+                    navbar.classList.remove('py-4');
+                } else {
+                    navbar.classList.remove('bg-bg-surface/80', 'backdrop-blur-xl', 'border-b', 'border-border', 'py-3');
+                    navbar.classList.add('py-4');
+                }
+            });
+        }
+
+        // 2. Mobile Menu Toggle
+        function initMobileMenu() {
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            const links = document.querySelectorAll('.mobile-link');
+            let isOpen = false;
+
+            const toggleMenu = () => {
+                isOpen = !isOpen;
+                if (isOpen) {
+                    menu.classList.remove('-translate-y-full');
+                    document.body.style.overflow = 'hidden';
+                    btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                } else {
+                    menu.classList.add('-translate-y-full');
+                    document.body.style.overflow = '';
+                    btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>';
+                }
+            };
+
+            btn.addEventListener('click', toggleMenu);
+            links.forEach(link => link.addEventListener('click', toggleMenu));
+        }
+
+        // 3. Scroll Reveal (Intersection Observer)
+        function initScrollReveal() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-fade-in-up');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { rootMargin: '0px 0px -80px 0px', threshold: 0.1 });
+
+            document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+        }
+
+        // 4. Tabs Sectores (Sección 6)
+        function initSectorsTabs() {
+            const btns = document.querySelectorAll('.sector-tab-btn');
+            const panel = document.getElementById('sector-info-panel');
+            const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Update Active States for Buttons
+                    btns.forEach(b => {
+                        b.classList.remove('active', 'bg-accent/20', 'border-accent', 'text-white');
+                        b.classList.add('text-text-secondary', 'border-transparent');
+                        b.setAttribute('aria-selected', 'false');
+                    });
+                    btn.classList.add('active', 'bg-accent/20', 'border-accent', 'text-white');
+                    btn.classList.remove('text-text-secondary', 'border-transparent');
+                    btn.setAttribute('aria-selected', 'true');
+
+                    const sector = btn.dataset.sector;
+                    const data = sectorData[sector];
+
+                    // Fade effect
+                    panel.style.opacity = 0;
+                    document.getElementById('mockup-chat-area').style.opacity = 0;
+
+                    setTimeout(() => {
+                        // Update Data Izquierda
+                        document.getElementById('sector-title').textContent = `Agente para ${data.name}`;
+                        document.getElementById('sector-desc').textContent = data.desc;
+                        document.getElementById('sector-bullet-1').textContent = data.bullets[0];
+                        document.getElementById('sector-bullet-2').textContent = data.bullets[1];
+                        document.getElementById('sector-bullet-3').textContent = data.bullets[2];
+
+                        // Update Data Mockup Derecha
+                        document.getElementById('mockup-icon').textContent = data.icon;
+                        document.getElementById('mockup-header-title').textContent = data.name + (data.name.includes("Clínica") || data.name.includes("Inmobiliaria") ? " Horizonte/Norte" : " Premium"); // Ficticio dinámico simple
+                        
+                        document.getElementById('mockup-agent-1').textContent = data.agentLine1;
+                        document.getElementById('mockup-client-1').textContent = data.clientLine1;
+                        document.getElementById('mockup-agent-2').textContent = data.agentLine2;
+
+                        panel.style.opacity = 1;
+                        document.getElementById('mockup-chat-area').style.opacity = 1;
+                    }, 200);
+                });
+            });
+        }
+
+        // 5. Formulario Demo Dinámico (Sección 7)
+        function initDemoForm() {
+            const btns = document.querySelectorAll('.demo-sector-btn');
+            
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Actualizar estilos botones form
+                    btns.forEach(b => {
+                        b.classList.remove('active', 'bg-accent/15', 'border-accent', 'text-white', 'shadow-[0_0_10px_rgba(47,69,106,0.15)]');
+                        b.classList.add('bg-bg-surface', 'border-border', 'text-text-secondary');
+                        b.querySelector('span:last-child').classList.remove('font-semibold');
+                        b.querySelector('span:last-child').classList.add('font-medium');
+                    });
+                    
+                    btn.classList.remove('bg-bg-surface', 'border-border', 'text-text-secondary');
+                    btn.classList.add('active', 'bg-accent/15', 'border-accent', 'text-white', 'shadow-[0_0_10px_rgba(47,69,106,0.15)]');
+                    btn.querySelector('span:last-child').classList.remove('font-medium');
+                    btn.querySelector('span:last-child').classList.add('font-semibold');
+
+                    // Actualizar panel visual izquierdo
+                    const data = sectorData[btn.dataset.sector];
+                    const visualPanel = document.getElementById('demo-visual-icon').parentElement.parentElement;
+                    
+                    visualPanel.style.opacity = 0;
+                    setTimeout(() => {
+                        document.getElementById('demo-visual-icon').textContent = data.icon;
+                        document.getElementById('demo-visual-title').textContent = data.name;
+                        document.getElementById('demo-visual-q').textContent = data.visualQ;
+                        document.getElementById('demo-visual-a').querySelector('span').textContent = data.visualA;
+                        visualPanel.style.opacity = 1;
+                    }, 200);
+                });
+            });
+        }
+
+        // 6. Hero Canvas Background
+        function initCanvas() {
+            const canvas = document.getElementById('hero-canvas');
+            if (!canvas) return;
+
+            // Desactivar en mobile muy pequeño por rendimiento si se desea, aquí lo mantenemos optimizado.
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let animationFrameId;
+
+            const resize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                initParticles();
+            };
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 0.3; // Lento y elegante
+                    this.vy = (Math.random() - 0.5) * 0.3;
+                    this.radius = Math.random() * 1.5 + 0.5;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(47, 69, 106, 0.4)'; // accent color (Hyper Indigo)
+                    ctx.fill();
+                }
+            }
+
+            const initParticles = () => {
+                particles = [];
+                // Reducir cantidad en mobile
+                const numParticles = window.innerWidth < 768 ? 30 : 70;
+                for (let i = 0; i < numParticles; i++) {
+                    particles.push(new Particle());
+                }
+            };
+
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].update();
+                    particles[i].draw();
+                    
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // Conexiones
+                        if (distance < 150) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = `rgba(47, 69, 106, ${0.15 - distance / 1000})`; // accent lines
+                            ctx.lineWidth = 0.5;
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                animationFrameId = requestAnimationFrame(animate);
+            };
+
+            window.addEventListener('resize', resize);
+            resize();
+            animate();
+        }
+
+        // 7. Lógica del Acordeón FAQ
+        function initFAQ() {
+            const items = document.querySelectorAll('.faq-item');
+            
+            items.forEach(item => {
+                const btn = item.querySelector('.faq-button');
+                const content = item.querySelector('.faq-content');
+                const icon = item.querySelector('.faq-icon');
+                
+                btn.addEventListener('click', () => {
+                    const isOpen = content.classList.contains('grid-rows-[1fr]');
+                    
+                    // Comportamiento acordeón: cierra los demás al abrir uno
+                    items.forEach(otherItem => {
+                        const otherContent = otherItem.querySelector('.faq-content');
+                        const otherIcon = otherItem.querySelector('.faq-icon');
+                        
+                        otherContent.classList.remove('grid-rows-[1fr]');
+                        otherContent.classList.add('grid-rows-[0fr]');
+                        otherIcon.classList.remove('rotate-180');
+                        otherItem.classList.remove('border-accent/50');
+                    });
+
+                    // Si no estaba abierto, lo abre
+                    if (!isOpen) {
+                        content.classList.remove('grid-rows-[0fr]');
+                        content.classList.add('grid-rows-[1fr]');
+                        icon.classList.add('rotate-180');
+                        item.classList.add('border-accent/50');
+                    }
+                });
+            });
+        }
+
+        // Initialize Todo
+        document.addEventListener('DOMContentLoaded', () => {
+            initNavbar();
+            initMobileMenu();
+            initScrollReveal();
+            initSectorsTabs();
+            initDemoForm();
+            initFAQ();
+            // Evitar animaciones de canvas en disp. de bajas prestaciones
+            if(window.matchMedia("(min-width: 640px)").matches) {
+                initCanvas();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -11,7 +11,7 @@
 import { db, usersDemo } from '~/lib/db/client';
 import { eq, and, desc } from 'drizzle-orm';
 import { triggerDemoCall } from '~/lib/retell';
-import { SECTOR_AGENTS, type SectorType } from '../data/agents';
+import { resolveSectorAgentId } from '../data/agents';
 import type { DemoRequestInput, DemoServiceResult, VerifyCodeResult } from '../types/demo.types';
 import type { RequestEventBase } from '@builder.io/qwik-city';
 import { 
@@ -58,7 +58,7 @@ export async function requestDemoVerification(
         name: data.name,
         email: data.email,
         phone: data.phone,
-        industry: data.industry,
+        sector: data.sector,
         ipAddress,
         status: 'pending_verification',
         verificationType: 'email_otp',
@@ -174,7 +174,7 @@ export async function verifyAndTriggerDemo(
     console.log(`[Demo] ✅ Código verificado para ${email}`);
 
     // 3. Disparar llamada a Retell ANTES de actualizar DB
-    const agentId = SECTOR_AGENTS[demoRecord.industry as SectorType];
+    const agentId = resolveSectorAgentId(demoRecord.sector);
 
     let callResponse;
     try {
@@ -246,7 +246,7 @@ export async function processDemoRequest(
         name: data.name,
         email: data.email,
         phone: data.phone,
-        industry: data.industry,
+        sector: data.sector,
         ipAddress,
         status: 'pending_verification',
         verificationType: 'none', // Sin verificación en este flujo
@@ -255,7 +255,7 @@ export async function processDemoRequest(
       .returning();
 
     // 2. Disparar llamada a Retell
-    const agentId = SECTOR_AGENTS[data.industry as SectorType];
+    const agentId = resolveSectorAgentId(data.sector);
     
     let callResponse;
     try {

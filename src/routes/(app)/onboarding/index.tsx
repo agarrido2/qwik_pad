@@ -25,7 +25,6 @@ import { component$, useSignal, useStore, useTask$, $ } from '@builder.io/qwik';
 import { Form, routeAction$, routeLoader$, zod$, type DocumentHead } from '@builder.io/qwik-city';
 import { OnboardingCompleteSchema, OnboardingService } from '~/lib/onboarding';
 import { getAuthGuardData } from '~/lib/auth/auth-guard';
-import type { IndustrySlug } from '~/lib/utils/demo-data-templates';
 import { ProgressIndicator } from '~/features/onboarding/components/ProgressIndicator';
 import { Step1IdentidadCorporativa } from '~/features/onboarding/components/Step1IdentidadCorporativa';
 import { Step2ReglasNegocio } from '~/features/onboarding/components/Step2ReglasNegocio';
@@ -81,7 +80,7 @@ export const useOnboardingAction = routeAction$(
         fullName: formData.fullName,
         organizationName: formData.organizationName,
         phone: formData.phone,
-        industrySlug: formData.industrySlug as IndustrySlug,
+        sector: formData.sector,
         businessDescription: formData.businessDescription,
         assistantGender: formData.assistantGender,
         assistantName: formData.assistantName,
@@ -129,7 +128,7 @@ export default component$(() => {
     organizationName: '',
     phone: '',
     // Paso 2: Reglas del Negocio
-    industrySlug: '',
+    sector: '',
     businessDescription: '',
     // Paso 3: Su Asistente
     assistantGender: 'female',
@@ -154,10 +153,10 @@ export default component$(() => {
         formData.organizationName.trim().length >= 3 &&
         formData.phone.trim().length >= 7;
     } else if (currentStep.value === 1) {
-      track(() => formData.industrySlug);
+      track(() => formData.sector);
       track(() => formData.businessDescription);
       isStepValid.value =
-        formData.industrySlug !== '' &&
+        formData.sector.trim().length >= 2 &&
         formData.businessDescription.trim().length >= 20;
     } else if (currentStep.value === 2) {
       track(() => formData.assistantGender);
@@ -253,7 +252,7 @@ export default component$(() => {
           {/* Hidden inputs PASO 2 (cuando NO es el paso actual) */}
           {currentStep.value !== 1 && (
             <>
-              <input type="hidden" name="industrySlug" value={formData.industrySlug} />
+              <input type="hidden" name="sector" value={formData.sector} />
               <input type="hidden" name="businessDescription" value={formData.businessDescription} />
             </>
           )}

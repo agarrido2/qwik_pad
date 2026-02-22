@@ -1,9 +1,9 @@
 /**
- * Templates de datos demo por industria
+ * Templates de datos demo por sector
  * Se usan durante el onboarding para poblar la cuenta del usuario
  */
 
-export const DEMO_DATA_BY_INDUSTRY = {
+export const DEMO_DATA_BY_SECTOR = {
   concesionario: {
     promptBase: 'Eres un asistente virtual de un concesionario de automóviles. Ayudas a los clientes con información sobre vehículos, financiamiento y agendamiento de pruebas de manejo.',
     sampleCalls: [
@@ -104,4 +104,19 @@ export const DEMO_DATA_BY_INDUSTRY = {
   },
 } as const;
 
-export type IndustrySlug = keyof typeof DEMO_DATA_BY_INDUSTRY;
+export const GENERIC_SECTOR_DEMO_TEMPLATE = {
+  promptBase: 'Eres un asistente virtual para una empresa. Ayudas a clientes con información general, agendamiento y derivación a un humano cuando sea necesario.',
+  sampleCalls: [
+    { client: 'Cliente potencial', duration: 180, outcome: 'Consulta atendida y siguiente paso definido' },
+    { client: 'Cliente recurrente', duration: 210, outcome: 'Información de servicio proporcionada' },
+    { client: 'Nuevo lead', duration: 165, outcome: 'Contacto cualificado y seguimiento agendado' },
+  ],
+  knowledgeBase: [
+    'Servicios principales de la empresa',
+    'Horarios y canales de atención',
+    'Proceso de agendamiento',
+    'Políticas básicas de soporte',
+  ],
+} as const;
+
+export type PredefinedSectorSlug = keyof typeof DEMO_DATA_BY_SECTOR;

@@ -2,18 +2,16 @@
  * Industrias/Sectores de Onucall
  * @description Configuración de los 7 sectores verticales que Onucall atiende
  * 
- * ALINEADO CON: schema.ts industrySectorEnum, onboarding.schemas.ts, agents.ts
+ * ALINEADO CON: onboarding.schemas.ts, agents.ts, demo-data-templates.ts
  * Cada sector tiene su objetivo principal y defaults específicos.
  */
-
-import type { IndustrySector } from '~/lib/db/schema';
 
 /**
  * Opciones de sector para el selector del onboarding
  * @description 7 sectores con objetivos claros y bien definidos
  */
 export const SECTOR_OPTIONS: {
-  value: IndustrySector;
+  value: string;
   label: string;
   description: string;
   icon: string;
@@ -62,12 +60,14 @@ export const SECTOR_OPTIONS: {
   },
 ];
 
+export type PredefinedSector = (typeof SECTOR_OPTIONS)[number]['value'];
+
 /**
  * Defaults de política de transferencia por sector
  * @description Se usa si el usuario no completa el campo transfer_policy en el onboarding
  * Define cómo debe comportarse el agente cuando el cliente exige un humano
  */
-export const TRANSFER_POLICY_DEFAULTS: Record<IndustrySector, string> = {
+export const TRANSFER_POLICY_DEFAULTS: Record<PredefinedSector, string> = {
   concesionario: 
     'Si el cliente insiste en hablar con un humano, transfiere la llamada al teléfono de respaldo.',
   

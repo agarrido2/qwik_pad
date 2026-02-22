@@ -34,14 +34,16 @@ import { VerificationModal } from './VerificationModal';
  * - src/features/demo/schemas/verification.schema.ts: VerificationInput (validado)
  */
 interface DemoWidgetProps {
-  requestAction: any; // ActionStore para Step 1 (email + phone + industry)
+  requestAction: any; // ActionStore para Step 1 (email + phone + sector)
   verifyAction: any;  // ActionStore para Step 2 (email + código OTP)
 }
 
 export const DemoWidget = component$<DemoWidgetProps>(
   ({ requestAction, verifyAction }) => {
-    // Lista de industrias para el selector
-    const industries = Object.entries(SECTOR_LABELS);
+    // Lista de sectores sugeridos para el selector
+    const sectors = Object.entries(SECTOR_LABELS);
+    const selectedSector = useSignal('');
+    const customSector = useSignal('');
     
     // Estado del flujo: 'form' | 'verification' | 'success'
     const flowState = useSignal<'form' | 'verification' | 'success'>('form');
@@ -221,27 +223,54 @@ export const DemoWidget = component$<DemoWidgetProps>(
           {/* Industria */}
           <div>
             <label
-              for="demo-industry"
+              for="demo-sector"
               class="mb-1.5 block text-sm font-medium text-gray-700"
             >
               Sector de tu empresa
             </label>
             <select
-              id="demo-industry"
-              name="industry"
+              id="demo-sector"
               required
               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              value={selectedSector.value}
+              onChange$={(event, el) => {
+                selectedSector.value = el.value;
+                if (el.value !== 'otro') {
+                  customSector.value = '';
+                }
+              }}
             >
-              <option value="">Selecciona una industria</option>
-              {industries.map(([value, label]) => (
+              <option value="">Selecciona un sector</option>
+              {sectors.map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>
               ))}
+              <option value="otro">Otro (escribir manualmente)</option>
             </select>
-            {requestAction.value?.fieldErrors?.industry && (
+
+            {selectedSector.value === 'otro' && (
+              <input
+                type="text"
+                class="mt-3 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                placeholder="Ej: Peluquería canina"
+                value={customSector.value}
+                onInput$={(event, el) => {
+                  customSector.value = el.value;
+                }}
+                required
+              />
+            )}
+
+            <input
+              type="hidden"
+              name="sector"
+              value={selectedSector.value === 'otro' ? customSector.value : selectedSector.value}
+            />
+
+            {requestAction.value?.fieldErrors?.sector && (
               <p class="mt-1 text-sm text-red-600">
-                {requestAction.value.fieldErrors.industry}
+                {requestAction.value.fieldErrors.sector}
               </p>
             )}
           </div>

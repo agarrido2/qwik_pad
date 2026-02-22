@@ -29,7 +29,7 @@ export interface AuthOrganization {
   name: string;
   slug: string;
   subscriptionTier: string;
-  industry: string | null;
+  sector: string | null;
   role: MemberRole;
   /** Pre-computed: "Propietario" | "Administrador" | "Miembro" */
   roleLabel: string;
