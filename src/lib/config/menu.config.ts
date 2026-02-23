@@ -100,6 +100,7 @@ export const MENU_CONFIG: MenuItem[] = [
     visible: true,
     children: [
       { text: 'Agenda', href: '/dashboard/agenda', icon: 'calendar' },
+      { text: 'Citas', href: '/dashboard/appointments', icon: 'calendar' },
       { text: 'Analítica', href: '/dashboard/analitica', icon: 'chart' },
     ],
     dividerAfter: true,
@@ -153,6 +154,7 @@ export const MENU_CONFIG: MenuItem[] = [
     roles: ['owner', 'admin'],
     section: 'workspace',
     children: [
+      { text: 'Horarios', href: '/dashboard/departments', icon: 'calendar' },
       { text: 'Integraciones', href: '/dashboard/integraciones', icon: 'puzzle' },
       { text: 'Organización', href: '/dashboard/organizacion', icon: 'building', roles: ['owner'] },
       { text: 'Usuarios', href: '/dashboard/usuarios', icon: 'users' },

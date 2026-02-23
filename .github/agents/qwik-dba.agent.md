@@ -1,7 +1,7 @@
 ---
 name: QwikDBA
 description: Arquitecto de Datos (PostgreSQL/Supabase). Gestiona esquemas, migraciones y seguridad RLS.
-model: Claude Sonnet 4.5 (copilot)
+model: Claude Sonnet 4.6 (copilot)
 # ⚠️ CLAVE: Necesita 'edit' (esquemas), 'run_in_terminal' (migraciones) y 'context7' (consultas complejas).
 tools: ['edit', 'read/readFile', 'execute/runInTerminal', 'upstash/context7/*']
 

@@ -1,334 +1,107 @@
+Aquí tienes 25 casos de uso prácticos, estructurados exactamente con el formato que has pedido y distribuidos entre los 7 sectores clave para los que Onucall está diseñado. 
 
-# Informe de Arquitectura Backend: Motor de Agendamiento para IA de Voz (Onucall)
-
-**Contexto del Proyecto:** Diseño de arquitectura de base de datos para Onucall,
-un SaaS multi-tenant con integración de agentes de IA por voz.  
-**Stack Tecnológico:** Qwik (Frontend), Supabase / PostgreSQL (Backend).  
-**Objetivo Principal:** Crear un motor de reservas escalable, independiente de
-servicios de terceros (Google Calendar, Cal.com), que reduzca la latencia
-conversacional de la IA a cero mediante la entrega de ventanas de tiempo
-pre-calculadas en una única petición a base de datos.
-
----
-
-## 1. Concepto Core: Tres Entidades Autónomas
-
-El sistema se basa en tres entidades con calendarios laborales completamente
-independientes entre sí. No existe herencia rígida ni cascada automática entre
-los niveles. Cada entidad gestiona su propio calendario de forma autónoma,
-siendo responsabilidad exclusiva del administrador del SaaS configurarlo y
-mantenerlo actualizado.
-
-Los tres niveles son:
-
-- **Organización:** Define el marco global de la empresa (horarios de apertura
-  general, zona horaria, festivos propios del negocio).
-- **Departamento:** Recurso lógico o físico dentro de la organización
-  (Departamento de Ventas, Box Perros, Sala de Conferencias, Despacho Laboral 1).
-  Funciona de forma completamente autónoma. Su horario puede coincidir o no con
-  el de la organización.
-- **Usuario / Operario:** El factor humano. Tiene su propio calendario laboral
-  (turnos, vacaciones, horas propias por convenio, devolución de horas).
-
-### Principio de Autonomía
-A nivel de configuración, los tres calendarios son independientes. Nadie
-hereda nada de nadie. El dueño del SaaS configura cada uno por separado en el
-panel de control.
-
-### Principio de Intersección (Solo en el momento de agendar)
-La dependencia **únicamente aparece** cuando el Agente de IA (Elena) necesita
-buscar una cita. En ese momento, el motor de base de datos cruza los tres
-calendarios y devuelve solo los huecos donde los tres coinciden en estar
-disponibles simultáneamente.
-
----
-
-## 2. Abstracción del Departamento (Generic Scheduling Engine)
-
-El departamento no representa necesariamente un espacio físico. Es un
-**recurso programable abstracto**. Esto hace que el motor de Onucall sea
-agnóstico al tipo de negocio que lo utilice.
-
-Ejemplos del mismo motor resolviendo casos dispares:
-
-| Negocio | Departamento en Onucall |
-| :--- | :--- |
-| Inmobiliaria | Dpto. Ventas, Dpto. Alquileres |
-| Peluquería de mascotas | Box Perros, Box Gatos, Box Patos |
-| Concesionario | Vehículos Nuevos, Postventa, Financiación |
-| Despacho jurídico | Despacho Laboral 1, Despacho Civil 2 |
-| Clínica | Consulta Medicina General, Consulta Pediatría |
-
-La base de datos no "sabe" qué es un box o un despacho. Solo entiende de
-`target_type`, `target_id`, fechas y horas. Esto garantiza escalabilidad
-horizontal del SaaS sin modificar el esquema.
-
----
-
-## 3. Esquema de Base de Datos (Ecosistema de 3 Tablas)
-
-Para evitar bases de datos pesadas (guardar los 365 días del año para cada
-entidad), el sistema utiliza el patrón **"Horario Base Semanal + Excepciones"**.
-
-### Tabla 1: `calendar_schedules` (Patrón Base Semanal)
-
-Almacena el comportamiento repetitivo por defecto. **No guarda fechas exactas**,
-sino los días de la semana (Lunes = 1, Domingo = 7) codificados en JSONB.
-
-| Columna | Tipo SQL | Descripción |
-| :--- | :--- | :--- |
-| `id` | `uuid` | Primary Key |
-| `target_type` | `enum` | `'ORGANIZATION'`, `'DEPARTMENT'`, `'USER'` |
-| `target_id` | `uuid` | Identificador único de la entidad (indexado) |
-| `timezone` | `text` | Ej: `'Europe/Madrid'`. Vital para cálculos horarios |
-| `weekly_hours` | `jsonb` | Patrón semanal ISODOW (claves 1 a 7) |
-| `created_at` | `timestamptz` | Fecha de creación |
-| `updated_at` | `timestamptz` | Fecha de última modificación |
-
-**Ejemplo del campo `weekly_hours`:**
-```json
-{
-  "1": [{"start": "09:00", "end": "14:00"}, {"start": "17:00", "end": "20:00"}],
-  "2": [{"start": "09:00", "end": "14:00"}, {"start": "17:00", "end": "20:00"}],
-  "3": [{"start": "09:00", "end": "14:00"}, {"start": "17:00", "end": "20:00"}],
-  "4": [{"start": "09:00", "end": "14:00"}, {"start": "17:00", "end": "20:00"}],
-  "5": [{"start": "09:00", "end": "14:00"}],
-  "6": [],
-  "7": []
-}
-```
-*(Las claves `"6"` y `"7"` con array vacío indican que sábado y domingo están
-cerrados. Si falta la clave, se interpreta igualmente como cerrado.)*
-
----
+Esta variedad es perfecta para inyectar en el contexto de una IA, ya que le enseñará a manejar citas que requieren desplazamiento, citas virtuales, concurrencia, uso de recursos físicos y servicios a domicilio.
 
-### Tabla 2: `calendar_exceptions` (Overrides y Festivos)
-
-Esta tabla es el corazón del control manual del administrador. Sobrescribe el
-horario base en días **puntuales y concretos**. Es la tabla que determina si
-un día específico del año no se abre, o si tiene un horario diferente al normal.
-
-| Columna | Tipo SQL | Descripción |
-| :--- | :--- | :--- |
-| `id` | `uuid` | Primary Key |
-| `target_type` | `enum` | A qué nivel aplica la excepción |
-| `target_id` | `uuid` | ID exacto de la entidad afectada (indexado) |
-| `exception_date` | `date` | La fecha exacta alterada. Ej: `2026-02-23` |
-| `is_closed` | `boolean` | `true` = Día completamente cerrado sin importar el horario base |
-| `custom_hours` | `jsonb` | Nullable. Si no está cerrado entero, aplica este horario especial ese día |
-| `description` | `text` | Motivo para el administrador: "Baja médica", "Inventario", "Evento especial" |
-| `created_at` | `timestamptz` | Fecha de creación del registro |
+***
 
-**Casos de uso del campo `is_closed`:**
-- `true` + `custom_hours: null` → El día entero está cerrado. No se generan huecos.
-- `false` + `custom_hours: [{"start":"09:00","end":"12:00"}]` → Abre ese día pero con horario reducido.
-- `false` + `custom_hours: [{"start":"09:00","end":"20:00"}]` → Override positivo: ese día abre más horas de lo habitual (Ej: devolución de horas, refuerzo puntual).
-
-**Ejemplos de registros reales en la tabla:**
-
-| Caso | target_type | is_closed | custom_hours | description |
-| :--- | :--- | :--- | :--- | :--- |
-| Siniestro en empresa | ORGANIZATION | true | null | "Rotura tubería, local cerrado" |
-| Único empleado de baja | DEPARTMENT | true | null | "Baja médica Dpto. Alquileres" |
-| Nochebuena (tarde libre) | DEPARTMENT | false | `[{"start":"09:00","end":"13:00"}]` | "Horario especial Nochebuena" |
-| Empleado devuelve horas | USER | false | `[{"start":"09:00","end":"14:00"}]` | "Trabaja sábado por deuda de horas" |
-
----
-
-### Tabla 3: `appointments` (Reservas Finales Confirmadas)
-
-Almacena los bloques de tiempo que ya han sido reservados por clientes.
-Es la tabla que el motor de disponibilidad consulta para "restar" los huecos
-ya ocupados antes de devolver la disponibilidad a la IA.
-
-| Columna | Tipo SQL | Descripción |
-| :--- | :--- | :--- |
-| `id` | `uuid` | Primary Key |
-| `organization_id` | `uuid` | Aislamiento Multi-Tenant (RLS en Supabase) |
-| `department_id` | `uuid` | Recurso que atiende la cita |
-| `user_id` | `uuid` | Operario asignado. Nullable hasta confirmación |
-| `start_at` | `timestamptz` | Inicio exacto de la cita (incluye buffers) |
-| `end_at` | `timestamptz` | Fin exacto de la cita (incluye buffers) |
-| `status` | `enum` | `CONFIRMED`, `PENDING`, `CANCELLED` |
-| `created_at` | `timestamptz` | Fecha de creación |
-
----
-
-## 4. Índices Recomendados
-
-Para que el Stored Procedure vuele en producción, se deben crear estos índices
-en Supabase desde el primer día:
-
-```sql
--- Búsqueda ultra-rápida del patrón base por entidad
-CREATE INDEX idx_calendar_schedules_target
-  ON calendar_schedules (target_type, target_id);
-
--- Búsqueda ultra-rápida de excepciones por entidad y fecha
-CREATE INDEX idx_calendar_exceptions_target_date
-  ON calendar_exceptions (target_id, exception_date);
-
--- Búsqueda de citas ocupadas en un rango de tiempo
-CREATE INDEX idx_appointments_range
-  ON appointments (department_id, start_at, end_at);
-```
-
----
-
-## 5. Procedimiento Almacenado RPC: `get_time_window_availability`
-
-Esta función es el único punto de contacto entre el Agente de IA (Elena) y
-el motor de calendario. Recibe un rango de fechas y devuelve un JSON limpio
-y pre-calculado con todos los huecos disponibles.
-
-### Parámetros de Entrada
-
-| Parámetro | Tipo | Descripción |
-| :--- | :--- | :--- |
-| `p_target_type` | `enum` | El nivel a consultar |
-| `p_target_id` | `uuid` | La entidad exacta a consultar |
-| `p_start_date` | `date` | Inicio de la ventana de tiempo |
-| `p_end_date` | `date` | Fin de la ventana de tiempo |
-| `p_duration_minutes` | `int` | Duración de cada hueco (configurada en el Departamento) |
-
-### Lógica Interna (Paso a Paso)
-
-1. **`generate_series(p_start_date, p_end_date)`:** PostgreSQL genera en RAM
-   la lista de días del rango solicitado. No hay tabla con 365 días físicamente
-   almacenados. Es generación dinámica en microsegundos.
-
-2. **`EXTRACT(ISODOW FROM fecha)`:** Convierte cada fecha del rango en su número
-   de día de la semana (1=Lunes, 7=Domingo) para buscar el horario base en
-   `calendar_schedules`.
-
-3. **`LEFT JOIN calendar_exceptions`:** Para cada día generado, busca si existe
-   un registro en la tabla de excepciones con esa fecha exacta y ese `target_id`.
-
-4. **`COALESCE` (Regla de resolución):** Aplica la siguiente lógica de prioridad:
-   - Si existe excepción y `is_closed = true` → Devuelve `[]` (cerrado).
-   - Si existe excepción y `custom_hours` tiene datos → Devuelve `custom_hours`.
-   - Si no existe excepción → Devuelve el horario base de `weekly_hours`.
-
-5. **Sustracción de citas ocupadas:** Cruza el resultado con la tabla
-   `appointments` y elimina los huecos donde ya exista una cita confirmada
-   (`status = 'CONFIRMED'`) que se solape en tiempo.
-
-6. **`jsonb_object_agg()`:** Empaqueta todos los días procesados en un único
-   objeto JSON y lo devuelve como respuesta final.
-
-### Respuesta JSON (Ejemplo)
-
-```json
-{
-  "2026-03-03": ["09:00", "09:30", "11:00", "15:00", "16:00"],
-  "2026-03-04": [],
-  "2026-03-05": ["09:00", "10:00", "11:00", "12:00"],
-  "2026-03-06": ["09:00", "10:30"],
-  "2026-03-07": [],
-  "2026-03-08": [],
-  "2026-03-09": ["09:00", "10:00", "14:00", "15:00"]
-}
-```
-
-*(Los días con `[]` pueden ser sábado/domingo por horario base, o un día
-cerrado por excepción. La IA no necesita saber el motivo, solo que no hay huecos.)*
-
----
-
-## 6. Flujo Completo del Agente de IA (Elena)
-
-### Fase 1: Inicio de Búsqueda
-Cuando Elena detecta intención de reserva en la conversación, lanza
-**una única llamada** al RPC solicitando la ventana de los próximos 7-14 días.
-
-```javascript
-// Tool Call desde el LLM de Elena
-POST /rest/v1/rpc/get_time_window_availability
-{
-  "p_target_type": "DEPARTMENT",
-  "p_target_id": "uuid-departamento-alquileres",
-  "p_start_date": "2026-03-03",
-  "p_end_date": "2026-03-10",
-  "p_duration_minutes": 60
-}
-```
-
-### Fase 2: Negociación Proactiva (Sin peticiones extra)
-Elena ya tiene el mapa completo de la semana en su contexto (el JSON).
-Puede negociar con el cliente de forma fluida sin volver a consultar la BD:
-
-> *Cliente:* "¿Tenéis el miércoles 4 por la mañana?"  
-> *Elena:* "El miércoles 4 no tenemos disponibilidad, pero el jueves 5
-> tengo huecos a las 9:00 y a las 10:00. ¿Alguna te viene bien?"
-
-### Fase 3: Paginación Dinámica
-Si el cliente solicita fechas fuera de la ventana inicial (Ej: "La semana
-que viene"), Elena vuelve a invocar el mismo RPC con nuevas fechas.
-El sistema está diseñado para que esto sea transparente en la conversación.
-
-### Fase 4: Confirmación con Bloqueo Transaccional
-Una vez acordada la hora, Elena lanza la segunda y última llamada:
-`book_appointment`. En el momento del `INSERT`, PostgreSQL ejecuta una
-validación de exclusión para prevenir el problema del **Double Booking**
-(dos clientes reservando el mismo hueco simultáneamente).
-
-- Si el hueco sigue libre → `INSERT` confirmado. Elena comunica la reserva.
-- Si el hueco fue ocupado en ese intervalo → El backend devuelve error
-  estructurado. Elena pide disculpas y ofrece el siguiente hueco del JSON
-  sin necesidad de volver a consultar la BD.
-
----
-
-## 7. Ventajas Técnicas de esta Arquitectura
-
-### Rendimiento
-Sin bucles en el servidor de aplicación (Node/Qwik). Todo el cálculo de
-intersección de calendarios y sustracción de citas se resuelve dentro de
-PostgreSQL en una única transacción. Un `generate_series` de 15 días con
-sus `JOINs` cuesta menos de 5ms de cómputo en Supabase.
-
-### Latencia Cero en Voz
-El Agente de IA realiza únicamente **2 peticiones** en toda la conversación:
-1. `get_time_window_availability` → Para obtener huecos disponibles.
-2. `book_appointment` → Para confirmar la cita.
-
-Esto garantiza un diálogo telefónico natural sin silencios percibibles.
-
-### Almacenamiento Ultra-Ligero
-Un año completo de configuración consume un puñado de filas en
-`calendar_schedules` (una por entidad) y registros puntuales en
-`calendar_exceptions`. Nunca se almacenan los 365 días físicamente.
-
-### Escalabilidad Multi-Tenant
-El campo `organization_id` en `appointments` permite activar Row Level
-Security (RLS) en Supabase, garantizando que cada empresa cliente solo
-acceda a sus propios datos de forma segura y aislada.
-
-### Independencia Total de Terceros
-No hay dependencia de APIs externas (Google Calendar, Cal.com, Calendly).
-El motor de reservas es 100% propiedad de Onucall, elimina costes de
-licencias y evita fallos por caídas de servicios externos.
-
-### Control Administrativo Total
-La tabla `calendar_exceptions` se mapea directamente con la interfaz de
-usuario del panel de Onucall: el administrador pincha en un día del
-calendario visual, introduce el motivo en el modal, y el backend refleja
-el cambio de forma inmediata. El campo `description` garantiza trazabilidad
-y auditoría interna para todos los cambios de disponibilidad.
-
----
-
-## 8. Resumen Ejecutivo
-
-| Componente | Responsabilidad |
-| :--- | :--- |
-| `calendar_schedules` | Define el "ritmo normal" semanal de la entidad |
-| `calendar_exceptions` | Inyecta la realidad caótica del día a día (overrides) |
-| `appointments` | Registra los compromisos de tiempo ya confirmados |
-| `get_time_window_availability` (RPC) | Motor único: cruza los 3 componentes y devuelve JSON limpio |
-| `book_appointment` (RPC) | Confirma la reserva con validación anti-double-booking |
-
-Con esta arquitectura de **2 tablas de calendario + 1 tabla de reservas +
-2 funciones RPC**, Onucall dispone de un motor de agendamiento de nivel
-empresarial, nativo en Supabase/PostgreSQL, optimizado para la baja
-latencia crítica que exige la IA de Voz.
+ CONTEXTO DE NEGOCIO PARA IA: Caso 1 - Concesionarios de vehículos
+## Escenario Real: "Departamento de Ventas Vehículos de Ocasión"
+El Sr. Enrique Pastor ve un SEAT Ateca de ocasión en la web del concesionario, pero vive en otra ciudad. Llama por teléfono a Onucall. La Agente de Voz (Elena) le atiende. El Sr. Pastor le explica que no puede ir físicamente y pide dos cosas:
+1. Que le envíen un dossier con fotos y ficha técnica al email.
+2. Que un comercial experto en vehículos de ocasión le llame "dentro de un par de días" para comentar el dossier y negociar el precio.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 2 - Concesionarios de vehículos
+## Escenario Real: "Departamento de Pruebas de Conducción (Test Drive)"
+La joven Marta acaba de sacarse el carnet y llama al concesionario porque está interesada en comprar un KIA Ibiza nuevo. Solicita agendar una prueba de conducción dinámica. Elena debe buscar un hueco donde coincidan un comercial libre y el vehículo de demostración disponible en la sede durante al menos 45 minutos.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 3 - Concesionarios de vehículos
+## Escenario Real: "Departamento de Taller y Mantenimiento"
+Don Arturo llama a su concesionario habitual porque en el salpicadero de su coche se ha encendido la luz de "Revisión Anual". Elena consulta la disponibilidad de los elevadores mecánicos del taller para agendar una cita de recepción del vehículo de 15 minutos el próximo viernes por la mañana.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 4 - Inmobiliarias
+## Escenario Real: "Departamento de Visitas a Inmuebles"
+Una pareja joven, los García, llaman a la inmobiliaria tras ver un anuncio de un chalet pareado. Quieren visitarlo presencialmente este sábado. Elena debe programar una cita de 60 minutos, teniendo en cuenta que el comercial necesitará un margen (buffer) de 30 minutos extra para desplazarse desde la oficina hasta la urbanización.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 5 - Inmobiliarias
+## Escenario Real: "Departamento de Captación y Tasaciones"
+Doña Carmen quiere vender su piso en el centro y llama a la inmobiliaria para que un agente vaya a valorarlo. Elena gestiona la cita enviando a un agente captador al domicilio de Carmen para una valoración física que tomará unos 90 minutos en total.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 6 - Inmobiliarias
+## Escenario Real: "Departamento de Firmas y Notaría"
+El Sr. López ya ha decidido comprar un piso y llama para fijar el día de la firma del contrato de arras. Elena debe agendar una reunión presencial en la sala de juntas de la oficina principal, asegurándose de que la sala no esté reservada y que el director de ventas esté presente.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 7 - Alquiladoras de vehículos y maquinaria
+## Escenario Real: "Departamento de Entregas de Maquinaria Pesada"
+El encargado de obra de la constructora "Edificaciones Sur" llama urgente para alquilar una excavadora pequeña. Elena confirma el stock y programa un slot de 20 minutos para mañana a primera hora, en el que el operario de la constructora podrá pasar con su camión a recoger y firmar el albarán de la excavadora.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 8 - Alquiladoras de vehículos y maquinaria
+## Escenario Real: "Departamento de Servicio Técnico In Situ"
+Un cliente que alquiló una plataforma elevadora llama desde la obra porque la máquina no arranca. Elena programa una visita de urgencia para el equipo de mecánicos móviles, quienes se desplazarán al lugar de la obra para reparar o sustituir la máquina esa misma tarde.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 9 - Alquiladoras de vehículos y maquinaria
+## Escenario Real: "Departamento de Rent-a-Car (Particulares)"
+Laura llama a la empresa de alquiler de furgonetas porque se muda de piso este fin de semana. Quiere recoger la furgoneta el viernes por la tarde. Elena gestiona la reserva y le da cita a las 18:00 en el mostrador para hacer la entrega de llaves y revisión de daños, un trámite de 15 minutos.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 10 - Despachos profesionales (Abogados)
+## Escenario Real: "Departamento Laboral - Primera Consulta"
+El Sr. Ramírez ha sido despedido de su empresa y busca asesoramiento legal. Llama al bufete de abogados. Elena le ofrece una primera consulta gratuita por videollamada de 30 minutos con uno de los abogados laboralistas del despacho para evaluar la viabilidad de una demanda.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 11 - Despachos profesionales (Gestorías)
+## Escenario Real: "Departamento de Campaña de Renta"
+Estamos en mayo y doña Teresa llama a su gestoría para hacer la Declaración de la Renta. Elena debe agendar una cita presencial de 45 minutos en la oficina de la gestoría para que Teresa lleve sus facturas en papel y se siente con un técnico fiscal.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 12 - Despachos profesionales (Asesoría de Empresas)
+## Escenario Real: "Departamento de Cierre de Impuestos"
+El administrador de una Pyme llama a su asesoría fiscal en el mes de enero. Necesita agendar una llamada telefónica extensa (callback) con su gestor asignado para revisar los cierres de IVA del cuarto trimestre antes de presentarlos a Hacienda. Elena reserva un bloque de 45 minutos en la agenda del gestor.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 13 - Retail / Distribuidoras B2B
+## Escenario Real: "Departamento de Preventa en Ruta"
+El dueño del "Restaurante El Puerto" llama a la distribuidora de bebidas porque quiere cambiar su carta de vinos. Elena agenda una visita presencial: el comercial de la zona visitará el restaurante el próximo jueves por la mañana con el catálogo de muestras, bloqueando 60 minutos en su ruta.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 14 - Retail / Distribuidoras B2B
+## Escenario Real: "Departamento de Diseño y Proyectos (Muebles)"
+Una pareja llama a una gran tienda de muebles y reformas. Quieren reformar su cocina. Elena les agenda una sesión de 2 horas en la propia tienda con un interiorista para diseñar la cocina en 3D frente al ordenador.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 15 - Retail / Distribuidoras B2B
+## Escenario Real: "Departamento de Recogida Click & Collect"
+Un cliente mayorista ha hecho un gran pedido de materiales de construcción por la web, pero prefiere ir a recogerlo con su furgón. Llama para avisar. Elena programa un slot en el muelle de carga (Loading Dock 2) para el martes a las 11:00, asegurando que los mozos de almacén tendrán el palet preparado.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 16 - Servicios Técnicos (SAT)
+## Escenario Real: "Departamento de SAT Electrodomésticos a Domicilio"
+El Sr. Gómez llama desesperado porque su frigorífico está perdiendo agua. Elena agenda una visita del técnico reparador a su domicilio. El sistema bloquea 60 minutos de trabajo más 30 minutos de buffer de desplazamiento para la ruta del técnico.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 17 - Servicios Técnicos (Instaladores)
+## Escenario Real: "Departamento de Presupuestos Solares"
+Don Manuel quiere instalar paneles solares en el tejado de su casa y llama a la empresa instaladora. Elena agenda una visita sin compromiso de un ingeniero, que irá a la casa, subirá al tejado a tomar medidas y explicará las opciones. Se reserva un bloque de 90 minutos.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 18 - Servicios Técnicos (Mantenimiento)
+## Escenario Real: "Departamento de Mantenimiento Anual de Calderas"
+Llega el otoño y la Sra. Ruiz llama a su empresa de gas para la revisión obligatoria de su caldera. Elena le ofrece las franjas horarias disponibles de los operarios de zona para realizar el mantenimiento rutinario de 45 minutos en su casa.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 19 - Clínicas y Centros de Salud
+## Escenario Real: "Departamento de Odontología General"
+Carlos llama a la clínica dental porque siente sensibilidad en una muela. Elena agenda una cita de 30 minutos en el "Gabinete 2" para que la odontóloga de turno le haga una exploración y una radiografía rápida.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 20 - Clínicas y Centros de Salud
+## Escenario Real: "Departamento de Fisioterapia y Rehabilitación"
+Un paciente con un esguince de tobillo llama a la clínica tras salir de urgencias. Necesita empezar sesiones de fisioterapia. Elena busca disponibilidad en las camillas libres para agendar una sesión manual de 45 minutos con uno de los fisioterapeutas del centro.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 21 - Clínicas y Centros de Salud (Estética)
+## Escenario Real: "Departamento de Tratamientos Láser"
+María llama al centro de estética para continuar con su bono de depilación láser. Elena agenda la cita teniendo en cuenta que este servicio requiere que la máquina láser específica (un recurso limitado) y la operadora estén libres simultáneamente durante 60 minutos.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 22 - Clínicas Veterinarias
+## Escenario Real: "Departamento de Consultas Gatos"
+El dueño del gato "Michi" llama a la clínica veterinaria porque el animal no ha comido en dos días. Elena le agenda una cita de 20 minutos en la consulta exclusiva de felinos (Box Gatos) para que el veterinario de guardia le haga una exploración.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 23 - Despachos profesionales (Notarías)
+## Escenario Real: "Departamento de Recogida de Escrituras"
+Una abogada llama a la notaría en nombre de su cliente porque necesita recoger las copias compulsadas de unas escrituras de compraventa que se firmaron la semana pasada. Elena gestiona un hueco de 5 minutos en el mostrador de administración para la recogida física de los documentos.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 24 - Alquiladoras de vehículos y maquinaria
+## Escenario Real: "Departamento de Devolución de Vehículos"
+Un turista llama a la empresa de alquiler de furgonetas camper porque su vuelo se ha adelantado y necesita devolver la campervan antes de lo previsto. Elena le reprograma la cita de devolución para el jueves a las 08:00 AM en el aparcamiento del aeropuerto, que requiere 15 minutos para la inspección visual.
+
+ CONTEXTO DE NEGOCIO PARA IA: Caso 25 - Servicios Técnicos (Informática B2B)
+## Escenario Real: "Departamento de Soporte IT Remoto"
+El gerente de una asesoría llama a su proveedor de mantenimiento informático porque el software de nóminas se ha bloqueado en tres ordenadores. Elena agenda una sesión de conexión remota de emergencia (sin desplazamiento): un técnico IT les llamará y se conectará en remoto a sus pantallas dentro de la próxima hora.

@@ -137,7 +137,7 @@ const verify = async () => {
 
     // 7. Verificar triggers set_updated_at en tablas principales
     console.log('📋 7. Verificando triggers set_updated_at...');
-    const tables = ['users', 'organizations', 'voice_agents', 'phone_numbers', 'departments'];
+    const tables = ['users', 'organizations', 'voice_agents', 'phone_numbers', 'departments', 'calendar_schedules', 'appointments'];
     let updatedAtTriggersCount = 0;
     
     for (const table of tables) {

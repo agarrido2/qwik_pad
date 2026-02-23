@@ -15,9 +15,15 @@
  * - Nueva tabla voice_agents (relación N:1 con organizations)
  * - Renombrada assigned_numbers → phone_numbers
  * - Simplificada organizations (campos de agente movidos a voice_agents)
+ *
+ * Refactor Contacts + Scheduling v2 (2026-02-23):
+ * - Nueva tabla contacts: ciclo de vida único prospect→lead→qualified→client
+ * - Nueva tabla contacts reemplaza clientName/clientPhone/clientEmail inline
+ * - appointments: startAt/endAt nullable para soportar callbacks sin hora fija
+ * - appointments: nuevo campo notes, appointmentType, callbackPreferredAt
  */
 
-import { pgTable, pgEnum, uuid, text, timestamp, boolean, jsonb, unique, integer, index } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, uuid, text, timestamp, boolean, jsonb, unique, integer, index, date } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ==========================================
@@ -54,6 +60,44 @@ export const phoneNumberStatusEnum = pgEnum('phone_number_status', [
   'available',  // Número disponible para asignar
   'assigned',   // Número asignado a un agente
   'suspended'   // Número suspendido temporalmente
+]);
+
+export const calendarTargetTypeEnum = pgEnum('calendar_target_type', [
+  'ORGANIZATION', // Calendario de la empresa (horario global, festivos)
+  'DEPARTMENT',   // Calendario del servicio (slot_duration, horario propio)
+  'USER',         // Calendario del operario (turnos, vacaciones, bajas)
+]);
+
+export const appointmentStatusEnum = pgEnum('appointment_status', [
+  'PENDING',    // Recibida, pendiente de asignación a operario
+  'CONFIRMED',  // Asignada y confirmada
+  'CANCELLED',  // Cancelada (libera el hueco, nunca se borra)
+]);
+
+export const assignmentModeEnum = pgEnum('assignment_mode', [
+  'manual', // El admin asigna la cita manualmente al operario
+  'ai',     // La IA decide el operario basándose en disponibilidad/carga
+]);
+
+export const appointmentTypeEnum = pgEnum('appointment_type', [
+  'appointment', // Cita presencial con hora exacta (bloquea agenda vía GIST)
+  'callback',    // Llamada saliente sin hora fija (startAt/endAt son NULL)
+  'visit',       // Visita a inmueble u otros (hora exacta, bloquea agenda)
+]);
+
+export const contactStatusEnum = pgEnum('contact_status', [
+  'prospect',  // Captado por la IA, datos mínimos (nombre, teléfono)
+  'lead',      // Interés confirmado, pendiente de qualificación
+  'qualified', // Cualificado comercialmente, en negociación activa
+  'client',    // Conversión completada
+  'inactive',  // Sin actividad o descartado
+]);
+
+export const contactSourceEnum = pgEnum('contact_source', [
+  'call',   // Captado en llamada entrante por agente IA
+  'web',    // Formulario web / landing page
+  'manual', // Creado manualmente por el equipo
+  'import', // Importado desde CSV / CRM externo
 ]);
 
 // ==========================================
@@ -230,10 +274,16 @@ export const departments = pgTable('departments', {
     .references(() => organizations.id, { onDelete: 'cascade' }),
 
   name: text('name').notNull(),
+  description: text('description'),
   color: text('color').notNull(),
   slug: text('slug').notNull(),
   isActive: boolean('is_active').notNull().default(true),
   sortOrder: integer('sort_order').notNull().default(0),
+
+  // Motor de calendario: configuración de citas
+  slotDurationMinutes: integer('slot_duration_minutes').notNull().default(60),
+  bufferBeforeMinutes: integer('buffer_before_minutes').notNull().default(0),
+  bufferAfterMinutes: integer('buffer_after_minutes').notNull().default(0),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -241,6 +291,264 @@ export const departments = pgTable('departments', {
   uniqueOrgSlug: unique().on(table.organizationId, table.slug),
   orgIdx: index('idx_departments_org').on(table.organizationId),
   orgActiveIdx: index('idx_departments_org_active').on(table.organizationId, table.isActive),
+}));
+
+// ==========================================
+// TABLA: department_members (Pivot N:M Dept ↔ Users)
+// ==========================================
+
+/**
+ * Department Members Table
+ * @description Qué operarios (users) pueden atender citas de cada departamento.
+ * Un user puede estar en múltiples departments. Un department puede tener N users.
+ * Cuando llega una cita al department, el admin (o la IA) asigna a uno de estos members.
+ */
+export const departmentMembers = pgTable('department_members', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  departmentId: uuid('department_id')
+    .notNull()
+    .references(() => departments.id, { onDelete: 'cascade' }),
+
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
+  // Un operario puede ser el responsable principal del departamento
+  isLead: boolean('is_lead').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
+
+  joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  // Un user solo puede pertenecer 1 vez a cada department
+  uniqueDeptUser: unique().on(table.departmentId, table.userId),
+  deptIdx: index('idx_dept_members_dept').on(table.departmentId),
+  userIdx: index('idx_dept_members_user').on(table.userId),
+  deptActiveIdx: index('idx_dept_members_dept_active').on(table.departmentId, table.isActive),
+}));
+
+// ==========================================
+// TABLA: calendar_schedules (Patrón Base Semanal)
+// ==========================================
+
+/**
+ * Calendar Schedules Table
+ * @description Horario base semanal de cada entidad (Org / Dept / User).
+ * No guarda fechas exactas, sino el patrón repetitivo por día de semana (ISODOW 1-7).
+ *
+ * Formato weekly_hours:
+ * { "1": [{"start":"09:00","end":"14:00"},{"start":"17:00","end":"20:00"}], "6": [], "7": [] }
+ * Claves ausentes o con [] = cerrado ese día.
+ *
+ * Cada entidad tiene máximo 1 registro en esta tabla (unique target_type + target_id).
+ */
+export const calendarSchedules = pgTable('calendar_schedules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  targetType: calendarTargetTypeEnum('target_type').notNull(),
+  targetId: uuid('target_id').notNull(),
+
+  // Zona horaria de la entidad. Crítico para conversión de horas en el RPC.
+  timezone: text('timezone').notNull().default('Europe/Madrid'),
+
+  // Patrón semanal ISODOW. Validado en capa de servicio con Zod antes del INSERT.
+  weeklyHours: jsonb('weekly_hours').notNull(),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  // Búsqueda ultra-rápida por entidad (el JOIN más frecuente del RPC)
+  targetIdx: index('idx_calendar_schedules_target').on(table.targetType, table.targetId),
+  // Cada entidad solo puede tener 1 calendario base
+  uniqueTarget: unique().on(table.targetType, table.targetId),
+}));
+
+// ==========================================
+// TABLA: calendar_exceptions (Overrides y Festivos)
+// ==========================================
+
+/**
+ * Calendar Exceptions Table
+ * @description Sobrescribe el horario base en días puntuales.
+ * Es la tabla que el administrador gestiona desde el panel visual.
+ *
+ * Prioridad en el RPC:
+ * 1. Si is_closed = true → ese día devuelve [] (cerrado total)
+ * 2. Si custom_hours IS NOT NULL → usa esos horarios ese día
+ * 3. Si no hay excepción → usa weekly_hours del patrón base
+ */
+export const calendarExceptions = pgTable('calendar_exceptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  targetType: calendarTargetTypeEnum('target_type').notNull(),
+  targetId: uuid('target_id').notNull(),
+
+  // Fecha exacta sobrescrita. Tipo date de PostgreSQL (sin hora).
+  exceptionDate: date('exception_date').notNull(),
+
+  // true = día completamente cerrado, sin importar custom_hours
+  isClosed: boolean('is_closed').notNull().default(true),
+
+  // Si el día no está cerrado del todo, aplica este horario especial
+  customHours: jsonb('custom_hours'),
+
+  // Motivo legible para el administrador: "Baja médica", "Inventario", "Festivo local"
+  description: text('description'),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  // JOIN crítico del RPC: buscar excepciones de una entidad en un rango de fechas
+  targetDateIdx: index('idx_calendar_exceptions_target_date').on(table.targetId, table.exceptionDate),
+  // No puede haber dos excepciones para la misma entidad el mismo día
+  uniqueTargetDate: unique().on(table.targetType, table.targetId, table.exceptionDate),
+}));
+
+// ==========================================
+// TABLA: appointments (Reservas Confirmadas)
+// ==========================================
+
+/**
+ * Appointments Table
+ * @description Citas confirmadas. El motor de disponibilidad las resta
+ * antes de devolver huecos libres a la IA.
+ *
+ * Flujo:
+ * 1. IA detecta intención de reserva → llama RPC get_time_window_availability
+ * 2. Cliente elige hueco → IA llama RPC book_appointment → INSERT con status PENDING
+ * 3. Admin (o IA) asigna operario → UPDATE user_id + status CONFIRMED
+ * 4. Si se cancela → UPDATE status CANCELLED (nunca DELETE, para historial)
+ *
+ * El constraint GIST de exclusión (aplicado vía migración SQL manual)
+ * garantiza que dos citas CONFIRMED nunca se solapen en el mismo department.
+ */
+export const appointments = pgTable('appointments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  // Multi-tenant
+  organizationId: uuid('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+
+  // Servicio que atiende la cita (OBLIGATORIO siempre)
+  departmentId: uuid('department_id')
+    .notNull()
+    .references(() => departments.id, { onDelete: 'restrict' }),
+
+  // Operario asignado (NULL hasta que admin/IA lo asigne)
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+
+  // Quién realizó la asignación (para auditoría)
+  assignedByUserId: uuid('assigned_by_user_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+
+  // Cómo se asignó el operario
+  assignmentMode: assignmentModeEnum('assignment_mode'),
+
+  // Tipo de interacción
+  type: appointmentTypeEnum('type').notNull().default('appointment'),
+
+  // Contacto vinculado (FK a contacts — nullable para compat con registros legacy)
+  // Cuando Elena crea la cita, crea/vincula el contact en la misma transacción.
+  contactId: uuid('contact_id')
+    .references(() => contacts.id, { onDelete: 'set null' }),
+
+  // Datos del cliente (desnormalizados para snapshot histórico inmutable)
+  // Se rellenan desde contacts en el momento de la reserva.
+  clientName: text('client_name').notNull(),
+  clientPhone: text('client_phone').notNull(),
+
+  // Contexto libre de la llamada/visita (generado por IA o editado por el admin)
+  // Ej: "Sra. Cristina quiere ver piso ref:130A, viene con su marido"
+  // Ej: "Sr. Pastor quiere callback sobre SEAT Ateca, prefiere tardes"
+  notes: text('notes'),
+
+  // Rango temporal exacto (incluye buffer_before y buffer_after del department)
+  // NULLABLE para callbacks (type = 'callback') sin hora fija.
+  // El constraint GIST de exclusión ignora NULLs → no genera falsos conflictos.
+  startAt: timestamp('start_at', { withTimezone: true }),
+  endAt: timestamp('end_at', { withTimezone: true }),
+
+  // Para callbacks: marca temporal aproximada de cuándo debe producirse la llamada.
+  // No bloquea agenda. Sirve para ordenar la cola de callbacks del equipo.
+  // Ej: NOW() + 2 days cuando cliente dice "en un par de días".
+  callbackPreferredAt: timestamp('callback_preferred_at', { withTimezone: true }),
+
+  // Estado de la cita
+  status: appointmentStatusEnum('status').notNull().default('PENDING'),
+
+  // Cancelación (solo si status = CANCELLED)
+  cancellationReason: text('cancellation_reason'),
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  // Multi-tenant: listado de citas por organización
+  orgIdx: index('idx_appointments_org').on(table.organizationId),
+  // Índice PARCIAL: solo CONFIRMED bloquean huecos (las CANCELLED/PENDING no cuentan)
+  // NOTA: el índice parcial WHERE status='CONFIRMED' y el constraint GIST de exclusión
+  // se aplican vía migración SQL manual (Drizzle no soporta EXCLUDE USING GIST)
+  deptDateIdx: index('idx_appointments_dept_date').on(table.departmentId, table.startAt, table.endAt),
+  // Panel de operario: mis citas
+  userDateIdx: index('idx_appointments_user_date').on(table.userId, table.startAt),
+  // Listado admin: todas las citas de la org por fecha
+  orgDateIdx: index('idx_appointments_org_date').on(table.organizationId, table.startAt),
+  // Citas pendientes de asignación (dashboard admin)
+  pendingIdx: index('idx_appointments_pending').on(table.departmentId, table.status),
+}));
+
+// ==========================================
+// TABLA: contacts (Ciclo de Vida Único del Contacto)
+// ==========================================
+
+/**
+ * Contacts Table
+ * @description Tabla única de contactos con ciclo de vida completo.
+ * El estado (status) describe en qué momento del embudo comercial está.
+ *
+ * Ciclo de vida:
+ *   prospect → lead → qualified → client
+ *                                ↘ inactive
+ *
+ * Creación inicial: Elena (IA) captura name + phone (+ email si lo da).
+ * Enriquecimiento posterior: el equipo añade address, notes, etc.
+ * Un contacto puede tener N appointments/callbacks a lo largo del tiempo.
+ */
+export const contacts = pgTable('contacts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  // Multi-tenant
+  organizationId: uuid('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+
+  // Agente IA que captó el contacto (nullable: puede ser creado manualmente)
+  agentId: uuid('agent_id')
+    .references(() => voiceAgents.id, { onDelete: 'set null' }),
+
+  // Ciclo de vida
+  status: contactStatusEnum('status').notNull().default('prospect'),
+  source: contactSourceEnum('source').notNull().default('call'),
+
+  // Datos capturados por la IA en la llamada (núcleo mínimo)
+  name: text('name').notNull(),
+  phone: text('phone').notNull(),
+  email: text('email'),
+
+  // Datos enriquecidos por el equipo comercial
+  address: text('address'),
+  notes: text('notes'), // Observaciones libres: contexto, preferencias, historial
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  orgIdx: index('idx_contacts_org').on(table.organizationId),
+  orgStatusIdx: index('idx_contacts_org_status').on(table.organizationId, table.status),
+  orgSourceIdx: index('idx_contacts_org_source').on(table.organizationId, table.source),
+  agentIdx: index('idx_contacts_agent').on(table.agentId),
+  // Búsqueda rápida por teléfono dentro de la org (deduplicación)
+  orgPhoneIdx: index('idx_contacts_org_phone').on(table.organizationId, table.phone),
 }));
 
 // ==========================================
@@ -513,6 +821,10 @@ export const pendingInvitations = pgTable('pending_invitations', {
 export const usersRelations = relations(users, ({ many }) => ({
   /** Organizaciones a las que pertenece (N:M via organization_members) */
   organizationMemberships: many(organizationMembers),
+  /** Departamentos en los que opera como operario */
+  departmentMemberships: many(departmentMembers),
+  /** Citas asignadas a este operario */
+  assignedAppointments: many(appointments),
   /** Invitaciones enviadas */
   sentInvitations: many(pendingInvitations),
   /** Agentes de voz creados por este usuario */
@@ -532,11 +844,51 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   pendingInvitations: many(pendingInvitations),
 }));
 
-export const departmentsRelations = relations(departments, ({ one }) => ({
+export const departmentsRelations = relations(departments, ({ one, many }) => ({
   /** Organización propietaria del departamento */
   organization: one(organizations, {
     fields: [departments.organizationId],
     references: [organizations.id],
+  }),
+  /** Operarios asignados a este departamento */
+  members: many(departmentMembers),
+  /** Citas gestionadas por este departamento */
+  appointments: many(appointments),
+}));
+
+export const departmentMembersRelations = relations(departmentMembers, ({ one }) => ({
+  /** Departamento al que pertenece */
+  department: one(departments, {
+    fields: [departmentMembers.departmentId],
+    references: [departments.id],
+  }),
+  /** Operario */
+  user: one(users, {
+    fields: [departmentMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const appointmentsRelations = relations(appointments, ({ one }) => ({
+  /** Organización propietaria */
+  organization: one(organizations, {
+    fields: [appointments.organizationId],
+    references: [organizations.id],
+  }),
+  /** Departamento/servicio que atiende */
+  department: one(departments, {
+    fields: [appointments.departmentId],
+    references: [departments.id],
+  }),
+  /** Operario asignado */
+  user: one(users, {
+    fields: [appointments.userId],
+    references: [users.id],
+  }),
+  /** Quién hizo la asignación */
+  assignedByUser: one(users, {
+    fields: [appointments.assignedByUserId],
+    references: [users.id],
   }),
 }));
 
@@ -652,7 +1004,22 @@ export type NewPhoneNumber = typeof phoneNumbers.$inferInsert;
 export type PendingInvitation = typeof pendingInvitations.$inferSelect;
 export type NewPendingInvitation = typeof pendingInvitations.$inferInsert;
 
+export type DepartmentMember = typeof departmentMembers.$inferSelect;
+export type NewDepartmentMember = typeof departmentMembers.$inferInsert;
+
+export type CalendarSchedule = typeof calendarSchedules.$inferSelect;
+export type NewCalendarSchedule = typeof calendarSchedules.$inferInsert;
+
+export type CalendarException = typeof calendarExceptions.$inferSelect;
+export type NewCalendarException = typeof calendarExceptions.$inferInsert;
+
+export type Appointment = typeof appointments.$inferSelect;
+export type NewAppointment = typeof appointments.$inferInsert;
+
 // Type helpers para enums
 export type AssistantGender = (typeof assistantGenderEnum.enumValues)[number];
 export type SubscriptionTier = (typeof subscriptionTierEnum.enumValues)[number];
 export type PhoneNumberStatus = (typeof phoneNumberStatusEnum.enumValues)[number];
+export type CalendarTargetType = (typeof calendarTargetTypeEnum.enumValues)[number];
+export type AppointmentStatus = (typeof appointmentStatusEnum.enumValues)[number];
+export type AssignmentMode = (typeof assignmentModeEnum.enumValues)[number];

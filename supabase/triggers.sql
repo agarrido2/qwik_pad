@@ -10,9 +10,9 @@
 -- 1. Ir a Supabase Dashboard → SQL Editor
 -- 2. Copiar y pegar este archivo completo
 -- 3. Ejecutar (Run)
--- 4. Verificar con: bun run scripts/diagnose_db.ts
+-- 4. Verificar con: bun run scripts/verify_installation.ts
 --
--- Última actualización: 2026-02-21
+-- Última actualización: 2026-02-22
 -- ==========================================
 
 -- ==========================================
@@ -90,16 +90,27 @@ COMMENT ON FUNCTION public.handle_new_auth_user() IS
 -- ==========================================
 -- TRIGGER: on_auth_user_created
 -- ==========================================
+-- auth.users es propiedad de supabase_auth_admin.
+-- En el SQL Editor hosted, postgres no puede asumir ese rol.
+-- Usamos un DO block con EXCEPTION para que el resto del script
+-- siempre se ejecute. Si falla, aplicar via Supabase CLI:
+--   supabase db push
+-- o ejecutar SOLO el bloque auth en una conexión directa (port 5432).
 
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DO $$
+BEGIN
+  CREATE OR REPLACE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_new_auth_user();
 
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_new_auth_user();
+  COMMENT ON TRIGGER on_auth_user_created ON auth.users IS
+    'Ejecuta handle_new_auth_user() después de crear un usuario en auth.users';
 
-COMMENT ON TRIGGER on_auth_user_created ON auth.users IS 
-'Ejecuta handle_new_auth_user() después de crear un usuario en auth.users';
+  RAISE NOTICE '✅ Trigger on_auth_user_created creado correctamente';
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE '⚠️  on_auth_user_created: permiso denegado (auth.users). Aplicar via Supabase CLI o conexión directa.';
+END $$;
 
 -- ==========================================
 -- FUNCIÓN: handle_updated_at()
@@ -126,37 +137,44 @@ COMMENT ON FUNCTION public.handle_updated_at() IS
 -- ==========================================
 
 -- Trigger para users
-DROP TRIGGER IF EXISTS set_updated_at ON public.users;
-CREATE TRIGGER set_updated_at
+CREATE OR REPLACE TRIGGER set_updated_at
   BEFORE UPDATE ON public.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
 -- Trigger para organizations
-DROP TRIGGER IF EXISTS set_updated_at ON public.organizations;
-CREATE TRIGGER set_updated_at
+CREATE OR REPLACE TRIGGER set_updated_at
   BEFORE UPDATE ON public.organizations
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
 -- Trigger para voice_agents
-DROP TRIGGER IF EXISTS set_updated_at ON public.voice_agents;
-CREATE TRIGGER set_updated_at
+CREATE OR REPLACE TRIGGER set_updated_at
   BEFORE UPDATE ON public.voice_agents
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
 -- Trigger para phone_numbers
-DROP TRIGGER IF EXISTS set_updated_at ON public.phone_numbers;
-CREATE TRIGGER set_updated_at
+CREATE OR REPLACE TRIGGER set_updated_at
   BEFORE UPDATE ON public.phone_numbers
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
 -- Trigger para departments
-DROP TRIGGER IF EXISTS set_updated_at ON public.departments;
-CREATE TRIGGER set_updated_at
+CREATE OR REPLACE TRIGGER set_updated_at
   BEFORE UPDATE ON public.departments
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+-- Trigger para calendar_schedules
+CREATE OR REPLACE TRIGGER set_updated_at
+  BEFORE UPDATE ON public.calendar_schedules
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();
+
+-- Trigger para appointments
+CREATE OR REPLACE TRIGGER set_updated_at
+  BEFORE UPDATE ON public.appointments
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
@@ -185,15 +203,21 @@ $$;
 COMMENT ON FUNCTION public.handle_delete_auth_user() IS 
 'Trigger function: Elimina automáticamente el usuario de public.users cuando se elimina de auth.users. Los foreign keys en cascade se encargan de limpiar referencias.';
 
--- Trigger para delete
-DROP TRIGGER IF EXISTS on_auth_user_deleted ON auth.users;
-CREATE TRIGGER on_auth_user_deleted
-  AFTER DELETE ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_delete_auth_user();
+-- Trigger para delete (requiere ownership de auth.users)
+DO $$
+BEGIN
+  CREATE OR REPLACE TRIGGER on_auth_user_deleted
+    AFTER DELETE ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_delete_auth_user();
 
-COMMENT ON TRIGGER on_auth_user_deleted ON auth.users IS 
-'Ejecuta handle_delete_auth_user() después de eliminar un usuario de auth.users';
+  COMMENT ON TRIGGER on_auth_user_deleted ON auth.users IS
+    'Ejecuta handle_delete_auth_user() después de eliminar un usuario de auth.users';
+
+  RAISE NOTICE '✅ Trigger on_auth_user_deleted creado correctamente';
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE '⚠️  on_auth_user_deleted: permiso denegado (auth.users). Aplicar via Supabase CLI o conexión directa.';
+END $$;
 
 -- ==========================================
 -- FUNCIÓN: user_organizations()
@@ -314,8 +338,7 @@ $$;
 COMMENT ON FUNCTION public.log_role_change() IS
 'Trigger function: Registra auditoría de cambios de rol en organization_members para trazabilidad RBAC.';
 
-DROP TRIGGER IF EXISTS audit_role_changes_trigger ON public.organization_members;
-CREATE TRIGGER audit_role_changes_trigger
+CREATE OR REPLACE TRIGGER audit_role_changes_trigger
   AFTER INSERT OR UPDATE OR DELETE ON public.organization_members
   FOR EACH ROW
   EXECUTE FUNCTION public.log_role_change();
@@ -331,6 +354,7 @@ DO $$
 DECLARE
   function_count INTEGER;
   trigger_count INTEGER;
+  updated_at_count INTEGER;
 BEGIN
   -- Contar funciones creadas
   SELECT COUNT(*) INTO function_count
@@ -353,6 +377,19 @@ BEGIN
   AND c.relname = 'users'
   AND t.tgname IN ('on_auth_user_created', 'on_auth_user_deleted');
 
+  -- Contar triggers set_updated_at en tablas públicas
+  SELECT COUNT(*) INTO updated_at_count
+  FROM pg_trigger t
+  JOIN pg_class c ON t.tgrelid = c.oid
+  JOIN pg_namespace n ON c.relnamespace = n.oid
+  WHERE n.nspname = 'public'
+  AND t.tgname = 'set_updated_at'
+  AND c.relname IN (
+    'users', 'organizations', 'voice_agents',
+    'phone_numbers', 'departments',
+    'calendar_schedules', 'appointments'
+  );
+
   -- Mostrar resultados
   RAISE NOTICE '';
   RAISE NOTICE '═════════════════════════════════════════════════';
@@ -360,15 +397,16 @@ BEGIN
   RAISE NOTICE '═════════════════════════════════════════════════';
   RAISE NOTICE 'Funciones creadas: % / 4', function_count;
   RAISE NOTICE 'Triggers en auth.users: % / 2', trigger_count;
+  RAISE NOTICE 'Triggers set_updated_at: % / 7', updated_at_count;
   RAISE NOTICE '';
-  
-  IF function_count = 4 AND trigger_count = 2 THEN
+
+  IF function_count = 4 AND trigger_count = 2 AND updated_at_count = 7 THEN
     RAISE NOTICE '✅ Todas las funciones y triggers están correctamente instalados';
   ELSE
     RAISE NOTICE '⚠️  ADVERTENCIA: Algunas funciones/triggers pueden estar faltando';
   END IF;
-  
+
   RAISE NOTICE '';
-  RAISE NOTICE 'Verificación completa con: bun run scripts/diagnose_db.ts';
+  RAISE NOTICE 'Verificación completa con: bun run scripts/verify_installation.ts';
   RAISE NOTICE '═════════════════════════════════════════════════';
 END $$;

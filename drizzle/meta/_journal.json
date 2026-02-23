@@ -78,6 +78,20 @@
       "when": 1771649400000,
       "tag": "0010_refactor_multi_agent_architecture",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1771787731420,
+      "tag": "0012_steep_rhino",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1771824805654,
+      "tag": "0013_certain_iceman",
+      "breakpoints": true
     }
   ]
 }
