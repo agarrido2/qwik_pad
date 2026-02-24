@@ -1,10 +1,9 @@
 /**
- * Industries Config - Source of Truth para catálogo de sectores
+ * Industries Config - Source of Truth del vertical activo
  *
- * Principio "Config as Code":
- * - Los sectores son decisión de producto (owner), no datos operativos.
- * - Se almacenan como configuración tipada en código, no en base de datos.
- * - Añadir/modificar sectores aquí no requiere migraciones.
+ * Onucall Auto opera con un único vertical: concesionarios de vehículos.
+ * Se mantiene este archivo para preservar API estable y facilitar
+ * futuros spin-offs por vertical sin romper imports existentes.
  */
 
 /**
@@ -29,43 +28,7 @@ export const SECTORS: SectorConfig[] = [
     slug: 'concesionario',
     name: 'Concesionario de Vehículos',
     icon: '🚗',
-    description: 'Venta y gestión comercial de vehículos',
-  },
-  {
-    slug: 'inmobiliaria',
-    name: 'Inmobiliaria',
-    icon: '🏠',
-    description: 'Captación, visitas y cierre de operaciones inmobiliarias',
-  },
-  {
-    slug: 'retail',
-    name: 'Retail y Distribución',
-    icon: '🛒',
-    description: 'Atención comercial, pedidos y operaciones omnicanal',
-  },
-  {
-    slug: 'alquiladora',
-    name: 'Empresa Alquiladora',
-    icon: '🔑',
-    description: 'Reservas, disponibilidad y coordinación de entregas',
-  },
-  {
-    slug: 'sat',
-    name: 'Servicio Técnico (SAT)',
-    icon: '🔧',
-    description: 'Incidencias, soporte y planificación de técnicos',
-  },
-  {
-    slug: 'despacho',
-    name: 'Despacho Profesional',
-    icon: '⚖️',
-    description: 'Gestión de clientes y servicios profesionales',
-  },
-  {
-    slug: 'clinica',
-    name: 'Clínica / Centro Médico',
-    icon: '🏥',
-    description: 'Pacientes, agenda y coordinación asistencial',
+    description: 'Captación comercial, stock y pruebas de conducción',
   },
 ];
 

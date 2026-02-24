@@ -22,7 +22,7 @@ export const CreateVoiceAgentSchema = z.object({
   name: z.string().trim().min(3, 'El nombre interno es obligatorio').max(120),
   assistantName: z.string().trim().min(2, 'El nombre del asistente es obligatorio').max(80),
   assistantGender: z.enum(['male', 'female']),
-  sector: z.string().trim().min(2, 'El sector es obligatorio').max(120),
+  sector: z.literal('concesionario').default('concesionario'),
   friendlinessLevel: personalityLevelSchema,
   warmthLevel: personalityLevelSchema,
   isDefault: z.coerce.boolean().optional().default(false),

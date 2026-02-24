@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DEFAULT_SECTOR } from '~/features/onboarding/constants';
 
 // Paso 1: Identidad Corporativa
 export const OnboardingStep1Schema = z.object({
@@ -18,13 +19,10 @@ export const OnboardingStep1Schema = z.object({
 
 // Paso 2: Reglas del Negocio
 export const OnboardingStep2Schema = z.object({
-  sector: z
-    .string()
-    .trim()
-    .min(2, 'Selecciona o escribe un sector'),
+  sector: z.literal(DEFAULT_SECTOR).default(DEFAULT_SECTOR),
   businessDescription: z
     .string()
-    .min(20, 'La descripción es demasiado corta. Escribe al menos 20 caracteres para que el asistente comprenda mejor tu negocio')
+    .min(20, 'La descripción es demasiado corta. Escribe al menos 20 caracteres para que el asistente comprenda mejor tu concesionario')
     .max(500, 'La descripción es demasiado larga. Por favor, resume en máximo 500 caracteres'),
 });
 

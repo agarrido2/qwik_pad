@@ -14,6 +14,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 export {
-  SECTOR_OPTIONS,
-  TRANSFER_POLICY_DEFAULTS,
+  DEFAULT_SECTOR,
+  SECTOR_METADATA,
+  DEFAULT_TRANSFER_POLICY,
 } from './constants/sectors';

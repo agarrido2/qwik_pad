@@ -2,6 +2,7 @@ import { db } from '../db/client';
 import { users, organizations, organizationMembers, voiceAgents } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { DemoDataService } from './demo-data.service';
+import { DEFAULT_SECTOR } from '~/features/onboarding/constants';
 
 /**
  * Onboarding Service - Maneja el proceso de onboarding
@@ -14,7 +15,7 @@ export class OnboardingService {
    * 2. Crea la organización con todos los datos
    * 3. Añade al usuario como owner
    * 4. Marca onboarding como completado
-  * 5. Genera datos demo según sector
+    * 5. Genera datos demo iniciales de concesionario
    * 
    * OPTIMIZACIÓN: Transacción atómica (todo o nada)
    * Referencia: docs/standards/DB_QUERY_OPTIMIZATION.md § 2.3
@@ -26,8 +27,8 @@ export class OnboardingService {
       fullName: string;
       organizationName: string;
       phone: string;
-      // Paso 2: Reglas del Negocio
-      sector: string;
+      // Paso 2: Reglas del Negocio (sector fijo: concesionario)
+      sector: typeof DEFAULT_SECTOR;
       businessDescription: string;
       // Paso 3: Su Asistente
       assistantGender: 'male' | 'female';
@@ -61,7 +62,7 @@ export class OnboardingService {
           name: data.organizationName,
           slug,
           phone: data.phone,
-          sector: data.sector,
+          sector: DEFAULT_SECTOR,
           businessDescription: data.businessDescription,
           subscriptionTier: 'free',
           subscriptionStatus: 'active',
@@ -88,7 +89,7 @@ export class OnboardingService {
           name: 'Agente Principal',
           assistantName: data.assistantName,
           assistantGender: data.assistantGender,
-          sector: data.sector,
+          sector: DEFAULT_SECTOR,
           friendlinessLevel: data.assistantFriendlinessLevel,
           warmthLevel: data.assistantKindnessLevel,
           businessDescription: data.businessDescription,
@@ -109,10 +110,7 @@ export class OnboardingService {
     });
 
     // 5. Generar datos demo FUERA de transacción (no es crítico)
-    const demoData = await DemoDataService.generateForSector(
-      result.organization.id,
-      data.sector,
-    );
+    const demoData = await DemoDataService.generateForConcesionario(result.organization.id);
 
     return { organization: result.organization, demoData };
   }

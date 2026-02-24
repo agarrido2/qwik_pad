@@ -1,26 +1,19 @@
-import {
-  DEMO_DATA_BY_SECTOR,
-  GENERIC_SECTOR_DEMO_TEMPLATE,
-  type PredefinedSectorSlug,
-} from '../utils/demo-data-templates';
+import { CONCESIONARIO_DEMO_TEMPLATE } from '../utils/demo-data-templates';
 
 /**
- * Demo Data Service - Genera datos de prueba según sector
- * Para el tier FREE (sin costos de API)
+ * Demo Data Service - Genera datos de prueba para Onucall Auto
+ * Vertical único: Concesionarios de Vehículos.
  */
 
 export class DemoDataService {
   /**
-   * Genera datos demo para una organización según su sector
-   * En tier FREE esto se usa para mostrar funcionalidad sin consumir APIs reales
+   * Genera datos demo para una organización (concesionarios)
+   * En tier FREE se usa para mostrar funcionalidad sin consumir APIs reales.
    */
-  static async generateForSector(
-    organizationId: string,
-    sector: string,
-  ) {
-    const template = this.getTemplate(sector);
+  static async generateForConcesionario(organizationId: string) {
+    const template = CONCESIONARIO_DEMO_TEMPLATE;
 
-    console.log(`[DemoDataService] Generando datos para ${sector}:`, {
+    console.log('[DemoDataService] Generando datos demo para concesionario:', {
       organizationId,
       promptBase: template.promptBase,
       sampleCallsCount: template.sampleCalls.length,
@@ -38,12 +31,5 @@ export class DemoDataService {
       sampleCalls: template.sampleCalls,
       knowledgeBase: template.knowledgeBase,
     };
-  }
-
-  /**
-   * Obtiene el template de datos demo (sin guardar en DB)
-   */
-  static getTemplate(sector: string) {
-    return DEMO_DATA_BY_SECTOR[sector as PredefinedSectorSlug] ?? GENERIC_SECTOR_DEMO_TEMPLATE;
   }
 }

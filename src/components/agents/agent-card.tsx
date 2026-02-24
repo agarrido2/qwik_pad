@@ -12,7 +12,6 @@ export interface AgentCardProps {
   id: string;
   name: string;
   assistantName: string;
-  sector: string | null;
   isActive: boolean;
   isDefault: boolean;
   phoneNumber: string | null;
@@ -36,7 +35,7 @@ export const AgentCard = component$<AgentCardProps>((props) => {
               )}
             </div>
             <p class="text-sm text-neutral-600">Asistente: {props.assistantName}</p>
-            <p class="text-sm text-neutral-600">Sector: {props.sector ?? 'Sin sector'}</p>
+            <p class="text-sm text-neutral-600">Vertical: Concesionarios</p>
             <p class="text-sm text-neutral-600">
               Número: {props.phoneNumber ?? 'Sin número asignado'}
             </p>

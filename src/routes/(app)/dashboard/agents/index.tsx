@@ -73,7 +73,6 @@ export default component$(() => {
               id={agent.id}
               name={agent.name}
               assistantName={agent.assistantName}
-              sector={agent.sector}
               isActive={agent.isActive}
               isDefault={agent.isDefault}
               phoneNumber={agent.phoneNumber}

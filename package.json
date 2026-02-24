@@ -1,6 +1,6 @@
 {
-  "name": "my-qwik-empty-starter",
-  "description": "Blank project with routing included",
+  "name": "onucall-auto",
+  "description": "Onucall Auto - Plataforma SaaS de IA de voz para concesionarios de vehículos",
   "engines": {
     "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
   },
@@ -25,11 +25,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
-    "db:diagnose": "bun run scripts/diagnose_db.ts",
-    "db:inspect": "bun run scripts/inspect_function.ts",
-    "db:cleanup": "bun run scripts/cleanup_db.ts",
-    "db:verify": "bun run scripts/verify_installation.ts",
-    "db:fix-audit": "bun run scripts/fix_audit_role_changes.ts"
+    "db:verify": "bun run scripts/verify_installation.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.20",

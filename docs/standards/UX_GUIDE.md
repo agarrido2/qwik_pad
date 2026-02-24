@@ -148,7 +148,7 @@ Mientras que la aplicación busca la eficiencia, la web pública busca la **pers
 ### 8.1 La Regla de los 3 Segundos (The Hero Section)
 El usuario llega escéptico y con el dedo en el botón "Atrás". El Hero debe responder tres preguntas antes de que parpadee:
 1.  **¿Qué es esto?** (Claridad radical. "Agentes de Voz IA" > "Revoluciona tu comunicación").
-2.  **¿Es para mí?** (Cualificación inmediata: "Para concesionarios, clínicas e inmobiliarias").
+2.  **¿Es para mí?** (Cualificación inmediata: "Para concesionarios de vehículos").
 3.  **¿Qué gano yo?** (Beneficio directo: "Automatiza el 100% de tus llamadas").
 
 ### 8.2 Arquitectura de la Confianza

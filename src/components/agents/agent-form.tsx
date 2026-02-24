@@ -17,7 +17,6 @@ export interface AgentFormValues {
   name: string;
   assistantName: string;
   assistantGender: 'male' | 'female';
-  sector: string;
   friendlinessLevel: number;
   warmthLevel: number;
   isDefault: boolean;
@@ -46,6 +45,7 @@ export interface AgentFormProps {
 export const AgentForm = component$<AgentFormProps>((props) => {
   const phoneOptions = props.phoneOptions ?? [];
   const showAdvanced = props.showAdvanced ?? false;
+  const fixedSector = 'concesionario';
 
   return (
     <div class="space-y-4">
@@ -115,13 +115,12 @@ export const AgentForm = component$<AgentFormProps>((props) => {
         </div>
       </div>
 
-      <FormField
-        name="sector"
-        label="Sector"
-        value={props.values.sector}
-        placeholder="Ej: Clínica, Inmobiliaria"
-        required
-      />
+      <div class="rounded-lg border border-primary-200 bg-primary-50 p-3">
+        <p class="text-sm font-medium text-neutral-900">Vertical del agente</p>
+        <p class="text-sm text-neutral-700">Concesionario de Vehículos</p>
+      </div>
+
+      <input type="hidden" name="sector" value={fixedSector} />
 
       <div class="flex items-center gap-2">
         <input

@@ -2,7 +2,7 @@
  * Landing Feature - Barrel export de secciones de la landing page
  * 
  * Cada sección es un component$ puro (sin lógica de negocio).
- * Se ensamblan en src/routes/(public)/index.tsx (Orchestrator Pattern).
+ * Secciones actualmente desacopladas de rutas públicas.
  */
 
 export { HeroSection } from './components/HeroSection';

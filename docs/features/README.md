@@ -1,6 +1,6 @@
 # Features - Documentación de Funcionalidades
 
-Documentación de las features implementadas en la aplicación.
+Documentación de las features implementadas en la aplicación (Onucall Auto).
 
 ## Estructura
 
@@ -11,6 +11,11 @@ Cada feature debe documentar:
 - **Base de datos:** Tablas/esquemas involucrados
 - **Seguridad:** Políticas RLS, validaciones
 
+## Estado actual
+
+- El flujo de demo pública fue retirado del producto.
+- Esta carpeta se reserva para documentación funcional vigente del vertical concesionarios.
+
 ## Índice
 
-(Se irá poblando conforme se documenten features)
+- *(Pendiente de poblar con documentación de features activas)*

@@ -199,25 +199,19 @@ export const Component = component$<ComponentProps>(
 ```tsx
 // Select con iconos y descripciones
 <Select
-  name="industry"
-  label="Sector"
+  name="vertical"
+  label="Vertical"
   options={[
     { 
-      value: 'tech', 
-      label: 'Tecnología', 
-      icon: '💻', 
-      description: 'Software y hardware' 
-    },
-    { 
-      value: 'retail', 
-      label: 'Retail', 
-      icon: '🛍️', 
-      description: 'Venta al por menor' 
+      value: 'concesionario', 
+      label: 'Concesionario de Vehículos', 
+      icon: '🚗', 
+      description: 'Captación comercial y pruebas de conducción' 
     },
   ]}
-  value={selectedIndustry.value}
-  onChange$={(value) => { selectedIndustry.value = value }}
-  error={industryError.value}
+  value={selectedVertical.value}
+  onChange$={(value) => { selectedVertical.value = value }}
+  error={verticalError.value}
 />
 ```
 

@@ -396,12 +396,12 @@ export function usePermissions() {
 **Queries finales:** 1 API + 1 DB por request (óptimo)  
 **Patrón replicable:** Sí — cualquier app con auth + roles + multi-tenant
 
-### 6.2 Demo Request (Referencia Excelente)
+### 6.2 Onboarding Demo Seed (Referencia Excelente)
 
-**Ubicación:** `src/features/demo/services/demo.services.ts`  
-**Implementación:** Trigger `validate_demo_rate_limits()` en INSERT  
-**Queries:** 1 (óptimo)  
-**Justificación:** Validación delegada a PostgreSQL, imposible bypassear
+**Ubicación:** `src/lib/services/demo-data.service.ts`  
+**Implementación:** Plantilla predefinida de concesionario sin consultas extra  
+**Queries:** 0 DB en generación de payload (óptimo)  
+**Justificación:** Datos de ejemplo desacoplados de persistencia para no añadir latencia al onboarding
 
 ---
 

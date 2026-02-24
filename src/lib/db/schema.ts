@@ -1,5 +1,5 @@
 /**
- * Drizzle ORM Schema - Onucall SaaS
+ * Drizzle ORM Schema - Onucall Auto
  * 
  * Arquitectura Multi-Tenant N:M con Multi-Agente:
  * - Users pueden pertenecer a múltiples Organizations (consultores, franquicias)
@@ -23,8 +23,8 @@
  * - appointments: nuevo campo notes, appointmentType, callbackPreferredAt
  */
 
-import { pgTable, pgEnum, uuid, text, timestamp, boolean, jsonb, unique, integer, index, date } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { pgTable, pgEnum, uuid, text, timestamp, boolean, jsonb, unique, integer, index, date, check } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
 
 // ==========================================
 // ENUMS
@@ -82,7 +82,7 @@ export const assignmentModeEnum = pgEnum('assignment_mode', [
 export const appointmentTypeEnum = pgEnum('appointment_type', [
   'appointment', // Cita presencial con hora exacta (bloquea agenda vía GIST)
   'callback',    // Llamada saliente sin hora fija (startAt/endAt son NULL)
-  'visit',       // Visita a inmueble u otros (hora exacta, bloquea agenda)
+  'visit',       // Visita al concesionario u otros (hora exacta, bloquea agenda)
 ]);
 
 export const contactStatusEnum = pgEnum('contact_status', [
@@ -119,13 +119,18 @@ export const organizations = pgTable('organizations', {
   subscriptionStatus: subscriptionStatusEnum('subscription_status').notNull().default('active'),
   
   // Metadata de negocio (Onboarding Paso 2)
-  sector: text('sector'), // concesionario | inmobiliaria | clinica | sector personalizado
+  sector: text('sector').default('concesionario'), // Vertical de negocio (Onucall Auto: concesionario)
   businessDescription: text('business_description'), // Descripción del negocio
   
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  sectorConcesionarioChk: check(
+    'organizations_sector_concesionario_chk',
+    sql`${table.sector} IS NULL OR ${table.sector} = 'concesionario'`
+  ),
+}));
 
 // ==========================================
 // TABLA: users
@@ -558,8 +563,8 @@ export const contacts = pgTable('contacts', {
 export const callFlowTemplates = pgTable('call_flow_templates', {
   id: uuid('id').primaryKey().defaultRandom(),
   
-  // Slug del sector (concesionario, inmobiliaria, etc.) - alineado con constantes del código
-  sector: text('sector'),
+  // Slug del vertical activo (Onucall Auto: concesionario)
+  sector: text('sector').default('concesionario'),
   
   name: text('name').notNull(),
   description: text('description'),
@@ -568,7 +573,12 @@ export const callFlowTemplates = pgTable('call_flow_templates', {
   flowConfig: jsonb('flow_config').notNull(),
   
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  sectorConcesionarioChk: check(
+    'call_flow_templates_sector_concesionario_chk',
+    sql`${table.sector} IS NULL OR ${table.sector} = 'concesionario'`
+  ),
+}));
 
 // ==========================================
 // TABLA: users_demo (Demo público)
@@ -576,8 +586,13 @@ export const callFlowTemplates = pgTable('call_flow_templates', {
 
 /**
  * Users Demo Table
- * @description Registro de usuarios que solicitan demo pública
- * Flujo: Formulario → Email OTP → Llamada Retell → Post-call analytics
+ * @deprecated La demo pública fue retirada (2026-02-24). Las rutas `/routes/(public)/`
+ * y `src/features/demo/` fueron eliminadas. Esta tabla se mantiene en la DB para
+ * preservar datos históricos y seguimiento de conversiones pasadas.
+ * NO crear nuevas referencias a esta tabla en el código de aplicación.
+ *
+ * @description Registro de usuarios que solicitaron demo pública.
+ * Flujo original: Formulario → Email OTP → Llamada Retell → Post-call analytics
  */
 export const usersDemo = pgTable('users_demo', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -646,9 +661,10 @@ export const ipTrials = pgTable('ip_trials', {
  * Arquitectura Multi-Agente: Una organización puede tener N agentes,
  * cada uno con su propia personalidad, configuración y número de teléfono.
  * 
- * Casos de uso:
- * - Clínica: Agente "Recepción", Agente "Urgencias 24h", Agente "Seguimiento"
- * - Concesionario: Agente "Nuevo", Agente "Ocasión", Agente "Taller"
+ * Casos de uso (Onucall Auto - Concesionarios):
+ * - Agente "Nuevos": Captación de leads de vehículos nuevos
+ * - Agente "Ocasión": Captación de leads de vehículos de segunda mano
+ * - Agente "Taller": Gestión de citas de mantenimiento y reparación
  */
 export const voiceAgents = pgTable('voice_agents', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -659,9 +675,9 @@ export const voiceAgents = pgTable('voice_agents', {
     .references(() => organizations.id, { onDelete: 'cascade' }),
   
   // Identidad del Agente
-  name: text('name').notNull(), // "Recepción Clínica", "Agente Urgencias 24h"
+  name: text('name').notNull(), // "Ventas Nuevos", "Agente Ocasión", "Taller"
   description: text('description'), // Descripción interna del propósito
-  sector: text('sector'), // concesionario | inmobiliaria | clinica | custom
+  sector: text('sector').default('concesionario'), // Vertical del agente (Onucall Auto: concesionario)
   
   // Integración Externa (Retell AI + Número)
   retellAgentId: text('retell_agent_id').unique(), // UUID del agente en Retell AI
@@ -699,6 +715,11 @@ export const voiceAgents = pgTable('voice_agents', {
   retellIdx: index('idx_voice_agents_retell').on(table.retellAgentId),
   // Índice para buscar agentes por sector
   sectorIdx: index('idx_voice_agents_sector').on(table.sector),
+  // Guardrail de dominio: Onucall Auto opera solo vertical concesionario
+  sectorConcesionarioChk: check(
+    'voice_agents_sector_concesionario_chk',
+    sql`${table.sector} IS NULL OR ${table.sector} = 'concesionario'`
+  ),
 }));
 
 // ==========================================

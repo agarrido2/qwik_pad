@@ -1,61 +1,25 @@
 /**
- * LiveDemoSection - Sección interactiva de demostración con DemoWidget
- * 
- * Layout 2 columnas: Grid de sectores (izq) + DemoWidget funcional (der).
- * Recibe las actions del route como props (Orchestrator Pattern).
- * 
- * DECISIÓN ARQUITECTÓNICA: Props tipadas como `any` para las actions
- * porque ActionStore<T, I, true> tiene limitaciones de covarianza al 
- * pasarse como props entre componentes. Ver DemoWidget.tsx para detalles.
+ * LiveDemoSection - Sección informativa de demostración.
+ *
+ * Tras el cambio de foco a Onucall Auto (concesionarios), la demo pública
+ * se desactiva. Se mantiene esta sección como placeholder
+ * de producto para no romper el layout de landing.
  */
 
 import { component$ } from '@builder.io/qwik';
-import { DemoWidget } from '~/features/demo/components/DemoWidget';
 
-/** Sectores visibles en el grid bento de la demo */
-const DEMO_SECTORS = [
-  {
-    id: 'concesionario',
-    name: 'Concesionarios',
-    description: 'Gestiona consultas de stock y agenda test drives',
-    emoji: '🚗',
-  },
-  {
-    id: 'inmobiliaria',
-    name: 'Inmobiliarias',
-    description: 'Atiende visitas y responde sobre propiedades',
-    emoji: '🏠',
-  },
-  {
-    id: 'retail',
-    name: 'Retail',
-    description: 'Informa sobre productos y disponibilidad',
-    emoji: '🛒',
-  },
-  {
-    id: 'alquiladora',
-    name: 'Alquiladoras',
-    description: 'Informa disponibilidad y condiciones de alquiler',
-    emoji: '🚛',
-  },
-  {
-    id: 'sat',
-    name: 'Servicios SAT',
-    description: 'Recibe incidencias y programa intervenciones',
-    emoji: '🔧',
-  },
-] as const;
+const ONUCALL_AUTO_VERTICAL = {
+  name: 'Concesionarios de Vehículos',
+  description: 'Captación 24/7, cualificación de leads y agendamiento de pruebas de conducción',
+  emoji: '🚗',
+} as const;
 
-/**
- * Props: Las actions se tipan como `any` por limitación de covarianza
- * de ActionStore al pasar entre componentes. Ver DemoWidget.tsx § Props.
- */
 interface LiveDemoSectionProps {
-  requestAction: any;
-  verifyAction: any;
+  requestAction?: unknown;
+  verifyAction?: unknown;
 }
 
-export const LiveDemoSection = component$<LiveDemoSectionProps>(({ requestAction, verifyAction }) => {
+export const LiveDemoSection = component$<LiveDemoSectionProps>(() => {
   return (
     <section id="live-demo" class="bg-linear-to-br from-primary-50 to-white py-20">
       <div class="content-container">
@@ -66,44 +30,29 @@ export const LiveDemoSection = component$<LiveDemoSectionProps>(({ requestAction
             Prueba nuestro agente de IA ahora
           </h2>
           <p class="text-lg text-neutral-600">
-            Descubre cómo tu negocio puede automatizar llamadas. Selecciona tu sector 
-            y recibirás una llamada en menos de 30 segundos.
+            Onucall Auto está optimizado para concesionarios de vehículos.
+            La demo pública se reactivará en una próxima iteración.
           </p>
         </div>
 
-        {/* 2 Column Layout: Sectores Grid (Left) + DemoWidget (Right) */}
-        <div class="grid gap-8 lg:grid-cols-[2fr,1fr]">
+        <div class="grid gap-8">
           
-          {/* LEFT BLOCK: Grid Bento de sectores */}
-          <div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
-            {DEMO_SECTORS.map((sector) => (
-              <div 
-                key={sector.id}
-                class="group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-lg"
-              >
-                {/* Icon/Image Area con gradiente de marca */}
-                <div class="flex h-28 items-center justify-center bg-linear-to-br from-primary-50 to-accent-50">
-                  <span class="text-4xl" aria-hidden="true">{sector.emoji}</span>
-                </div>
-                
-                {/* Content: Título + Descripción breve */}
-                <div class="p-4">
-                  <h3 class="mb-1 text-sm font-semibold text-neutral-900">
-                    {sector.name}
-                  </h3>
-                  <p class="text-xs text-neutral-600">
-                    {sector.description}
-                  </p>
-                </div>
+          <div class="rounded-xl border border-neutral-200 bg-white p-6">
+            <div class="flex items-center gap-4">
+              <span class="text-4xl" aria-hidden="true">{ONUCALL_AUTO_VERTICAL.emoji}</span>
+              <div>
+                <h3 class="text-base font-semibold text-neutral-900">{ONUCALL_AUTO_VERTICAL.name}</h3>
+                <p class="text-sm text-neutral-600">{ONUCALL_AUTO_VERTICAL.description}</p>
               </div>
-            ))}
+            </div>
           </div>
 
-          {/* RIGHT BLOCK: DemoWidget funcional con 2-step verification */}
-          <DemoWidget 
-            requestAction={requestAction} 
-            verifyAction={verifyAction} 
-          />
+          <div class="rounded-xl border border-neutral-200 bg-white p-6 text-center">
+            <p class="text-sm text-neutral-600">
+              Solicita una demo privada con el equipo comercial para ver el flujo completo de captación,
+              cualificación y agendamiento para ventas de vehículos nuevos y de ocasión.
+            </p>
+          </div>
         </div>
       </div>
     </section>
