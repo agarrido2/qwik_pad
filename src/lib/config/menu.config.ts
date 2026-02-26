@@ -134,16 +134,11 @@ export const MENU_CONFIG: MenuItem[] = [
     ],
   },
   {
-    text: 'Agente IA',
+    text: 'Mis Agentes',
     icon: 'bot',
+    href: '/dashboard/agents',
     roles: ['owner', 'admin'],
     section: 'main',
-    children: [
-      { text: 'Agentes', href: '/dashboard/agents', icon: 'bot' },
-      { text: 'Teléfonos', href: '/dashboard/agente/telefonos', icon: 'hash' },
-      { text: 'Prompt / Flujo', href: '/dashboard/agente/flujos', icon: 'workflow' },
-      { text: 'Base Conocimiento', href: '/dashboard/agente/kb', icon: 'book' },
-    ],
     dividerAfter: true,
   },
 

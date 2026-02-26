@@ -62,6 +62,12 @@ export const phoneNumberStatusEnum = pgEnum('phone_number_status', [
   'suspended'   // Número suspendido temporalmente
 ]);
 
+export const voiceAgentStatusEnum = pgEnum('voice_agent_status', [
+  'draft',      // Borrador: elegido master prompt, pendiente de configurar
+  'published',  // Publicado: sincronizado con Retell AI y activo
+  'paused',     // Pausado: sincronizado con Retell AI pero inactivo
+]);
+
 export const calendarTargetTypeEnum = pgEnum('calendar_target_type', [
   'ORGANIZATION', // Calendario de la empresa (horario global, festivos)
   'DEPARTMENT',   // Calendario del servicio (slot_duration, horario propio)
@@ -652,6 +658,50 @@ export const ipTrials = pgTable('ip_trials', {
 }));
 
 // ==========================================
+// TABLA: master_prompts (Plantillas de Onucall)
+// ==========================================
+
+/**
+ * Master Prompts Table
+ * @description Plantillas de agente curadas por el equipo de Onucall, organizadas por sector.
+ * Son de solo lectura para el usuario del SaaS. El usuario fork-ea una al crear su agente.
+ *
+ * Flujo:
+ * 1. Onucall crea master prompts por sector (concesionarios, inmobiliarias, etc.)
+ * 2. El usuario elige uno → se crea un voice_agent en draft referenciando master_prompt_id
+ * 3. El usuario personaliza welcome_message y config en el builder
+ * 4. Publish → sincroniza con Retell AI
+ */
+export const masterPrompts = pgTable('master_prompts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  // Clasificación
+  sector: text('sector').notNull(), // 'concesionario' | 'inmobiliaria' | ...
+  slug: text('slug').notNull().unique(), // 'onucall-concesionario-003'
+  name: text('name').notNull(), // 'Ventas V.O. Premium'
+  description: text('description'), // Descripción visible en el selector
+  icon: text('icon').notNull().default('bot'), // Nombre del icono SVG
+
+  // Contenido del Prompt (solo lectura para el usuario)
+  systemPrompt: text('system_prompt').notNull(), // System prompt base completo
+  welcomeMessageDefault: text('welcome_message_default'), // Sugerencia editable por usuario
+
+  // Metadatos de configuración (speech, functions, knowledge base, etc.)
+  // Estructura: { voice_id, language, speech_settings, functions: [], knowledge_base_ids: [] }
+  config: jsonb('config').notNull().default('{}'),
+
+  // Control de visibilidad
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0), // Orden en el selector
+
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  sectorIdx: index('idx_master_prompts_sector').on(table.sector),
+  sectorActiveIdx: index('idx_master_prompts_sector_active').on(table.sector, table.isActive),
+}));
+
+// ==========================================
 // TABLA: voice_agents (Agentes de Voz IA)
 // ==========================================
 
@@ -674,10 +724,20 @@ export const voiceAgents = pgTable('voice_agents', {
     .notNull()
     .references(() => organizations.id, { onDelete: 'cascade' }),
   
+  // Plantilla base (opcional: null si se creó sin master prompt)
+  masterPromptId: uuid('master_prompt_id')
+    .references(() => masterPrompts.id, { onDelete: 'set null' }),
+
   // Identidad del Agente
   name: text('name').notNull(), // "Ventas Nuevos", "Agente Ocasión", "Taller"
   description: text('description'), // Descripción interna del propósito
-  sector: text('sector').default('concesionario'), // Vertical del agente (Onucall Auto: concesionario)
+  sector: text('sector').default('concesionario'), // Vertical del agente
+
+  // Estado del ciclo de vida del agente
+  status: voiceAgentStatusEnum('status').notNull().default('draft'),
+
+  // Personalización del mensaje inicial (editable por el usuario sobre el default del master)
+  welcomeMessage: text('welcome_message'),
   
   // Integración Externa (Retell AI + Número)
   retellAgentId: text('retell_agent_id').unique(), // UUID del agente en Retell AI
@@ -715,11 +775,10 @@ export const voiceAgents = pgTable('voice_agents', {
   retellIdx: index('idx_voice_agents_retell').on(table.retellAgentId),
   // Índice para buscar agentes por sector
   sectorIdx: index('idx_voice_agents_sector').on(table.sector),
-  // Guardrail de dominio: Onucall Auto opera solo vertical concesionario
-  sectorConcesionarioChk: check(
-    'voice_agents_sector_concesionario_chk',
-    sql`${table.sector} IS NULL OR ${table.sector} = 'concesionario'`
-  ),
+  // Índice para buscar agentes por master_prompt_id
+  masterPromptIdx: index('idx_voice_agents_master_prompt').on(table.masterPromptId),
+  // Índice para buscar agentes por status
+  statusIdx: index('idx_voice_agents_status').on(table.organizationId, table.status),
 }));
 
 // ==========================================
@@ -957,6 +1016,11 @@ export const pendingInvitationsRelations = relations(pendingInvitations, ({ one 
   }),
 }));
 
+export const masterPromptsRelations = relations(masterPrompts, ({ many }) => ({
+  /** Agentes creados a partir de esta plantilla */
+  voiceAgents: many(voiceAgents),
+}));
+
 export const voiceAgentsRelations = relations(voiceAgents, ({ one }) => ({
   /** Organización propietaria del agente */
   organization: one(organizations, {
@@ -972,6 +1036,11 @@ export const voiceAgentsRelations = relations(voiceAgents, ({ one }) => ({
   phoneNumber: one(phoneNumbers, {
     fields: [voiceAgents.phoneNumberId],
     references: [phoneNumbers.id],
+  }),
+  /** Plantilla master de la que deriva este agente */
+  masterPrompt: one(masterPrompts, {
+    fields: [voiceAgents.masterPromptId],
+    references: [masterPrompts.id],
   }),
 }));
 
@@ -1019,6 +1088,9 @@ export type NewIpTrial = typeof ipTrials.$inferInsert;
 export type VoiceAgent = typeof voiceAgents.$inferSelect;
 export type NewVoiceAgent = typeof voiceAgents.$inferInsert;
 
+export type MasterPrompt = typeof masterPrompts.$inferSelect;
+export type NewMasterPrompt = typeof masterPrompts.$inferInsert;
+
 export type PhoneNumber = typeof phoneNumbers.$inferSelect;
 export type NewPhoneNumber = typeof phoneNumbers.$inferInsert;
 
@@ -1039,6 +1111,7 @@ export type NewAppointment = typeof appointments.$inferInsert;
 
 // Type helpers para enums
 export type AssistantGender = (typeof assistantGenderEnum.enumValues)[number];
+export type VoiceAgentStatus = (typeof voiceAgentStatusEnum.enumValues)[number];
 export type SubscriptionTier = (typeof subscriptionTierEnum.enumValues)[number];
 export type PhoneNumberStatus = (typeof phoneNumberStatusEnum.enumValues)[number];
 export type CalendarTargetType = (typeof calendarTargetTypeEnum.enumValues)[number];

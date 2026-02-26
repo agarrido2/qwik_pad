@@ -7,11 +7,19 @@
  *   consistencia entre `voice_agents` y `phone_numbers`.
  * - La asignación de número es 1:1: un número solo puede estar en un agente.
  * - `is_default` se mantiene único por organización desde este servicio.
+ * - createDraft() crea un borrador referenciando un master_prompt.
+ *   El usuario personaliza en el builder y publica vía Retell.
  */
 
 import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import { db } from '../db/client';
-import { phoneNumbers, type PhoneNumberStatus, voiceAgents } from '../db/schema';
+import {
+  masterPrompts,
+  phoneNumbers,
+  type PhoneNumberStatus,
+  type VoiceAgentStatus,
+  voiceAgents,
+} from '../db/schema';
 
 export interface VoiceAgentListItem {
   id: string;
@@ -19,12 +27,14 @@ export interface VoiceAgentListItem {
   assistantName: string;
   assistantGender: 'male' | 'female';
   sector: string | null;
+  status: VoiceAgentStatus;
   isActive: boolean;
   isDefault: boolean;
   retellAgentId: string | null;
   phoneNumberId: string | null;
   phoneNumber: string | null;
   phoneStatus: PhoneNumberStatus | null;
+  masterPromptId: string | null;
   updatedAt: Date;
 }
 
@@ -35,11 +45,18 @@ export interface VoiceAgentDetail extends VoiceAgentListItem {
   warmthLevel: number;
   businessDescription: string | null;
   promptSystem: string | null;
+  welcomeMessage: string | null;
   transferPolicy: string | null;
   leadsEmail: string | null;
   webhookUrl: string | null;
   createdBy: string;
   createdAt: Date;
+  /** Datos del master prompt base (null si no tiene) */
+  masterPromptName: string | null;
+  masterPromptSystemPrompt: string | null;
+  masterPromptWelcomeDefault: string | null;
+  masterPromptIcon: string | null;
+  masterPromptConfig: Record<string, unknown> | null;
 }
 
 export interface CreateVoiceAgentData {
@@ -54,6 +71,15 @@ export interface CreateVoiceAgentData {
   isDefault?: boolean;
 }
 
+/** Datos para crear un borrador a partir de un master prompt */
+export interface CreateDraftData {
+  organizationId: string;
+  createdBy: string;
+  masterPromptId: string;
+  name: string;
+  sector: string;
+}
+
 export interface UpdateVoiceAgentData {
   name?: string;
   description?: string | null;
@@ -64,6 +90,7 @@ export interface UpdateVoiceAgentData {
   warmthLevel?: number;
   businessDescription?: string | null;
   promptSystem?: string | null;
+  welcomeMessage?: string | null;
   transferPolicy?: string | null;
   leadsEmail?: string | null;
   webhookUrl?: string | null;
@@ -71,6 +98,7 @@ export interface UpdateVoiceAgentData {
   phoneNumberId?: string | null;
   isActive?: boolean;
   isDefault?: boolean;
+  status?: VoiceAgentStatus;
 }
 
 export class VoiceAgentService {
@@ -107,6 +135,7 @@ export class VoiceAgentService {
 
   /**
    * Lista todos los agentes de una organización con su número enlazado.
+   * Incluye status y masterPromptId para la galería.
    */
   static async getByOrganization(organizationId: string): Promise<VoiceAgentListItem[]> {
     const rows = await db
@@ -116,12 +145,14 @@ export class VoiceAgentService {
         assistantName: voiceAgents.assistantName,
         assistantGender: voiceAgents.assistantGender,
         sector: voiceAgents.sector,
+        status: voiceAgents.status,
         isActive: voiceAgents.isActive,
         isDefault: voiceAgents.isDefault,
         retellAgentId: voiceAgents.retellAgentId,
         phoneNumberId: voiceAgents.phoneNumberId,
         phoneNumber: phoneNumbers.phoneNumber,
         phoneStatus: phoneNumbers.status,
+        masterPromptId: voiceAgents.masterPromptId,
         updatedAt: voiceAgents.updatedAt,
       })
       .from(voiceAgents)
@@ -134,6 +165,7 @@ export class VoiceAgentService {
 
   /**
    * Obtiene un agente por ID validando pertenencia a la organización.
+   * LEFT JOIN a master_prompts para hidratar datos base del prompt.
    */
   static async getById(id: string, organizationId: string): Promise<VoiceAgentDetail | null> {
     const [row] = await db
@@ -145,10 +177,12 @@ export class VoiceAgentService {
         assistantName: voiceAgents.assistantName,
         assistantGender: voiceAgents.assistantGender,
         sector: voiceAgents.sector,
+        status: voiceAgents.status,
         friendlinessLevel: voiceAgents.friendlinessLevel,
         warmthLevel: voiceAgents.warmthLevel,
         businessDescription: voiceAgents.businessDescription,
         promptSystem: voiceAgents.promptSystem,
+        welcomeMessage: voiceAgents.welcomeMessage,
         transferPolicy: voiceAgents.transferPolicy,
         leadsEmail: voiceAgents.leadsEmail,
         webhookUrl: voiceAgents.webhookUrl,
@@ -158,16 +192,70 @@ export class VoiceAgentService {
         phoneStatus: phoneNumbers.status,
         isActive: voiceAgents.isActive,
         isDefault: voiceAgents.isDefault,
+        masterPromptId: voiceAgents.masterPromptId,
         createdBy: voiceAgents.createdBy,
         createdAt: voiceAgents.createdAt,
         updatedAt: voiceAgents.updatedAt,
+        // Datos del master prompt base
+        masterPromptName: masterPrompts.name,
+        masterPromptSystemPrompt: masterPrompts.systemPrompt,
+        masterPromptWelcomeDefault: masterPrompts.welcomeMessageDefault,
+        masterPromptIcon: masterPrompts.icon,
+        masterPromptConfig: masterPrompts.config,
       })
       .from(voiceAgents)
       .leftJoin(phoneNumbers, eq(voiceAgents.phoneNumberId, phoneNumbers.id))
+      .leftJoin(masterPrompts, eq(voiceAgents.masterPromptId, masterPrompts.id))
       .where(and(eq(voiceAgents.id, id), eq(voiceAgents.organizationId, organizationId)))
       .limit(1);
 
-    return row ?? null;
+    return (row as VoiceAgentDetail) ?? null;
+  }
+
+  /**
+   * Crea un borrador de agente a partir de un master prompt.
+   * Copia systemPrompt y welcomeMessage del master prompt al agente.
+   */
+  static async createDraft(data: CreateDraftData) {
+    return db.transaction(async (tx) => {
+      // Recuperar el master prompt para copiar prompt y welcome message
+      const [mp] = await tx
+        .select({
+          systemPrompt: masterPrompts.systemPrompt,
+          welcomeMessageDefault: masterPrompts.welcomeMessageDefault,
+        })
+        .from(masterPrompts)
+        .where(eq(masterPrompts.id, data.masterPromptId))
+        .limit(1);
+
+      if (!mp) {
+        throw new Error('Master prompt no encontrado');
+      }
+
+      const [agent] = await tx
+        .insert(voiceAgents)
+        .values({
+          organizationId: data.organizationId,
+          createdBy: data.createdBy,
+          masterPromptId: data.masterPromptId,
+          name: data.name,
+          // Valores sensatos por defecto para el borrador
+          assistantName: data.name,
+          assistantGender: 'female',
+          sector: data.sector,
+          status: 'draft',
+          // Copiar datos del master prompt como punto de partida
+          promptSystem: mp.systemPrompt,
+          welcomeMessage: mp.welcomeMessageDefault,
+          friendlinessLevel: 5,
+          warmthLevel: 5,
+          isDefault: false,
+          isActive: false,
+        })
+        .returning();
+
+      return agent;
+    });
   }
 
   /**
@@ -250,6 +338,7 @@ export class VoiceAgentService {
           warmthLevel: data.warmthLevel,
           businessDescription: data.businessDescription,
           promptSystem: data.promptSystem,
+          welcomeMessage: data.welcomeMessage,
           transferPolicy: data.transferPolicy,
           leadsEmail: data.leadsEmail,
           webhookUrl: data.webhookUrl,
@@ -257,6 +346,7 @@ export class VoiceAgentService {
           phoneNumberId: normalizedPhoneId,
           isActive: data.isActive,
           isDefault: data.isDefault,
+          status: data.status,
           updatedAt: new Date(),
         })
         .where(and(eq(voiceAgents.id, id), eq(voiceAgents.organizationId, organizationId)))

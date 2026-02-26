@@ -25,7 +25,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
-    "db:verify": "bun run scripts/verify_installation.ts"
+    "db:verify": "bun run scripts/verify_installation.ts",
+    "db:seed:prompts": "bun run scripts/seed-master-prompts.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.20",
