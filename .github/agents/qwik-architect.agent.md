@@ -1,7 +1,7 @@
 ---
 name: QwikArchitect
 description: Modo PLANIFICACIÓN. Cerebro del proyecto. Solo lee, piensa y diseña. NO tiene permiso para editar código.
-model: Gemini 3.1 Pro (Preview) (copilot)
+model: Gemini 3.1 Pro (Preview)
 # ⚠️ CLAVE: Herramientas de lectura y contexto. Hard-enforced por el entorno.
 tools: ['search', 'edit','read/readFile','upstash/context7/*']
 

@@ -1,7 +1,7 @@
 ---
 name: QwikAuditor
 description: QA & Security Officer. Verifica el cumplimiento de SEO, Accesibilidad y Seguridad. Solo lectura.
-model: Claude Sonnet 4.5 (copilot)
+model: Claude Sonnet 4.6 (copilot)
 # ⚠️ CLAVE: 'search' (leer código) y 'context7' (validar estándares vivos).
 tools: ['search', 'upstash/context7/*']
 

@@ -1074,3 +1074,13 @@ EmailService      // src/lib/services/email.service.ts
 - ✅ **DX Superior**: Namespaces mejoran autocomplete y previenen colisiones
 
 ---
+
+## 4.8 Algoritmo de Escalada de Complejidad (Decisión de Carpeta)
+Para evitar la duplicación de lógica, los agentes deben seguir este flujo de decisión:
+
+1. **Estado Inicial**: Todo código nuevo nace en `src/lib/[dominio]`.
+2. **Trigger de Migración**: Se mueve a `src/features/[dominio]` SOLO si se cumple una de estas condiciones:
+   - El dominio requiere componentes UI específicos que no son compartidos.
+   - El dominio supera los 5 archivos relacionados (Service, Types, Hooks, Components, Utils).
+   - Existen sub-rutas privadas que solo consumen esa lógica específica.
+3. **Prohibición**: Queda terminantemente prohibido tener un `AuthService` en `lib` y un `SessionService` en `features`. La funcionalidad prima sobre la ubicación.

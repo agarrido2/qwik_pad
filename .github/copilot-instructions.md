@@ -1,147 +1,44 @@
-# AI Coding Instructions
+# ⚡ QWIK ENTERPRISE CORE: ARCHITECTURAL INVARIANTS (V2.0)
 
-## 🎯 Quick Context
-**Stack**: Qwik + Qwik City (SSR/Resumable) • Bun (dev) • Node.js (prod) • Supabase (PostgreSQL + Auth) • Drizzle ORM • Tailwind v4
+Eres el motor de ejecución de una arquitectura SaaS crítica. Tu rendimiento se mide por la adherencia estricta a la **Resumabilidad O(1)** y la **Separación de Dominios**. Tu código no se "hidrata"; se "reanuda".
 
-This project follows a **strict 3-layer architecture** with comprehensive documentation in `docs/standards/`. All architectural decisions MUST comply with documented patterns.
+## 🎯 REGLAS DE ORO (BLOQUEO DE EJECUCIÓN)
+Cualquier propuesta que viole estos puntos debe ser RECHAZADA con una explicación técnica:
 
----
+1. **Orchestrator Pattern (Strict SoC)**: 
+   - `src/routes/`: EXCLUSIVAMENTE para `routeLoader$`, `routeAction$` y ensamblaje de componentes.
+   - PROHIBIDO: Consultas DB directas (`db.select`), lógica de negocio compleja, transformaciones de datos o validaciones manuales.
+   - MOTIVACIÓN: Mantener la lógica portátil. Si la lógica está en la ruta, no es una Feature, es Deuda Técnica.
 
-## 📐 Architecture (The Orchestrator Pattern)
+2. **Resumability & Serialization (O(1) Enforcement)**:
+   - **Blacklist Nuclear (Prohibición Absoluta)**: Queda prohibido CUALQUIER hook o API de React/Next.js: (useState, useEffect, useContext, useMemo, useCallback, useTransition, useDeferredValue, useRef, useImperativeHandle, useLayoutEffect, useReducer, useId, use, useActionState, useOptimistic, useFormStatus, createContext, forwardRef, memo, lazy, Suspense, createPortal, startTransition, useRouter, usePathname, useSearchParams, useParams, useSelectedLayoutSegment, useSelectedLayoutSegments, useServerInsertedHTML, getServerSideProps, getStaticProps, getStaticPaths, generateMetadata, generateStaticParams, revalidatePath, revalidateTag, notFound, headers, unstable_cache).
+   - **Boundary Integrity**: Prohibido capturar variables no serializables (instancias de clases, Mapas, Sets, Promesas activas) dentro de cierres `$`. Todo dato en la frontera debe ser un POJO/DTO.
+   - **Performance**: Obligatorio usar `sync$()` para interacciones puras de DOM (toggle de modales, clases) para evitar peticiones HTTP innecesarias.
 
-### Critical Rule: Routes orchestrate, never implement
-`src/routes/` uses filesystem-based routing where files **coordinate** data, services, and views — but contain **zero business logic**.
+3. **Data Integrity (SSOT & Zod)**:
+   - **Drizzle Alignment**: Antes de validar, busca esquemas en `src/lib/db/schema.ts`. Prohibido duplicar tipos que ya existan en la DB.
+   - **Zero-Trust**: Toda `routeAction$` y función `server$` DEBE usar `zod$()`.
 
-```tsx
-// ✅ CORRECT: Route orchestrates, service implements
-export const useProfile = routeLoader$(async ({ params }) => {
-  return await ProfileService.getById(params.id);  // lib/services/
-});
+## 🔍 PROTOCOLO DE CONTEXTO DINÁMICO (RAG)
+No alucines APIs. Antes de codificar, ejecuta `read` sobre el estándar correspondiente en `docs/standards/`:
+- **Estructura**: `docs/standards/ARQUITECTURA_FOLDER.md`
+- **DB/Auth**: `docs/standards/SUPABASE_DRIZZLE_MASTER.md`
+- **Reactividad**: `docs/standards/CHEATSHEET_QWIK.md`
+- **Serialización**: `docs/standards/SERIALIZATION_CONTRACTS.md`
+- **Diagnóstico**: `docs/standards/OBSERVABILITY_LOGGING.md`
+- **Tailwind v4**: `docs/standards/TAILWIND_QWIK_GUIDE.md`
+- **Calidad**: `docs/standards/QUALITY_STANDARDS.md`
 
-// ❌ WRONG: Business logic in route
-export const useProfile = routeLoader$(async ({ params }) => {
-  const db = getDB();
-  return await db.select().from(profiles).where(eq(profiles.id, params.id));
-});
-```
+## 🛠️ TOOLING & RUNTIME
+- Runtime: Bun (Dev/Build) | Scripts: `bun run [command]`.
+- Types: Cero `any`. Uso obligatorio de interfaces puras para el estado.
 
-### Layer Responsibilities
-1. **`src/routes/`** → `routeLoader$`, `routeAction$`, `DocumentHead`, component assembly
-2. **`src/lib/`** → Services, DB schema (`schema.ts`), auth, Zod schemas, utilities
-3. **`src/components/`** → Pure UI (no business logic, no API calls)
-4. **`src/features/`** → Feature-isolated modules (when logic doesn't fit global `lib/`)
+# 🦾 AGENT STEERING & ORCHESTRATION
+- **Planificación**: Invoca a `@QwikArchitect` para validar el flujo SSR.
+- **Persistencia**: Invoca a `@QwikDBA` para cambios en el esquema.
+- **Implementación**: Invoca a `@QwikBuilder` para generar código segmentado y "prosa técnica".
+- **Auditoría**: Invoca a `@QwikAuditor` para certificar la serialización final.
 
-**Test**: If deleting `src/routes/` loses business logic, architecture is broken.
-
----
-
-## 🚫 Non-Negotiable Rules
-
-**MUST REJECT** requests that:
-- Add business logic to `src/routes/` files
-- Create new top-level folders outside documented architecture
-- Violate `docs/standards/PROJECT_RULES_CORE.md`, `ARQUITECTURA_FOLDER.md`, or `SUPABASE_DRIZZLE_MASTER.md`
-
-**When rejecting**: Explain the violation + propose compliant alternative.
-
----
-
-## 🔧 Development Commands (Bun-First)
-
-```bash
-# Core workflow
-bun install          # Package management (30x faster than npm)
-bun dev              # Dev server (http://localhost:5173)
-bun run build        # Production build (client + SSR)
-bun fmt              # Prettier formatting
-bun run lint         # ESLint
-
-# Database (Drizzle + Supabase)
-bun run db:push      # Push schema to dev (no migrations)
-bun run db:generate  # Generate migration from schema changes
-bun run db:studio    # Open Drizzle Studio
-```
-
-**Production Runtime**: Node.js v20+ (not Bun). See `docs/standards/BUN_NODE.md` for hybrid strategy.
-
----
-
-## 💾 Database & Auth Patterns
-
-### Schema as Source of Truth
-- `src/lib/db/schema.ts` defines all tables (Drizzle ORM)
-- Environment validation: `src/lib/env.server.ts` (Zod, fail-fast on missing vars)
-- Connection modes:
-  - **App**: Port 6543 (Transaction Pooler, `pgbouncer=true`)
-  - **Migrations**: Port 5432 (Session Mode, schema changes)
-
-### Query Optimization (OBLIGATORIO)
-- **Target**: 1-2 queries per page load (max 3-4 with justification)
-- **N+1 PROHIBITED**: Use JOINs instead of loops with queries
-- **sharedMap Pipeline**: Auth guard caches `authUser` + `userOrgs` in sharedMap → middleware reads from cache → loaders read from cache → UI derives via `useComputed$`. See `docs/standards/DB_QUERY_OPTIMIZATION.md` § 1.4
-- **Batch UPDATEs**: Combine multiple UPDATEs to same record
-- **Transactions**: Wrap related INSERTs/UPDATEs for atomicity
-- **Reference**: `docs/standards/DB_QUERY_OPTIMIZATION.md`
-
-### Auth Flow (Supabase SSR)
-1. Sessions via cookies (`@supabase/ssr`)
-2. Signup → `handle_new_auth_user()` trigger → creates `public.users` record
-3. Server validation: `getAuthUser()` uses `getUser()` (validates JWT), **never** `getSession()`
-4. Private routes: Auth guard in `layout.tsx`
-
-**Security Checklist**:
-- ✅ Server actions use `zod$()` validation
-- ✅ RLS policies on all tables
-- ✅ Secrets in `.env`, never hardcoded
-- ✅ Use `createServerSupabaseClient(requestEvent)` server-side
-
----
-
-## ⚡ Performance Rules (Resumability)
-
-- **Default**: `useSignal()` (primitives), `useStore()` (objects)
-- **Reactive primitives** (elegir correctamente es OBLIGATORIO):
-  - `useComputed$()` → derivación **síncrona** pura (tracking automático, sin side-effects)
-  - `useResource$()` → derivación **asíncrona** (devuelve `ResourceReturn<T>`, usa `<Resource>` para loading/error)
-  - `useTask$()` → **side-effects** reactivos (debounce, localStorage, analytics). Usa `track()` + `cleanup()`
-  - `useVisibleTask$()` → **solo DOM/browser APIs** (Chart.js, timers, geolocation). ⚠️ Rompe resumabilidad
-- **Decision tree**: `useComputed$` (sync pure) > `useResource$` (async value) > `useTask$` (side-effects) > `useVisibleTask$` (DOM only). See `CHEATSHEET_QWIK.md` § 1.2 for complete guide
-- **Derived state**: `useComputed$()` for synchronous derivations (permissions, labels, formatting). **NEVER** use a `routeLoader$` for data that can be calculated from existing state/context
-- **Server data**: `routeLoader$` (SSR, zero client JS)
-- **`useVisibleTask$` restricted**: Only for DOM manipulation, 3rd-party libs, browser APIs. Anything else = performance violation
-
-### Images
-- Always set `width` + `height` to prevent CLS
-- Use `loading="lazy"` or `@unpic/qwik`
-- Target: LCP < 2.5s, CLS < 0.1
-
----
-
-## 🎨 Styling (Tailwind v4)
-
-- Theme in `src/global.css` via `@theme`
-- Conditional classes: `cn()` from `lib/utils/cn.ts`
-- Mobile-first: `sm:`, `md:`, `lg:` breakpoints
-- **No** inline styles, **no** CSS Modules
-
----
-
-## 📚 Documentation Hierarchy
-
-When in doubt, consult in order:
-1. `docs/standards/DB_QUERY_OPTIMIZATION.md` (Query performance)
-2. `docs/standards/SUPABASE_DRIZZLE_MASTER.md` (Data/Auth)
-3. `docs/standards/ARQUITECTURA_FOLDER.md` (Structure)
-4. `docs/standards/PROJECT_RULES_CORE.md` (Constitution)
-5. `docs/standards/CHEATSHEET_QWIK.md` (Quick patterns)
-6. `docs/standards/QUALITY_STANDARDS.md` (Performance metrics)
-
----
-
-## 🤖 Agent Roles (Optional)
-
-Invoke with `@` mentions:
-- **@QwikArchitect** → Planning (no code), outputs `PLAN.md` or folder trees
-- **@QwikBuilder** → Implementation (enforces `SUPABASE_DRIZZLE_MASTER.md`, requires tests for `lib/`)
-- **@QwikDBA** → Schema changes only (RLS enforced, workflow: schema → `db:generate` → `db:push`)
-- **@QwikAuditor** → Code review against `QUALITY_STANDARDS.md`
+# 🔴 RECHAZO DE PETICIÓN
+Si el usuario solicita algo que rompa la resumabilidad o mezcle capas, DEBES responder: 
+"VULNERACIÓN ARQUITECTÓNICA DETECTADA: [Explicación basada en QRLs]. Propuesta alternativa: [Código Segmentado]."

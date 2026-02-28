@@ -533,3 +533,41 @@ create trigger on_auth_user_created
 | `Cannot read property 'value' of undefined` | Loader ejecutado fuera de componente | Verificar que `useProfile()` esté dentro de `component$(() => {...})` |
 | `Missing pgbouncer parameter` | URL sin Transaction Mode | Añadir `?pgbouncer=true` al final de `DATABASE_URL` |
 | Transaction timeout | Operación bloqueante dentro de `db.transaction()` | Mover lógica pesada fuera del callback, mantener solo queries DB |
+
+
+Aquí tienes el contenido para añadir al final de tu archivo docs/standards/SUPABASE_DRIZZLE_MASTER.md en texto plano:
+
+## 12. Ingeniería de Datos y Validación (Drizzle-Zod)
+
+Para eliminar la redundancia de tipos y asegurar que la base de datos sea la Única Fuente de Verdad (SSOT), se automatiza la validación de esquemas:
+
+* Regla Operativa: Queda prohibido escribir esquemas Zod manuales para objetos que ya existen en la base de datos.
+* Implementación: El @QwikDBA debe generar los esquemas de inserción y selección usando drizzle-zod en el mismo schema.ts.
+* Uso en el Orchestrator: El @QwikBuilder importará estos esquemas para validar las routeAction$.
+
+Ejemplo en schema.ts:
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+export const users = pgTable('users', { ... });
+
+// Esquemas automatizados
+export const insertUserSchema = createInsertSchema(users);
+export const selectUserSchema = createSelectSchema(users);
+
+## 13. Protocolo de RLS Declarativo (Security Enforcement)
+
+Drizzle no abstrae las políticas de Row Level Security de Supabase. Para evitar fugas de datos por olvido, se establece el siguiente contrato:
+
+* Obligación: Toda tabla que contenga user_id o datos sensibles debe llevar su política RLS documentada en el código.
+* Formato: El @QwikDBA incluirá un bloque de comentarios SQL inmediatamente después de la definición de la tabla en schema.ts.
+
+Ejemplo en schema.ts:
+export const profiles = pgTable('profiles', { ... });
+
+// @RLS: ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+// @RLS: CREATE POLICY "Users can update own profile"
+// ON profiles FOR UPDATE USING (auth.uid() = id);
+
+## 14. Índices y Performance (Audit Ready)
+
+* Regla de Indexación: Toda columna utilizada en un LEFT JOIN, WHERE o ORDER BY debe tener un índice definido en Drizzle.
+* Batching: Para operaciones masivas, usa .insert().values([...]) en lugar de bucles para reducir el round-trip con Supabase.
