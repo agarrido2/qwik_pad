@@ -1,4 +1,4 @@
-import { component$, Slot } from '@builder.io/qwik';
+import { component$, Slot } from "@builder.io/qwik";
 
 /**
  * AuthLayout - Para páginas de autenticación (login, register, reset password)
@@ -6,10 +6,14 @@ import { component$, Slot } from '@builder.io/qwik';
  */
 export const AuthLayout = component$(() => {
   return (
-    <div class="flex min-h-screen flex-col bg-gradient-to-br from-neutral-50 to-primary-50/30">
+    <div class="to-primary-50/30 flex min-h-screen flex-col bg-linear-to-br from-neutral-50">
       {/* Logo fixe */}
-      <div class="absolute left-8 top-8">
-        <a href="/" class="text-2xl font-bold text-primary-600" aria-label="Onucall - Volver al inicio">
+      <div class="absolute top-8 left-8">
+        <a
+          href="/"
+          class="text-primary-600 text-2xl font-bold"
+          aria-label="Onucall - Volver al inicio"
+        >
           Onucall
         </a>
       </div>
@@ -23,9 +27,14 @@ export const AuthLayout = component$(() => {
 
       {/* Footer discreto */}
       <footer class="pb-8 text-center text-sm text-neutral-500">
-        © {new Date().getFullYear()} Onucall · 
-        <a href="#" class="ml-1 hover:text-primary-600 transition-colors">Privacidad</a> · 
-        <a href="#" class="ml-1 hover:text-primary-600 transition-colors">Términos</a>
+        © {new Date().getFullYear()} Onucall ·
+        <a href="#" class="hover:text-primary-600 ml-1 transition-colors">
+          Privacidad
+        </a>{" "}
+        ·
+        <a href="#" class="hover:text-primary-600 ml-1 transition-colors">
+          Términos
+        </a>
       </footer>
     </div>
   );

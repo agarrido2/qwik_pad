@@ -20,7 +20,7 @@ export const NotificationUser = component$<NotificationUserProps>(
       <Button
         variant="ghost"
         size="icon"
-        class="text-foreground hover:bg-muted hover:text-foreground"
+        class="text-gray-700 hover:bg-gray-200 hover:text-gray-900"
         title={
           count > 0 ? `${count} notificaciones sin leer` : "Sin notificaciones"
         }

@@ -117,34 +117,19 @@ export const ThemeToggle = component$(() => {
 
       {/* Indicador de sistema — visible en modo AUTO */}
       <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
+        aria-hidden="true"
         class={[
           "absolute h-5 w-5 transition-all duration-300",
           mode.value === "system"
             ? "scale-100 rotate-0"
             : "scale-0 rotate-90 opacity-0",
         ]}
+        viewBox="0 0 24 24"
       >
-        <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="2" />
-        <line
-          x1="8"
-          y1="21"
-          x2="16"
-          y2="21"
-          stroke-width="2"
-          stroke-linecap="round"
-        />
-        <line
-          x1="12"
-          y1="17"
-          x2="12"
-          y2="21"
-          stroke-width="2"
-          stroke-linecap="round"
-        />
+        <rect width="20" height="14" x="2" y="3" stroke-width="2" rx="2" />
+        <path stroke-linecap="round" stroke-width="2" d="M8 21h8m-4-4v4" />
       </svg>
 
       <span class="sr-only">

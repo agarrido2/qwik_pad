@@ -1,14 +1,14 @@
 /**
  * Icono ChevronDown
  * @description Flecha hacia abajo, usado en accordions, dropdowns
- * 
+ *
  * @param props - Acepta todas las props de <svg> (class, aria-hidden, etc.)
  * @example
  * <ChevronDown aria-hidden="true" class="h-4 w-4" />
  */
-import type { PropsOf } from '@builder.io/qwik'
+import type { PropsOf } from "@builder.io/qwik";
 
-export function ChevronDown(props: PropsOf<'svg'>, key: string) {
+export function ChevronDown(props: PropsOf<"svg">, key: string) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -25,7 +25,7 @@ export function ChevronDown(props: PropsOf<'svg'>, key: string) {
     >
       <path d="M19 9l-7 7-7-7" />
     </svg>
-  )
+  );
 }
 
-export default ChevronDown
+export default ChevronDown;
