@@ -11,7 +11,7 @@
  * [CITE: PROJECT_RULES_CORE.md - Routes como orchestrators, no lógica de negocio]
  */
 
-import { component$ } from "@builder.io/qwik";
+import { component$, sync$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 
 /* ─── Tipos ──────────────────────────────────────────────────────────────── */
@@ -237,6 +237,8 @@ const BADGE_VARIANTS: BadgeVariant[] = [
   },
 ];
 
+const MODE_OPTIONS = ["light", "dark", "system"] as const;
+
 /* ─── Componente Principal ───────────────────────────────────────────────── */
 
 export default component$(() => {
@@ -256,6 +258,31 @@ export default component$(() => {
           . Usa esta página para evaluar la paleta antes de tomar decisiones de
           diseño.
         </p>
+
+        <div class="mt-5 flex flex-wrap items-center gap-4">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+              Modo
+            </span>
+            {MODE_OPTIONS.map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                class="border-border bg-card text-foreground hover:bg-muted rounded-md border px-3 py-1.5 text-xs font-medium"
+                onClick$={sync$(() => {
+                  const root = document.documentElement;
+                  root.classList.remove("light", "dark");
+                  if (mode !== "system") {
+                    root.classList.add(mode);
+                  }
+                  localStorage.setItem("theme", mode);
+                })}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
       {/* Sección: Swatches de Color */}
@@ -264,8 +291,8 @@ export default component$(() => {
           Tokens de Color
         </h2>
         <p class="text-muted-foreground mb-5 text-sm">
-          Cada token refleja su valor en modo claro. Activa el modo oscuro de tu
-          sistema para ver la variante dark.
+          Cada token refleja su valor en modo actual. Activa el modo oscuro para
+          ver la variante dark.
         </p>
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {SWATCHES.map((swatch) => (

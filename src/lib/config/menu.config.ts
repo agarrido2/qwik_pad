@@ -126,9 +126,9 @@ export const MENU_CONFIG: MenuItem[] = [
     roles: ['owner', 'admin'], // Solo admins configuran IA
     section: 'main',
     children: [
-      { text: 'Mis Agentes', href: '/dashboard/agentes', icon: 'bot' },
-      { text: 'Prompts y Guiones', href: '/dashboard/agentes/prompts', icon: 'file-text' },
-      { text: 'Base de Conocimiento', href: '/dashboard/agentes/conocimiento', icon: 'database' },
+      { text: 'Mis Agentes', href: '/dashboard/agents', icon: 'bot' },
+      { text: 'Prompts y Guiones', href: '/dashboard/agents?view=prompts', icon: 'file-text' },
+      { text: 'Base de Conocimiento', href: '/dashboard/agents?view=conocimiento', icon: 'database' },
     ]
   },
   {
