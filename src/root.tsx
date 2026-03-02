@@ -22,6 +22,20 @@ export default component$(() => {
             href={`${import.meta.env.BASE_URL}manifest.json`}
           />
         )}
+        <script
+          dangerouslySetInnerHTML={`
+          (function() {
+          try {
+          var mode = localStorage.getItem('theme') || 'system';
+          var root = document.documentElement;
+          root.classList.remove('light', 'dark');
+          if (mode === 'light') root.classList.add('light');
+          if (mode === 'dark') root.classList.add('dark');
+          }
+          catch (e) {}
+          })();
+        `}
+        />
         <RouterHead />
       </head>
       <body lang="en">

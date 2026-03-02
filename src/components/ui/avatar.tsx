@@ -20,9 +20,9 @@
  * <Avatar name="ana@example.com" size="sm" color="neutral" />
  */
 
-import { component$ } from '@builder.io/qwik';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '~/lib/utils/cn';
+import { component$ } from "@builder.io/qwik";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "~/lib/utils/cn";
 
 // ============================================================================
 // CVA VARIANTS
@@ -30,24 +30,24 @@ import { cn } from '~/lib/utils/cn';
 
 const avatarVariants = cva(
   // Base: Forma circular, centrado, texto en negrita
-  'inline-flex shrink-0 items-center justify-center rounded-full font-semibold select-none',
+  "inline-flex shrink-0 items-center justify-center rounded-full font-semibold select-none",
   {
     variants: {
       size: {
-        xs: 'w-6 h-6 text-[10px]',
-        sm: 'w-8 h-8 text-xs',
-        md: 'w-10 h-10 text-sm',
-        lg: 'w-12 h-12 text-base',
-        xl: 'w-16 h-16 text-lg',
+        xs: "w-6 h-6 text-[10px]",
+        sm: "w-8 h-8 text-xs",
+        md: "w-10 h-10 text-sm",
+        lg: "w-12 h-12 text-base",
+        xl: "w-16 h-16 text-lg",
       },
       color: {
-        primary: 'bg-primary-100 text-primary-700',
-        neutral: 'bg-neutral-100 text-neutral-700',
+        primary: "bg-primary/15 text-primary",
+        neutral: "bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {
-      size: 'sm',
-      color: 'primary',
+      size: "sm",
+      color: "primary",
     },
   },
 );
@@ -97,7 +97,7 @@ export const Avatar = component$<AvatarProps>(
         <img
           src={src}
           alt={alt || name}
-          class={cn(avatarVariants({ size, color }), 'object-cover', className)}
+          class={cn(avatarVariants({ size, color }), "object-cover", className)}
           width={40}
           height={40}
         />

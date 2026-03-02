@@ -7,370 +7,387 @@
  * 3. Menu items con active state detection (flex-1)
  * 4. Footer con Workspace menu + Logout (py-4)
  *
- * RBAC 2026-02-15:
- * - Menu filtrado por rol usando menu.config.ts (source of truth)
- * - AuthContext provee user + org + roleLabel/roleBadgeColor
- * - ZERO lógica de permisos manual en el componente
- *
- * MULTI-NIVEL 2026-02-16:
- * - Soporta grupos expandibles (items con `children`)
- * - useStore para estado de expand/collapse (Record<text, boolean>)
- * - Auto-expand si un hijo está activo
- * - Separadores visuales (`dividerAfter`)
- * - Renderizado recursivo con `renderMenuItem()`
- * - Indentación pl-8 para hijos, chevron rotable para padres
- *
- * COLLAPSE 2026-02-17:
- * - Mobile (<1024px): overlay (translate-x)
- * - Desktop (≥1024px): colapsa a w-16 (solo iconos + tooltips)
- * - Estado desde SidebarContext (isOpen, isCollapsed)
- * - Cierra mobile al navegar (closeMobile en Link)
- *
- * Colores: Sistema HSL (bg-card, border-border, text-foreground)
+ * RBAC + Optimización 2026-03-01:
+ * - Menús derivados con useComputed$ por rol (sin recomputar en cada render).
+ * - Item y Group separados para reducir complejidad del componente raíz.
+ * - Estado de expansión encapsulado por grupo para minimizar re-render global.
+ * - Cero lógica de permisos manual (SSOT: menu.config.ts).
  */
 
-import { component$, useContext, useStore, useTask$ } from '@builder.io/qwik';
-import { Form, Link, useLocation } from '@builder.io/qwik-city';
-import { cn } from '~/lib/utils/cn';
-import { AuthContext } from '~/lib/context/auth.context';
-import { SidebarContext } from '~/lib/context/sidebar.context';
-import { getVisibleMenu, type ResolvedMenuItem } from '~/lib/config/menu.config';
-import { useLogoutAction } from '~/routes/(app)/dashboard/layout';
-import { IconMap } from '~/components/icons/dashboard-icons';
-import { OrgSwitcher } from './org-switcher';
+import {
+  component$,
+  useComputed$,
+  useContext,
+  useSignal,
+  useTask$,
+  type QRL,
+} from "@builder.io/qwik";
+import { Form, Link, useLocation } from "@builder.io/qwik-city";
+import { cn } from "~/lib/utils/cn";
+import { AuthContext } from "~/lib/context/auth.context";
+import { SidebarContext } from "~/lib/context/sidebar.context";
+import {
+  getVisibleMenu,
+  type MenuItem,
+  type ResolvedMenuItem,
+} from "~/lib/config/menu.config";
+import { useLogoutAction } from "~/routes/(app)/dashboard/layout";
+import { IconMap } from "~/components/icons/dashboard-icons";
+import { Badge } from "~/components/ui";
+import { OrgSwitcher } from "./org-switcher";
+
+// Coincide con la duración de la transición CSS de grid-rows (ms)
+const FOCUS_DELAY_MS = 310;
+
+// Exact-match para /dashboard para evitar activar el item raíz
+// en todas las sub-rutas (/dashboard/agentes, /dashboard/agenda…)
+const isLinkActive = (pathname: string, href?: string) => {
+  if (!href) return false;
+  if (href === "/dashboard" || href === "/dashboard/") {
+    return pathname === "/dashboard" || pathname === "/dashboard/";
+  }
+  return pathname.startsWith(href);
+};
+
+const renderIcon = (iconName: string) => IconMap[iconName] ?? IconMap.home;
+
+interface SidebarItemProps {
+  item: MenuItem;
+  pathname: string;
+  collapsed: boolean;
+  closeMobile: QRL<() => void>;
+  isChild?: boolean;
+}
+
+export const SidebarItem = component$<SidebarItemProps>((props) => {
+  const active = useComputed$(() =>
+    isLinkActive(props.pathname, props.item.href),
+  );
+
+  return (
+    <div>
+      <Link
+        href={props.item.href!}
+        onClick$={props.closeMobile}
+        class={cn(
+          "group relative flex items-center rounded-md px-3 py-2.5",
+          "text-sm font-medium transition-colors",
+          props.isChild && "pl-8",
+          props.collapsed ? "justify-center px-0" : "gap-3",
+          active.value
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        )}
+        aria-current={active.value ? "page" : undefined}
+      >
+        <span
+          class={cn("shrink-0", props.isChild && "text-muted-foreground/60")}
+        >
+          {renderIcon(props.item.icon)}
+        </span>
+
+        <span
+          class={cn(
+            "sidebar-item-label",
+            props.collapsed ? "w-0 opacity-0" : "flex-1",
+          )}
+        >
+          {props.item.text}
+        </span>
+
+        {!props.collapsed &&
+          props.item.badge !== undefined &&
+          props.item.badge > 0 && (
+            <Badge variant="error">{props.item.badge}</Badge>
+          )}
+
+        {props.collapsed && (
+          <span class="sidebar-tooltip">{props.item.text}</span>
+        )}
+      </Link>
+
+      {props.item.dividerAfter && <hr class="border-border my-2" />}
+    </div>
+  );
+});
+
+interface SidebarGroupProps {
+  item: ResolvedMenuItem;
+  pathname: string;
+  collapsed: boolean;
+  closeMobile: QRL<() => void>;
+}
+
+export const SidebarGroup = component$<SidebarGroupProps>((props) => {
+  const isGroupActive = useComputed$(
+    () =>
+      props.item.children?.some((child) =>
+        isLinkActive(props.pathname, child.href),
+      ) ?? false,
+  );
+  // Inicializar expandido si ya hay un hijo activo (SSR-safe: valor sincrónico)
+  const isExpanded = useSignal<boolean>(isGroupActive.value);
+
+  useTask$(({ track }) => {
+    track(() => props.pathname);
+    if (isGroupActive.value) {
+      isExpanded.value = true;
+    }
+  });
+
+  return (
+    <div>
+      <button
+        onClick$={() => {
+          if (props.collapsed) return;
+          const opening = !isExpanded.value;
+          isExpanded.value = opening;
+          if (opening) {
+            // Espera a que finalice la animación grid-rows antes de poner foco
+            setTimeout(() => {
+              const firstLink = document.querySelector<HTMLElement>(
+                `[data-group="${props.item.text}"] a`,
+              );
+              firstLink?.focus();
+            }, FOCUS_DELAY_MS);
+          }
+        }}
+        class={cn(
+          "group relative flex w-full items-center rounded-md px-3 py-2.5",
+          "text-sm font-medium transition-colors",
+          "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+          props.collapsed ? "justify-center px-0" : "gap-3",
+        )}
+        aria-expanded={props.collapsed ? undefined : isExpanded.value}
+        aria-label={`${isExpanded.value ? "Colapsar" : "Expandir"} ${props.item.text}`}
+      >
+        <span class="shrink-0">{renderIcon(props.item.icon)}</span>
+
+        <span
+          class={cn(
+            "sidebar-item-label text-left",
+            props.collapsed ? "w-0 opacity-0" : "flex-1",
+          )}
+        >
+          {props.item.text}
+        </span>
+
+        {!props.collapsed && (
+          <span
+            class={cn(
+              "shrink-0 transition-transform duration-200",
+              isExpanded.value && "rotate-90",
+            )}
+          >
+            {IconMap.chevron}
+          </span>
+        )}
+
+        {props.collapsed && (
+          <span class="sidebar-tooltip">{props.item.text}</span>
+        )}
+      </button>
+
+      {/* grid-rows: transición de 0fr→1fr permite animar height sin JS.
+           El <div class="overflow-hidden"> interior actúa como contenedor.
+           Requiere Tailwind v4 con soporte de valores arbitrarios en grid-rows. */}
+      {!props.collapsed && (
+        <div
+          data-group={props.item.text}
+          role="group"
+          aria-hidden={!isExpanded.value}
+          class={cn(
+            "grid transition-[grid-template-rows,opacity] duration-300 ease-in-out",
+            isExpanded.value
+              ? "grid-rows-[1fr] opacity-100"
+              : "grid-rows-[0fr] opacity-0",
+          )}
+        >
+          <div class="overflow-hidden">
+            <div class="mt-1 ml-4 space-y-1 pb-1">
+              {props.item.children?.map((child) => (
+                <SidebarItem
+                  key={child.href ?? child.text}
+                  item={child}
+                  pathname={props.pathname}
+                  collapsed={props.collapsed}
+                  closeMobile={props.closeMobile}
+                  isChild={true}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {props.item.dividerAfter && <hr class="border-border my-2" />}
+    </div>
+  );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SidebarStaticActions — Soporte + Logout (acciones fijas fuera del menú RBAC)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface SidebarStaticActionsProps {
+  collapsed: boolean;
+}
+
+export const SidebarStaticActions = component$<SidebarStaticActionsProps>(
+  (props) => {
+    // useLogoutAction es un routeAction$ registrado en /dashboard/layout.tsx;
+    // puede invocarse desde cualquier componente dentro de esa ruta.
+    const logoutAction = useLogoutAction();
+
+    return (
+      <>
+        <button
+          class={cn(
+            "group relative flex w-full items-center rounded-md px-3 py-2.5",
+            "text-muted-foreground text-sm font-medium",
+            "hover:bg-accent hover:text-accent-foreground transition-colors",
+            props.collapsed ? "justify-center px-0" : "gap-3",
+          )}
+          aria-label="Contactar soporte"
+        >
+          <span class="shrink-0">{IconMap["support"] ?? IconMap.home}</span>
+          <span
+            class={cn("sidebar-item-label", props.collapsed && "w-0 opacity-0")}
+          >
+            Soporte
+          </span>
+          {props.collapsed && <span class="sidebar-tooltip">Soporte</span>}
+        </button>
+
+        <Form action={logoutAction}>
+          <button
+            type="submit"
+            class={cn(
+              "group relative flex w-full items-center rounded-md px-3 py-2.5",
+              "text-error text-sm font-medium",
+              "hover:bg-error/10 transition-colors",
+              props.collapsed ? "justify-center px-0" : "gap-3",
+            )}
+            aria-label="Cerrar sesión"
+          >
+            <span class="shrink-0">{IconMap["logout"] ?? IconMap.home}</span>
+            <span
+              class={cn(
+                "sidebar-item-label",
+                props.collapsed && "w-0 opacity-0",
+              )}
+            >
+              Cerrar sesión
+            </span>
+            {props.collapsed && (
+              <span class="sidebar-tooltip">Cerrar sesión</span>
+            )}
+          </button>
+        </Form>
+      </>
+    );
+  },
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DashboardSidebar — Orquestador: ensambla zonas, no declara lógica propia
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const DashboardSidebar = component$(() => {
   const location = useLocation();
   const auth = useContext(AuthContext);
   const sidebar = useContext(SidebarContext);
-  const logoutAction = useLogoutAction();
 
-  const mainMenu = getVisibleMenu(auth.organization.role, 'main');
-  const workspaceMenu = getVisibleMenu(auth.organization.role, 'workspace');
+  const role = useComputed$(() => auth.organization.role);
+  const pathname = useComputed$(() => location.url.pathname);
 
-  const isActive = (href?: string) => {
-    if (!href) return false;
-    if (href === '/dashboard') {
-      return location.url.pathname === '/dashboard' ||
-             location.url.pathname === '/dashboard/';
-    }
-    return location.url.pathname.startsWith(href);
-  };
-
-  const expandedGroups = useStore<Record<string, boolean>>({});
-
-  useTask$(({ track }) => {
-    const pathname = track(() => location.url.pathname);
-    const role = track(() => auth.organization.role);
-
-    const resolvedMainMenu = getVisibleMenu(role, 'main');
-    const resolvedWorkspaceMenu = getVisibleMenu(role, 'workspace');
-
-    const isPathActive = (href?: string) => {
-      if (!href) {
-        return false;
-      }
-
-      if (href === '/dashboard') {
-        return pathname === '/dashboard' || pathname === '/dashboard/';
-      }
-
-      return pathname.startsWith(href);
-    };
-
-    for (const item of [...resolvedMainMenu, ...resolvedWorkspaceMenu]) {
-      if (item.children?.some((child) => child.href && isPathActive(child.href))) {
-        expandedGroups[item.text] = true;
-      }
-    }
-  });
-
-  const renderIcon = (iconName: string) => {
-    return IconMap[iconName] ?? IconMap.home;
-  };
-
-  const renderMenuItem = (item: ResolvedMenuItem, isChild = false) => {
-    const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedGroups[item.text] ?? false;
-    const collapsed = sidebar.isCollapsed.value;
-
-    // ── Grupo expandible ────────────────────────────────────────────────────
-    if (hasChildren) {
-      return (
-        <div key={item.text}>
-          <button
-            onClick$={() => {
-              if (!collapsed) {
-                const opening = !expandedGroups[item.text];
-                expandedGroups[item.text] = opening;
-                if (opening) {
-                  setTimeout(() => {
-                    const first = document.querySelector<HTMLElement>(
-                      `[data-group="${item.text}"] a`
-                    );
-                    first?.focus();
-                  }, 310);
-                }
-              }
-            }}
-            class={cn(
-              'group relative flex w-full items-center px-3 py-2.5 rounded-md',
-              'text-sm font-medium transition-colors',
-              'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-              collapsed ? 'justify-center px-0' : 'gap-3'
-            )}
-            aria-expanded={collapsed ? undefined : isExpanded}
-            aria-label={`${isExpanded ? 'Colapsar' : 'Expandir'} ${item.text}`}
-          >
-            {/* Icono siempre visible */}
-            <span class="shrink-0">
-              {renderIcon(item.icon)}
-            </span>
-
-            {/* Label (oculto en collapsed) */}
-            <span class={cn(
-              'sidebar-item-label text-left',
-              collapsed ? 'w-0 opacity-0' : 'flex-1'
-            )}>
-              {item.text}
-            </span>
-
-            {/* Chevron (oculto en collapsed) */}
-            {!collapsed && (
-              <span class={cn(
-                'shrink-0 transition-transform duration-200',
-                isExpanded && 'rotate-90'
-              )}>
-                {IconMap.chevron}
-              </span>
-            )}
-
-            {/* Tooltip (solo visible en collapsed) */}
-            {collapsed && (
-              <span class="sidebar-tooltip">{item.text}</span>
-            )}
-          </button>
-
-          {/* Hijos — grid-template-rows para transición al tamaño real (sin bounce) */}
-          {!collapsed && (
-            <div
-              data-group={item.text}
-              role="group"
-              aria-hidden={!isExpanded}
-              class={cn(
-                'grid transition-[grid-template-rows,opacity] duration-300 ease-in-out',
-                isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-              )}
-            >
-              <div class="overflow-hidden">
-                <div class="ml-4 mt-1 space-y-1 pb-1">
-                  {item.children!.map((child) => (
-                    <Link
-                      key={child.href ?? child.text}
-                      href={child.href!}
-                      onClick$={sidebar.closeMobile}
-                      class={cn(
-                        'flex items-center gap-3 px-3 py-2.5 pl-8 rounded-md',
-                        'text-sm font-medium transition-colors',
-                        isActive(child.href)
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                      )}
-                      aria-current={isActive(child.href) ? 'page' : undefined}
-                    >
-                      <span class="shrink-0 text-muted-foreground/60">
-                        {renderIcon(child.icon)}
-                      </span>
-                      <span class="flex-1">{child.text}</span>
-                      {child.badge !== undefined && child.badge > 0 && (
-                        <span class="badge-error">{child.badge}</span>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {item.dividerAfter && <hr class="my-2 border-border" />}
-        </div>
-      );
-    }
-
-    // ── Link directo ────────────────────────────────────────────────────────
-    return (
-      <div key={item.href ?? item.text}>
-        <Link
-          href={item.href!}
-          onClick$={sidebar.closeMobile}
-          class={cn(
-            'group relative flex items-center px-3 py-2.5 rounded-md',
-            'text-sm font-medium transition-colors',
-            isChild && 'pl-8',
-            collapsed ? 'justify-center px-0' : 'gap-3',
-            isActive(item.href)
-              ? 'bg-primary/10 text-primary'
-              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-          )}
-          aria-current={isActive(item.href) ? 'page' : undefined}
-        >
-          {/* Icono siempre visible */}
-          <span class={cn(
-            'shrink-0',
-            isChild && 'text-muted-foreground/60'
-          )}>
-            {renderIcon(item.icon)}
-          </span>
-
-          {/* Label (oculto en collapsed) */}
-          <span class={cn(
-            'sidebar-item-label',
-            collapsed ? 'w-0 opacity-0' : 'flex-1'
-          )}>
-            {item.text}
-          </span>
-
-          {/* Badge (oculto en collapsed) */}
-          {!collapsed && item.badge !== undefined && item.badge > 0 && (
-            <span class="badge-error">{item.badge}</span>
-          )}
-
-          {/* Tooltip (solo visible en collapsed) */}
-          {collapsed && (
-            <span class="sidebar-tooltip">{item.text}</span>
-          )}
-        </Link>
-
-        {item.dividerAfter && <hr class="my-2 border-border" />}
-      </div>
-    );
-  };
+  const mainMenu = useComputed$(() => getVisibleMenu(role.value, "main"));
+  const workspaceMenu = useComputed$(() =>
+    getVisibleMenu(role.value, "workspace"),
+  );
 
   return (
     <aside
       class={cn(
-        // Base
-        'fixed left-0 top-0 h-screen flex flex-col z-30',
-        'bg-card border-r border-border',
-        'transition-all duration-300',
-        // Mobile: visible/oculto con translate
+        "bg-background fixed top-0 left-0 z-30 flex h-screen flex-col",
+        "transition-all duration-300",
         sidebar.isOpen.value
-          ? 'translate-x-0'
-          : '-translate-x-full lg:translate-x-0',
-        // Desktop: ancho dinámico
-        sidebar.isCollapsed.value
-          ? 'w-16'
-          : 'w-72'
+          ? "translate-x-0"
+          : "-translate-x-full lg:translate-x-0",
+        sidebar.isCollapsed.value ? "w-16" : "w-72",
       )}
       aria-label="Navegación del dashboard"
     >
-      {/* 1. LOGO/ORG NAME ─────────────────────────────────────────────────── */}
-      <div class={cn(
-        'h-16 flex items-center border-b border-border shrink-0',
-        'transition-all duration-300',
-        sidebar.isCollapsed.value
-          ? 'justify-center px-2'
-          : 'justify-between px-6'
-      )}>
-        {/* Logo/Nombre org (oculto en collapsed) */}
-        {!sidebar.isCollapsed.value && (
-          <h2 class="text-xl font-bold text-primary truncate">
-            {auth.organization.name}
-          </h2>
+      {/* Zona 1: selector de organización y cabecera (h-16 = misma altura que header) */}
+      <div
+        class={cn(
+          "flex h-16 shrink-0 items-center",
+          "transition-[padding] duration-300",
+          sidebar.isCollapsed.value ? "px-2" : "px-4",
         )}
-
-        {/* Botón toggle collapse (desktop) */}
-        <button
-          onClick$={sidebar.toggleCollapse}
-          class="hidden lg:flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors shrink-0"
-          aria-label={sidebar.isCollapsed.value
-            ? 'Expandir sidebar'
-            : 'Colapsar sidebar'
-          }
-        >
-          {/* Chevron izquierda/derecha según estado */}
-          <span class={cn(
-            'transition-transform duration-300',
-            sidebar.isCollapsed.value && 'rotate-180'
-          )}>
-            {IconMap.chevronLeft}
-          </span>
-        </button>
+      >
+        <OrgSwitcher collapsed={sidebar.isCollapsed.value} />
       </div>
 
-      {/* 2. WORKSPACE INFO (oculto en collapsed) ────────────────────────── */}
-      {!sidebar.isCollapsed.value && (
-        <div class="py-4 px-4 border-b border-border shrink-0">
-          <OrgSwitcher />
-        </div>
-      )}
-
-      {/* 3. MENU PRINCIPAL ───────────────────────────────────────────────── */}
-      <nav class={cn(
-        'flex-1 overflow-y-auto overflow-x-hidden py-4 transition-all duration-300',
-        sidebar.isCollapsed.value ? 'px-1' : 'px-3'
-      )}
+      <nav
+        class={cn(
+          "flex-1 overflow-x-hidden overflow-y-auto pt-12 pb-4 transition-all duration-300",
+          sidebar.isCollapsed.value ? "px-1" : "px-3",
+        )}
         role="navigation"
       >
         <div class="space-y-1">
-          {mainMenu.map((item) => renderMenuItem(item))}
+          {mainMenu.value.map((item) =>
+            item.children && item.children.length > 0 ? (
+              <SidebarGroup
+                key={item.text}
+                item={item}
+                pathname={pathname.value}
+                collapsed={sidebar.isCollapsed.value}
+                closeMobile={sidebar.closeMobile}
+              />
+            ) : (
+              <SidebarItem
+                key={item.href ?? item.text}
+                item={item}
+                pathname={pathname.value}
+                collapsed={sidebar.isCollapsed.value}
+                closeMobile={sidebar.closeMobile}
+              />
+            ),
+          )}
         </div>
       </nav>
 
-      {/* 4. FOOTER — Workspace + Soporte + Logout ───────────────────────── */}
-      <div class={cn(
-        'border-t border-border space-y-1 overflow-x-hidden overflow-y-visible',
-        'transition-all duration-300',
-        sidebar.isCollapsed.value ? 'py-4 px-1' : 'py-4 px-3'
-      )}>
-        {workspaceMenu.map((item) => renderMenuItem(item))}
+      <div
+        class={cn(
+          "space-y-1 overflow-x-hidden overflow-y-visible",
+          "transition-all duration-300",
+          sidebar.isCollapsed.value ? "px-1 py-4" : "px-3 py-4",
+        )}
+      >
+        {workspaceMenu.value.map((item) =>
+          item.children && item.children.length > 0 ? (
+            <SidebarGroup
+              key={item.text}
+              item={item}
+              pathname={pathname.value}
+              collapsed={sidebar.isCollapsed.value}
+              closeMobile={sidebar.closeMobile}
+            />
+          ) : (
+            <SidebarItem
+              key={item.href ?? item.text}
+              item={item}
+              pathname={pathname.value}
+              collapsed={sidebar.isCollapsed.value}
+              closeMobile={sidebar.closeMobile}
+            />
+          ),
+        )}
 
-        {/* Soporte */}
-        <button
-          class={cn(
-            'group relative flex w-full items-center px-3 py-2.5 rounded-md',
-            'text-sm font-medium text-muted-foreground',
-            'hover:bg-accent hover:text-accent-foreground transition-colors',
-            sidebar.isCollapsed.value ? 'justify-center px-0' : 'gap-3'
-          )}
-          aria-label="Contactar soporte"
-        >
-          <span class="shrink-0">{renderIcon('support')}</span>
-          <span class={cn(
-            'sidebar-item-label',
-            sidebar.isCollapsed.value && 'w-0 opacity-0'
-          )}>
-            Soporte
-          </span>
-          {sidebar.isCollapsed.value && (
-            <span class="sidebar-tooltip">Soporte</span>
-          )}
-        </button>
-
-        {/* Logout */}
-        <Form action={logoutAction}>
-          <button
-            type="submit"
-            class={cn(
-              'group relative flex w-full items-center px-3 py-2.5 rounded-md',
-              'text-sm font-medium text-error',
-              'hover:bg-error/10 transition-colors',
-              sidebar.isCollapsed.value ? 'justify-center px-0' : 'gap-3'
-            )}
-            aria-label="Cerrar sesión"
-          >
-            <span class="shrink-0">{renderIcon('logout')}</span>
-            <span class={cn(
-              'sidebar-item-label',
-              sidebar.isCollapsed.value && 'w-0 opacity-0'
-            )}>
-              Cerrar sesión
-            </span>
-            {sidebar.isCollapsed.value && (
-              <span class="sidebar-tooltip">Cerrar sesión</span>
-            )}
-          </button>
-        </Form>
+        {/* Zona 4b: acciones estáticas fuera del menú RBAC (soporte + logout) */}
+        <SidebarStaticActions collapsed={sidebar.isCollapsed.value} />
       </div>
     </aside>
   );

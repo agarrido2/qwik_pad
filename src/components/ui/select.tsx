@@ -1,14 +1,14 @@
 /**
  * Select Component - Dropdown Personalizado con Estilos Modernos
- * 
+ *
  * Selector custom que reemplaza el <select> nativo con un dropdown estilizado.
  * Incluye soporte para íconos, descripciones y estados de error.
- * 
+ *
  * Características:
  * - Variantes visuales: default, error, success (armonizado con Input)
  * - Tamaños: sm, default, lg (consistencia con Button/Input)
  * - Accesibilidad: ARIA roles, keyboard navigation (próximamente)
- * 
+ *
  * @example
  * // Select con iconos y descripciones
  * <Select
@@ -21,9 +21,9 @@
  * />
  */
 
-import { component$, useSignal, $, type QRL } from '@builder.io/qwik';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '~/lib/utils/cn';
+import { component$, useSignal, $, type QRL } from "@builder.io/qwik";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "~/lib/utils/cn";
 
 export interface SelectOption {
   value: string;
@@ -34,58 +34,59 @@ export interface SelectOption {
 
 /**
  * Variantes del trigger button mediante CVA.
- * 
+ *
  * Razón: Armonización con Input component. Un Select debe verse como un Input
  * en su estado cerrado, manteniendo consistencia visual del form.
  */
 const selectTriggerVariants = cva(
   // Base: Layout y comportamiento compartido
-  'relative w-full rounded-lg border-2 bg-white px-4 text-left transition-all duration-200 hover:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500',
+  "relative w-full rounded-lg border-2 bg-background px-4 text-left text-foreground transition-all duration-200 hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-ring",
   {
     variants: {
       variant: {
-        default: 'border-neutral-200',
-        error: 'border-error hover:border-error/80 focus:ring-error',
-        success: 'border-green-500 hover:border-green-600 focus:ring-green-500',
+        default: "border-input",
+        error: "border-error hover:border-error/80 focus:ring-error",
+        success: "border-success hover:border-success/80 focus:ring-success",
       },
       size: {
-        sm: 'py-2 text-xs',   // Altura ~h-8 (alineado con Input sm)
-        default: 'py-3 text-sm', // Altura ~h-10 (alineado con Input default)
-        lg: 'py-4 text-base',  // Altura ~h-12 (alineado con Input lg)
+        sm: "py-2 text-xs", // Altura ~h-8 (alineado con Input sm)
+        default: "py-3 text-sm", // Altura ~h-10 (alineado con Input default)
+        lg: "py-4 text-base", // Altura ~h-12 (alineado con Input lg)
       },
     },
     defaultVariants: {
-      variant: 'default',
-      size: 'default',
+      variant: "default",
+      size: "default",
     },
-  }
+  },
 );
 
-export interface SelectProps extends VariantProps<typeof selectTriggerVariants> {
+export interface SelectProps
+  extends VariantProps<typeof selectTriggerVariants> {
   /** Nombre del campo (requerido para forms) */
   name: string;
-  
+
   /** Opciones del dropdown */
   options: SelectOption[];
-  
+
   /** Valor seleccionado */
   value?: string;
-  
+
   /** Handler de cambio */
   onChange$: QRL<(value: string) => void>;
-  
+
   /** Placeholder cuando no hay selección */
   placeholder?: string;
-  
+
   /** Label del campo */
   label?: string;
-  
+
   /** Campo requerido */
   required?: boolean;
-  
+
   /** Mensaje de error (fuerza variant="error") */
   error?: string;
-  
+
   /** Clases CSS adicionales para el wrapper */
   class?: string;
 }
@@ -96,7 +97,7 @@ export const Select = component$<SelectProps>(
     options,
     value,
     onChange$,
-    placeholder = 'Selecciona una opción',
+    placeholder = "Selecciona una opción",
     label,
     required = false,
     error,
@@ -119,16 +120,16 @@ export const Select = component$<SelectProps>(
     });
 
     // Forzar variant="error" si existe mensaje de error (consistencia con Input)
-    const computedVariant = error ? 'error' : variant;
+    const computedVariant = error ? "error" : variant;
 
     return (
-      <div class={cn('relative', className)}>
+      <div class={cn("relative", className)}>
         {/* Label con asterisco si es required */}
         {label && (
-          <label class="mb-2 block text-sm font-medium text-neutral-700">
+          <label class="text-foreground mb-2 block text-sm font-medium">
             {label}
             {required && (
-              <span class="ml-1 text-error" aria-label="obligatorio">
+              <span class="text-error ml-1" aria-label="obligatorio">
                 *
               </span>
             )}
@@ -136,7 +137,7 @@ export const Select = component$<SelectProps>(
         )}
 
         {/* Hidden input para form submission */}
-        <input type="hidden" name={name} value={value || ''} />
+        <input type="hidden" name={name} value={value || ""} />
 
         {/* Trigger Button con variantes CVA */}
         <button
@@ -144,7 +145,7 @@ export const Select = component$<SelectProps>(
           onClick$={toggleDropdown}
           class={cn(
             selectTriggerVariants({ variant: computedVariant, size }),
-            !selectedOption && 'text-neutral-400' // Placeholder styling
+            !selectedOption && "text-muted-foreground", // Placeholder styling
           )}
           aria-haspopup="listbox"
           aria-expanded={isOpen.value}
@@ -158,11 +159,11 @@ export const Select = component$<SelectProps>(
                 </span>
               )}
               <div>
-                <div class="font-medium text-neutral-900">
+                <div class="text-foreground font-medium">
                   {selectedOption?.label || placeholder}
                 </div>
                 {selectedOption?.description && (
-                  <div class="text-xs text-neutral-500">
+                  <div class="text-muted-foreground text-xs">
                     {selectedOption.description}
                   </div>
                 )}
@@ -172,8 +173,8 @@ export const Select = component$<SelectProps>(
             {/* Chevron indicador (rotación animada) */}
             <svg
               class={cn(
-                'h-5 w-5 text-neutral-400 transition-transform duration-200',
-                isOpen.value && 'rotate-180'
+                "text-muted-foreground h-5 w-5 transition-transform duration-200",
+                isOpen.value && "rotate-180",
               )}
               fill="none"
               viewBox="0 0 24 24"
@@ -191,7 +192,7 @@ export const Select = component$<SelectProps>(
 
         {/* Dropdown Menu (condicional) */}
         {isOpen.value && (
-          <div class="absolute z-10 mt-2 w-full rounded-lg border border-neutral-200 bg-white shadow-xl">
+          <div class="border-border bg-popover text-popover-foreground absolute z-10 mt-2 w-full rounded-lg border shadow-xl">
             <ul class="max-h-80 overflow-auto py-2" role="listbox">
               {options.map((option) => (
                 <li key={option.value}>
@@ -199,9 +200,9 @@ export const Select = component$<SelectProps>(
                     type="button"
                     onClick$={() => selectOption(option.value)}
                     class={cn(
-                      'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150',
-                      'hover:bg-primary-50',
-                      option.value === value && 'bg-primary-100'
+                      "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-150",
+                      "hover:bg-accent",
+                      option.value === value && "bg-primary/10",
                     )}
                     role="option"
                     aria-selected={option.value === value}
@@ -215,11 +216,11 @@ export const Select = component$<SelectProps>(
 
                     {/* Label y descripción */}
                     <div class="flex-1">
-                      <div class="font-medium text-neutral-900">
+                      <div class="text-foreground font-medium">
                         {option.label}
                       </div>
                       {option.description && (
-                        <div class="text-xs text-neutral-500">
+                        <div class="text-muted-foreground text-xs">
                           {option.description}
                         </div>
                       )}
@@ -228,7 +229,7 @@ export const Select = component$<SelectProps>(
                     {/* Checkmark para opción seleccionada */}
                     {option.value === value && (
                       <svg
-                        class="h-5 w-5 text-primary-600"
+                        class="text-primary h-5 w-5"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -248,7 +249,7 @@ export const Select = component$<SelectProps>(
 
         {/* Mensaje de error */}
         {error && (
-          <p class="mt-1 text-sm text-error leading-relaxed" role="alert">
+          <p class="text-error mt-1 text-sm leading-relaxed" role="alert">
             {error}
           </p>
         )}
@@ -263,5 +264,5 @@ export const Select = component$<SelectProps>(
         )}
       </div>
     );
-  }
+  },
 );

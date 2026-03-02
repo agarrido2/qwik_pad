@@ -5,14 +5,19 @@
  * la ruta como orquestador único de estado y derivaciones.
  */
 
-import { component$, type QRL, type Signal } from '@builder.io/qwik';
-import { DatePickerCalendar } from './date-picker-calendar';
-import { DepartmentFilter } from './department-filter';
-import { UpcomingEvents } from './upcoming-events';
-import type { CalendarEvent, Department, UpcomingEvent } from '../types/calendar.types';
+import { component$, type QRL, type Signal } from "@builder.io/qwik";
+import { DatePickerCalendar } from "./date-picker-calendar";
+import { DepartmentFilter } from "./department-filter";
+import { UpcomingEvents } from "./upcoming-events";
+import type {
+  CalendarEvent,
+  Department,
+  UpcomingEvent,
+} from "../types/calendar.types";
 
 interface CalendarSidebarProps {
   selectedDate: Signal<string>;
+  visibleMonth: Signal<Date>;
   onDateSelect$: QRL<(dateIso: string) => void>;
   departments: Department[];
   allEvents: CalendarEvent[];
@@ -29,11 +34,12 @@ interface CalendarSidebarProps {
 export const CalendarSidebar = component$<CalendarSidebarProps>((props) => {
   return (
     <aside
-      class={props.class ?? 'hidden w-[280px] flex-shrink-0 flex-col gap-4 lg:flex'}
+      class={props.class ?? "hidden w-70 shrink-0 flex-col gap-4 lg:flex"}
       aria-label="Panel lateral de agenda"
     >
       <DatePickerCalendar
         selectedDate={props.selectedDate}
+        visibleMonth={props.visibleMonth}
         onDateSelect$={props.onDateSelect$}
       />
 

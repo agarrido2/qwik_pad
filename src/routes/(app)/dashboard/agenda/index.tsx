@@ -5,126 +5,175 @@
  * No contiene lógica de negocio reutilizable.
  */
 
-import { $, component$, useComputed$, useSignal } from '@builder.io/qwik';
-import { routeLoader$, type DocumentHead } from '@builder.io/qwik-city';
+import { $, component$, useComputed$, useSignal } from "@builder.io/qwik";
+import {
+  routeLoader$,
+  type DocumentHead,
+  type RequestEventLoader,
+} from "@builder.io/qwik-city";
 import {
   CalendarSidebar,
   CalendarView,
   type CalendarEvent,
   type Department,
   type UpcomingEvent,
-} from '~/features/calendar';
+} from "~/features/calendar";
+import { resolveActiveOrg } from "~/lib/auth/active-org";
+import { AuthService } from "~/lib/services/auth.service";
+import { RBACService } from "~/lib/services/rbac.service";
+
+const getMonthStartFromIso = (isoDate: string): Date => {
+  const [year, month] = isoDate.split("-").map(Number);
+  const normalizedYear = Number.isFinite(year)
+    ? year
+    : new Date().getFullYear();
+  const normalizedMonth = Number.isFinite(month)
+    ? month - 1
+    : new Date().getMonth();
+  return new Date(normalizedYear, normalizedMonth, 1);
+};
+
+const requireActiveOrg = async (requestEvent: RequestEventLoader) => {
+  const authUser = await AuthService.getAuthUser(requestEvent);
+  if (!authUser) {
+    throw requestEvent.redirect(302, "/login");
+  }
+
+  let orgs = requestEvent.sharedMap.get("userOrgs") as
+    | Awaited<ReturnType<typeof RBACService.getUserOrganizationsWithRoles>>
+    | undefined;
+
+  if (!orgs) {
+    orgs = await RBACService.getUserOrganizationsWithRoles(authUser.id);
+    requestEvent.sharedMap.set("userOrgs", orgs);
+  }
+
+  if (orgs.length === 0) {
+    throw requestEvent.redirect(302, "/onboarding");
+  }
+
+  return resolveActiveOrg(requestEvent, orgs);
+};
 
 /**
  * Loader SSR para eventos de agenda.
  * V1 usa datos mock tipados para desacoplar la UI de la persistencia.
  */
-export const useCalendarEvents = routeLoader$<CalendarEvent[]>(async () => {
-  const today = new Date();
-  const isoDate = today.toISOString().split('T')[0] ?? '';
+export const useCalendarEvents = routeLoader$<CalendarEvent[]>(
+  async (requestEvent) => {
+    const activeOrg = await requireActiveOrg(requestEvent);
+    const today = new Date();
+    const isoDate = today.toISOString().split("T")[0] ?? "";
+    void activeOrg;
 
-  return [
-    {
-      id: 'evt-1',
-      title: 'Cita · Juan Pérez',
-      start: `${isoDate}T10:00:00`,
-      end: `${isoDate}T11:00:00`,
-      color: 'hsl(var(--primary))',
-      textColor: 'hsl(var(--primary-foreground))',
-      extendedProps: {
-        type: 'appointment',
-        contactName: 'Juan Pérez',
-        status: 'confirmed',
-        departmentId: 'dept-sales',
-        departmentName: 'Ventas',
-        priority: 'high',
+    return [
+      {
+        id: "evt-1",
+        title: "Cita · Juan Pérez",
+        start: `${isoDate}T10:00:00`,
+        end: `${isoDate}T11:00:00`,
+        color: "hsl(var(--primary))",
+        textColor: "hsl(var(--primary-foreground))",
+        extendedProps: {
+          type: "appointment",
+          contactName: "Juan Pérez",
+          status: "confirmed",
+          departmentId: "dept-sales",
+          departmentName: "Ventas",
+          priority: "high",
+        },
       },
-    },
-    {
-      id: 'evt-2',
-      title: 'Seguimiento · María López',
-      start: `${isoDate}T13:30:00`,
-      end: `${isoDate}T14:00:00`,
-      color: 'hsl(var(--warning))',
-      textColor: 'hsl(var(--warning-foreground))',
-      extendedProps: {
-        type: 'follow-up',
-        contactName: 'María López',
-        status: 'pending',
-        departmentId: 'dept-support',
-        departmentName: 'Soporte',
-        priority: 'normal',
+      {
+        id: "evt-2",
+        title: "Seguimiento · María López",
+        start: `${isoDate}T13:30:00`,
+        end: `${isoDate}T14:00:00`,
+        color: "hsl(var(--warning))",
+        textColor: "hsl(var(--warning-foreground))",
+        extendedProps: {
+          type: "follow-up",
+          contactName: "María López",
+          status: "pending",
+          departmentId: "dept-support",
+          departmentName: "Soporte",
+          priority: "normal",
+        },
       },
-    },
-    {
-      id: 'evt-3',
-      title: 'Bloqueo · Formación interna',
-      start: `${isoDate}T16:00:00`,
-      end: `${isoDate}T17:30:00`,
-      color: 'hsl(var(--muted))',
-      textColor: 'hsl(var(--muted-foreground))',
-      extendedProps: {
-        type: 'blocked',
-        departmentId: 'dept-operations',
-        departmentName: 'Operaciones',
-        priority: 'normal',
+      {
+        id: "evt-3",
+        title: "Bloqueo · Formación interna",
+        start: `${isoDate}T16:00:00`,
+        end: `${isoDate}T17:30:00`,
+        color: "hsl(var(--muted))",
+        textColor: "hsl(var(--muted-foreground))",
+        extendedProps: {
+          type: "blocked",
+          departmentId: "dept-operations",
+          departmentName: "Operaciones",
+          priority: "normal",
+        },
       },
-    },
-    {
-      id: 'evt-4',
-      title: 'Demo producto · Lead B2B',
-      start: `${isoDate}T12:00:00`,
-      end: `${isoDate}T13:00:00`,
-      color: 'hsl(var(--secondary))',
-      textColor: 'hsl(var(--secondary-foreground))',
-      extendedProps: {
-        type: 'call',
-        contactName: 'Marta Gómez',
-        status: 'confirmed',
-        departmentId: 'dept-sales',
-        departmentName: 'Ventas',
-        priority: 'normal',
+      {
+        id: "evt-4",
+        title: "Demo producto · Lead B2B",
+        start: `${isoDate}T12:00:00`,
+        end: `${isoDate}T13:00:00`,
+        color: "hsl(var(--secondary))",
+        textColor: "hsl(var(--secondary-foreground))",
+        extendedProps: {
+          type: "call",
+          contactName: "Marta Gómez",
+          status: "confirmed",
+          departmentId: "dept-sales",
+          departmentName: "Ventas",
+          priority: "normal",
+        },
       },
-    },
-  ];
-});
+    ];
+  },
+);
 
 /**
  * Loader SSR para departamentos de agenda.
  * V2 usa catálogo mock tipado; V3 se conectará al service + DB.
  */
-export const useDepartments = routeLoader$<Department[]>(async () => {
-  return [
-    {
-      id: 'dept-sales',
-      name: 'Ventas',
-      color: 'primary',
-      slug: 'ventas',
-      isActive: true,
-    },
-    {
-      id: 'dept-support',
-      name: 'Soporte',
-      color: 'warning',
-      slug: 'soporte',
-      isActive: true,
-    },
-    {
-      id: 'dept-operations',
-      name: 'Operaciones',
-      color: 'success',
-      slug: 'operaciones',
-      isActive: true,
-    },
-    {
-      id: 'dept-product',
-      name: 'Producto',
-      color: 'secondary',
-      slug: 'producto',
-      isActive: true,
-    },
-  ];
-});
+export const useDepartments = routeLoader$<Department[]>(
+  async (requestEvent) => {
+    const activeOrg = await requireActiveOrg(requestEvent);
+    void activeOrg;
+
+    return [
+      {
+        id: "dept-sales",
+        name: "Ventas",
+        color: "primary",
+        slug: "ventas",
+        isActive: true,
+      },
+      {
+        id: "dept-support",
+        name: "Soporte",
+        color: "warning",
+        slug: "soporte",
+        isActive: true,
+      },
+      {
+        id: "dept-operations",
+        name: "Operaciones",
+        color: "success",
+        slug: "operaciones",
+        isActive: true,
+      },
+      {
+        id: "dept-product",
+        name: "Producto",
+        color: "secondary",
+        slug: "producto",
+        isActive: true,
+      },
+    ];
+  },
+);
 
 /**
  * Página agenda del dashboard.
@@ -133,8 +182,11 @@ export default component$(() => {
   const events = useCalendarEvents();
   const departments = useDepartments();
 
-  const selectedDate = useSignal(new Date().toISOString().split('T')[0] ?? '');
-  const activeDepartmentIds = useSignal(departments.value.map((department) => department.id));
+  const selectedDate = useSignal(new Date().toISOString().split("T")[0] ?? "");
+  const visibleMonth = useSignal(getMonthStartFromIso(selectedDate.value));
+  const activeDepartmentIds = useSignal(
+    departments.value.map((department) => department.id),
+  );
   const isMobileOptionsOpen = useSignal(false);
 
   const filteredEvents = useComputed$(() => {
@@ -153,7 +205,7 @@ export default component$(() => {
   const upcomingEvents = useComputed$<UpcomingEvent[]>(() => {
     const now = Date.now();
     const departmentMap = new Map(
-      departments.value.map((department) => [department.id, department])
+      departments.value.map((department) => [department.id, department]),
     );
 
     return filteredEvents.value
@@ -162,27 +214,30 @@ export default component$(() => {
       .slice(0, 5)
       .map((event) => {
         const departmentId = event.extendedProps?.departmentId;
-        const department = departmentId ? departmentMap.get(departmentId) : undefined;
+        const department = departmentId
+          ? departmentMap.get(departmentId)
+          : undefined;
 
         return {
           id: event.id,
           title: event.title,
           start: event.start,
-          departmentColor: department?.color ?? 'primary',
-          departmentName: department?.name ?? 'General',
-          priority: event.extendedProps?.priority ?? 'normal',
+          departmentColor: department?.color ?? "primary",
+          departmentName: department?.name ?? "General",
+          priority: event.extendedProps?.priority ?? "normal",
         };
       });
   });
 
   const handleDateSelect$ = $((isoDate: string) => {
     selectedDate.value = isoDate;
+    visibleMonth.value = getMonthStartFromIso(isoDate);
   });
 
   const handleDepartmentToggle$ = $((departmentId: string) => {
     if (activeDepartmentIds.value.includes(departmentId)) {
       activeDepartmentIds.value = activeDepartmentIds.value.filter(
-        (currentId) => currentId !== departmentId
+        (currentId) => currentId !== departmentId,
       );
       return;
     }
@@ -191,9 +246,11 @@ export default component$(() => {
   });
 
   const handleDepartmentToggleAll$ = $(() => {
-    const allDepartmentIds = departments.value.map((department) => department.id);
+    const allDepartmentIds = departments.value.map(
+      (department) => department.id,
+    );
     const isEverythingActive = allDepartmentIds.every((departmentId) =>
-      activeDepartmentIds.value.includes(departmentId)
+      activeDepartmentIds.value.includes(departmentId),
     );
 
     activeDepartmentIds.value = isEverythingActive ? [] : allDepartmentIds;
@@ -207,8 +264,8 @@ export default component$(() => {
     <div class="space-y-3 sm:space-y-4">
       <header class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 class="text-2xl font-bold text-foreground">Agenda</h2>
-          <p class="mt-1 text-sm text-muted-foreground">
+          <h2 class="text-foreground text-2xl font-bold">Agenda</h2>
+          <p class="text-muted-foreground mt-1 text-sm">
             Visualiza citas, seguimientos y bloqueos operativos de tu agente IA.
           </p>
         </div>
@@ -217,7 +274,7 @@ export default component$(() => {
           <button
             type="button"
             aria-label="Crear nuevo evento"
-            class="inline-flex h-10 flex-1 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-light lg:w-auto lg:flex-none"
+            class="bg-primary text-primary-foreground hover:bg-primary-light inline-flex h-10 flex-1 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors lg:w-auto lg:flex-none"
           >
             + Crear Evento
           </button>
@@ -227,7 +284,7 @@ export default component$(() => {
             onClick$={toggleMobileOptions$}
             aria-label="Mostrar opciones de agenda"
             aria-expanded={isMobileOptionsOpen.value}
-            class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:bg-accent hover:text-accent-foreground lg:hidden"
+            class="border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-10 w-10 items-center justify-center rounded-md border transition-colors lg:hidden"
           >
             <svg
               class="h-5 w-5"
@@ -251,6 +308,7 @@ export default component$(() => {
         <CalendarSidebar
           class="flex flex-col gap-3 lg:hidden"
           selectedDate={selectedDate}
+          visibleMonth={visibleMonth}
           onDateSelect$={handleDateSelect$}
           departments={departments.value}
           allEvents={events.value}
@@ -263,8 +321,9 @@ export default component$(() => {
 
       <div class="flex gap-4 lg:gap-6">
         <CalendarSidebar
-          class="hidden w-[280px] flex-shrink-0 flex-col gap-4 lg:flex"
+          class="hidden w-70 shrink-0 flex-col gap-4 lg:flex"
           selectedDate={selectedDate}
+          visibleMonth={visibleMonth}
           onDateSelect$={handleDateSelect$}
           departments={departments.value}
           allEvents={events.value}
@@ -275,7 +334,10 @@ export default component$(() => {
         />
 
         <div class="min-w-0 flex-1">
-          <CalendarView events={filteredEvents.value} selectedDate={selectedDate.value} />
+          <CalendarView
+            events={filteredEvents.value}
+            selectedDate={selectedDate.value}
+          />
         </div>
       </div>
     </div>
@@ -283,39 +345,39 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: 'Agenda - Onucall',
+  title: "Agenda - Onucall",
   meta: [
     {
-      name: 'description',
+      name: "description",
       content:
-        'Calendario de agenda para gestionar citas y eventos operativos del dashboard de Onucall.',
+        "Calendario de agenda para gestionar citas y eventos operativos del dashboard de Onucall.",
     },
     {
-      property: 'og:title',
-      content: 'Agenda - Onucall',
+      property: "og:title",
+      content: "Agenda - Onucall",
     },
     {
-      property: 'og:description',
+      property: "og:description",
       content:
-        'Calendario de agenda para gestionar citas y eventos operativos del dashboard de Onucall.',
+        "Calendario de agenda para gestionar citas y eventos operativos del dashboard de Onucall.",
     },
     {
-      property: 'og:type',
-      content: 'website',
+      property: "og:type",
+      content: "website",
     },
     {
-      property: 'og:url',
-      content: 'https://onucall.com/dashboard/agenda',
+      property: "og:url",
+      content: "https://onucall.com/dashboard/agenda",
     },
     {
-      property: 'twitter:card',
-      content: 'summary_large_image',
+      property: "twitter:card",
+      content: "summary_large_image",
     },
   ],
   links: [
     {
-      rel: 'canonical',
-      href: 'https://onucall.com/dashboard/agenda',
+      rel: "canonical",
+      href: "https://onucall.com/dashboard/agenda",
     },
   ],
 };

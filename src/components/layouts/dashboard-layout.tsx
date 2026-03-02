@@ -19,23 +19,21 @@
  * Colores: Sistema HSL (bg-background, sin hardcoded)
  */
 
-import { component$, Slot, useContext, $ } from '@builder.io/qwik';
-import { SidebarContext } from '~/lib/context/sidebar.context';
-import { DashboardSidebar, DashboardHeader, DashboardFooter  } from '~/components/dashboard';
+import { component$, Slot, useContext } from "@builder.io/qwik";
+import { SidebarContext } from "~/lib/context/sidebar.context";
+import {
+  DashboardSidebar,
+  DashboardHeader,
+  DashboardFooter,
+} from "~/components/dashboard";
 
-import { cn } from '~/lib/utils/cn';
+import { cn } from "~/lib/utils/cn";
 
 export const DashboardLayout = component$(() => {
   const sidebar = useContext(SidebarContext);
 
-  /** Cerrar sidebar mobile al hacer click en el backdrop */
-  const handleBackdropClick$ = $(() => {
-    sidebar.closeMobile();
-  });
-
   return (
-    <div class="min-h-screen bg-background">
-
+    <div class="bg-card min-h-screen">
       {/* ── BACKDROP (mobile only) ─────────────────────────────────────────
           Visible cuando sidebar está abierto en mobile.
           Click cierra el sidebar.
@@ -44,7 +42,7 @@ export const DashboardLayout = component$(() => {
       {sidebar.isOpen.value && (
         <div
           class="sidebar-backdrop"
-          onClick$={handleBackdropClick$}
+          onClick$={sidebar.closeMobile}
           aria-hidden="true"
         />
       )}
@@ -61,32 +59,30 @@ export const DashboardLayout = component$(() => {
           Mobile:  left-0 (sidebar es overlay, no empuja el header)
           Desktop: left-72 expandido / left-16 colapsado
       ──────────────────────────────────────────────────────────────────── */}
-     <DashboardHeader
-        title="Dashboard"
+      <DashboardHeader
         notificationCount={0}
         class={cn(
-          // ✅ Fix #5: left-0 base (mobile full width)
-          'left-0 transition-[left] duration-300',
+          // Base: mobile full width
+          "left-0",
           // Desktop: ajusta left según collapsed
-          sidebar.isCollapsed.value ? 'lg:left-16' : 'lg:left-72'
+          sidebar.isCollapsed.value ? "lg:left-19" : "lg:left-75",
         )}
       />
 
       {/* ── MAIN CONTENT ──────────────────────────────────────────────────
           Mobile:  ml-0 (sidebar es overlay, no ocupa espacio)
           Desktop: ml-72 expandido / ml-16 colapsado
-          mt-16 → respeta header (h-16)
-          mb-12 → respeta footer (h-12)
+          mt-19 → gap visual sobre header (h-16 + 12px)
+          bottom-15 → gap visual sobre footer (h-12 + 12px)
+          Scroll interno para mantener gaps visibles siempre.
       ──────────────────────────────────────────────────────────────────── */}
       <main
         class={cn(
-          'mt-16 mb-12 p-6 min-h-[calc(100vh-7rem)] transition-[margin-left] duration-300',
-          // Mobile: sin margen (sidebar es overlay)
-          'ml-0',
+          "bg-background fixed top-19 right-0 bottom-15 overflow-y-auto p-6",
+          // Mobile: sin margen lateral (sidebar es overlay)
+          "left-0",
           // Desktop: margen dinámico según collapsed
-          sidebar.isCollapsed.value
-            ? 'lg:ml-16'
-            : 'lg:ml-72'
+          sidebar.isCollapsed.value ? "lg:left-19" : "lg:left-75",
         )}
       >
         <Slot />
