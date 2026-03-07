@@ -6977,5 +6977,5 @@ A medida que el producto madure, la integración con los principales DMS del sec
 
 ---
 
-*Documento confidencial. Propiedad intelectual exclusiva del equipo fundador de Onucall.*
+*Documento confidencial. Propiedad intelectual exclusiva del equipo fundador de Onucall. AGG
 *Onucall © 2026. Todos los derechos reservados.*
