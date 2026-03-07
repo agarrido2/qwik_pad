@@ -6816,3 +6816,166 @@ equipo fundador.
 
 Onucall © 2026. Todos los derechos reservados.
 
+# APÉNDICE N: REGISTRO DE MEJORAS — VERSIÓN 1.1
+
+**Fecha de revisión:** Marzo 2026
+**Origen:** Sesión de trabajo con IA — revisión estratégica y técnica
+**Propósito:** Este apéndice documenta las mejoras, correcciones y adiciones que deben incorporarse en la próxima versión del documento. Cada entrada indica la sección afectada, la naturaleza del cambio y la justificación.
+
+---
+
+## 1. CORRECCIONES OBLIGATORIAS
+
+### 1.1 Eliminación de referencias a "Onucars" sin contexto (Sección 35.2)
+
+**Tipo:** Corrección
+**Sección afectada:** 35 — Proyección Financiera
+**Problema:** El término "Onucars" aparece dos veces en la proyección financiera del mes 6 y del mes 12 sin haber sido definido en ningún punto previo del documento. Para cualquier lector externo —inversor, socio, colaborador— esto genera una inconsistencia que resta credibilidad al conjunto.
+**Acción:** Eliminar las referencias a "Onucars" de la tabla de proyecciones o añadir una nota a pie de página que explique la arquitectura de marca antes de la primera aparición del término.
+
+---
+
+### 1.2 Revisión de las proyecciones financieras del arranque (Sección 35.2)
+
+**Tipo:** Corrección
+**Sección afectada:** 35 — Proyección Financiera
+**Problema:** Los objetivos del mes 1 (2 clientes pagando) y del mes 2 (6 clientes pagando) asumen que existe demanda contenida esperando el lanzamiento. En un producto SaaS B2B de venta directa sin marketing pagado, el ciclo real de captación —prospección, demostración presencial, período de prueba, decisión del propietario— raramente permite cerrar más de 1-2 clientes en el primer mes operativo. Las proyecciones actuales sobreestiman la velocidad de arranque y pueden generar una sensación de fracaso en los primeros meses cuando en realidad el ritmo es el esperado para este tipo de producto.
+**Acción:** Revisar el ramp de los primeros 6 meses hacia cifras más conservadoras. Propuesta orientativa: mes 1 (0-1 clientes), mes 2 (2-3), mes 3 (5-7), mes 4 (10-13), mes 6 (20-25). Los objetivos del mes 12 en adelante pueden mantenerse si se sustenta en estrategia de canales adicionales (alianzas con portales, afiliación, etc.).
+
+---
+
+## 2. MEJORAS TÉCNICAS
+
+### 2.1 Rediseño completo de la configuración del agente de voz (Sección 6)
+
+**Tipo:** Mejora sustancial
+**Sección afectada:** 6 — El Agente de Voz Configurable
+**Problema actual:** La sección describe parámetros de configuración (nombre, género, escala de amabilidad, instrucciones específicas) pero no define el mecanismo técnico que hace posible esa configuración sin exponer ni comprometer el prompt maestro. Tampoco describe la experiencia de usuario en el dashboard al configurar el agente.
+**Mejora propuesta:** Incorporar el modelo de **Slots tipificados sobre el prompt maestro**.
+
+El principio es el siguiente: el prompt maestro vive en el backend de Onucall y nunca es visible ni modificable por el usuario. Dentro de ese prompt existen zonas nombradas —slots— que se rellenan dinámicamente con los valores que el usuario configura desde el dashboard. El usuario ve campos con etiquetas claras, límites de caracteres y descripciones de para qué sirve cada campo. El sistema ensambla el prompt final en tiempo real al inicio de cada llamada.
+
+Los slots configurables por el usuario son:
+
+- `{agent_name}` → campo de texto, máximo 30 caracteres
+- `{agent_gender}` → selector binario (voz femenina / masculina)
+- `{amability_level}` → escala deslizante 1-5 que se traduce internamente a bloques de texto predefinidos en el prompt
+- `{business_description}` → área de texto libre, máximo 500 caracteres, con botón **Ayúdame** (descrito en el punto 2.3)
+- `{custom_instructions}` → área de texto libre, máximo 800 caracteres, con botón **Ayúdame**
+- `{active_promotions}` → campo estructurado (nombre, condiciones, fecha de expiración) que el sistema formatea automáticamente antes de inyectarlo
+
+El núcleo del prompt —la lógica conversacional, el mecanismo de tool calling, las reglas de escalado, el cumplimiento RGPD, los flujos de agendamiento— permanece bloqueado y nunca expuesto.
+
+Los límites de caracteres no son solo una decisión de UX. Son también una capa de seguridad que previene intentos de prompt injection a través de los propios campos de configuración del usuario.
+
+El módulo de **Casos de Uso** (Sección 23) actúa como la capa avanzada de configuración comportamental. Los slots básicos cubren el 80% de las necesidades de los concesionarios en los primeros meses. Los Casos de Uso cubren el 20% restante para quienes necesitan mayor control situacional.
+
+**Añadir a Apéndice E** una nueva entrada de decisión de diseño que documente esta elección y su justificación.
+
+---
+
+### 2.2 Principio de separación SQL/IA en el BI Conversacional (Sección 19)
+
+**Tipo:** Mejora técnica y conceptual
+**Sección afectada:** 19 — BI Conversacional
+**Problema actual:** La sección describe bien el resultado final del BI Conversacional pero no articula el principio técnico más importante que garantiza su fiabilidad: el LLM nunca genera ni interpola datos operativos. Los datos siempre provienen de una fuente estructurada.
+**Mejora propuesta:** Añadir una subsección con el siguiente principio formal:
+
+> **Principio de separación SQL/IA:** Los datos precisos y verificables —conteos, precios, fechas, asignaciones, estados— se obtienen siempre mediante consultas SQL exactas contra la base de datos relacional. El LLM recibe esos datos ya calculados como contexto y su función es exclusivamente convertirlos en lenguaje natural, contextualizarlos y relacionarlos entre sí. El LLM nunca calcula, nunca interpola y nunca supone un dato operativo.
+
+Ejemplo que debe incluirse en la sección:
+
+Cuando el usuario pregunta *"¿Cuántos leads tiene asignados Juan Cortés en los últimos 45 días con resultado satisfactorio?"*, el sistema ejecuta primero la query SQL exacta y obtiene el número. Solo entonces se lo entrega al LLM para que formule la respuesta. Si el SQL devuelve 7, el LLM responde con 7. Nunca con "aproximadamente 7" ni con "entre 5 y 9".
+
+Este principio es especialmente crítico en el contexto de un concesionario donde los datos operativos tienen consecuencias comerciales directas. Un número incorrecto en el rendimiento de un vendedor, en el stock disponible o en los leads activos puede generar decisiones equivocadas con coste económico real.
+
+**Añadir a Apéndice E** una nueva entrada de decisión de diseño que documente este principio y su justificación.
+
+---
+
+### 2.3 El Clasificador de Intención como componente formal del RAG Híbrido (Sección 21)
+
+**Tipo:** Mejora técnica
+**Sección afectada:** 21 — El RAG Híbrido de Tres Capas
+**Problema actual:** La sección 21.4 describe la orquestación de las tres capas pero no define el componente que determina qué capas activar para cada consulta. Este componente —el Clasificador de Intención— es en la práctica una pieza arquitectónica diferenciada que merece su propia definición.
+**Mejora propuesta:** Añadir una subsección 21.5 denominada **El Clasificador de Intención** con el siguiente contenido:
+
+Antes de que el sistema active ninguna capa del RAG, un paso previo clasifica la consulta entrante para determinar qué combinación de fuentes es necesaria. Este clasificador opera mediante un prompt corto y de bajo coste al LLM que analiza la pregunta y devuelve un objeto JSON indicando qué capas requiere la consulta.
+
+Las combinaciones posibles son:
+
+- **Solo Capa 1 (SQL):** preguntas sobre datos operativos actuales — stock, leads, citas, rendimiento de vendedores
+- **Solo Capa 2 (vectorial):** preguntas técnicas sobre vehículos o documentos de la Base de Conocimientos
+- **Solo Capa 3 (externa):** preguntas sobre el mercado o la competencia sin cruce con datos internos
+- **Capas 1 + 2:** preguntas que requieren datos operativos y conocimiento documental simultáneamente
+- **Capas 1 + 3:** preguntas mixtas de datos internos con benchmarking externo
+- **Las tres capas:** preguntas de análisis complejo que cruzan datos propios, documentación y mercado
+
+El ejemplo canónico de Capas 1 + 3 que debe incluirse en el documento:
+
+> *"Dime el porcentaje diferencial que existe en los SUVs que hemos vendido en el último trimestre en relación con la competencia local."*
+
+Esta consulta requiere: (1) una query SQL exacta sobre las ventas propias de SUVs en el trimestre, y (2) datos de listings cerrados en los principales portales de la provincia para el mismo período. El LLM recibe ambos resultados y construye la respuesta con el diferencial real. Ninguno de los dos datos lo genera el LLM: ambos provienen de sus fuentes originales.
+
+La importancia del clasificador no es solo técnica. Evitar activar las tres capas en cada consulta reduce la latencia, reduce el coste en tokens y —más importante— elimina el riesgo de que el LLM mezcle fuentes cuando no es necesario y genere respuestas contaminadas con datos irrelevantes.
+
+---
+
+### 2.4 Incorporación de la Cuenta Demo y la Demo en Vivo (Nueva sección)
+
+**Tipo:** Adición
+**Sección sugerida:** Nueva sección entre el bloque de módulos (Parte V) y el bloque de integraciones (Parte VII), o bien como subsecciones dentro de la Sección 5.
+**Contenido a añadir:**
+
+**Cuenta Demo (onboarding autónomo):**
+El primer punto de contacto de un nuevo usuario con Onucall es la creación de una cuenta demo completamente autónoma, sin intervención humana y operable en menos de cinco minutos desde el registro. La cuenta demo es gratuita, opera exclusivamente con datos ficticios predefinidos por Onucall, y tiene como único propósito que el usuario experimente la filosofía y las funcionalidades de la plataforma en un entorno sin riesgo y sin compromiso. No hay llamadas de ventas, no hay formularios de contacto obligatorios, no hay intervención del equipo de Onucall en el proceso. El usuario llega, se registra, y en minutos tiene acceso a un dashboard funcional con un catálogo de vehículos de ejemplo, leads ficticios en distintas fases del pipeline, una agenda con citas de prueba y un agente de voz preconfigurado.
+
+**Demo en vivo en la landing page:**
+La landing page del producto incluye una funcionalidad de demostración en tiempo real del agente de voz que permite a cualquier visitante experimentar el producto antes de registrarse. El proceso es: el visitante introduce su número de teléfono, el sistema lanza una llamada saliente desde el agente preconfigurado de Onucall, y el visitante mantiene una conversación real con el agente usando una base de conocimientos y un catálogo de vehículos ficticios preparados para la demostración. Esta funcionalidad es el argumento comercial más poderoso del producto porque convierte la abstracción de "agente de voz con IA" en una experiencia directa e inmediata, eliminando la barrera de desconfianza que es el mayor freno de adopción en este tipo de producto.
+
+---
+
+## 3. MEJORAS ESTRATÉGICAS
+
+### 3.1 Definición formal de la arquitectura de marca (Sección 5 y Sección 33)
+
+**Tipo:** Adición
+**Secciones afectadas:** 5 — Qué es Onucall, y 33 — Modelo de Negocio y Precios
+**Contenido a añadir:**
+
+**Onucall** es la marca paraguas y la entidad tecnológica que sustenta la plataforma. Bajo Onucall operan productos verticales especializados que comparten el mismo motor técnico pero están adaptados a las necesidades específicas de cada sector:
+
+- **Onucars** — plataforma de inteligencia comercial con IA de voz para concesionarios y vendedores de vehículos
+- **Onuinmo** — plataforma de inteligencia comercial con IA de voz para agencias inmobiliarias (Fase 2)
+
+La decisión sobre si el cliente final percibe y contrata el producto vertical directamente (compra "Onucars") o percibe la marca paraguas ("powered by Onucall") tiene implicaciones en el naming del dashboard, el dominio de acceso y el posicionamiento del go-to-market. Esta decisión está pendiente de definición y debe tomarse antes del lanzamiento del primer producto vertical.
+
+---
+
+## 4. COMENTARIOS ADICIONALES
+
+**Sobre el nivel del documento en su versión actual:**
+El whitepaper v1.0 tiene un nivel de profundidad técnica y operativa inusual para la etapa en que se encuentra el producto. La sección de decisiones de diseño justificadas (Apéndice E) es especialmente valiosa y debe continuar siendo actualizada con cada decisión arquitectónica relevante. Es el activo de documentación con mayor valor a largo plazo.
+
+**Sobre la sección 3 (Realidad del día a día en un concesionario):**
+Esta sección no necesita cambios. Está escrita con conocimiento de causa y es el mejor argumento de venta del documento. Cualquier presentación comercial del producto debería empezar por esta sección o por una versión condensada de ella.
+
+**Sobre el Apéndice H (Argumentario de Ventas):**
+Las respuestas a objeciones son sólidas. Considerar añadir una séptima objeción frecuente en el sector: *"Ya lo hacemos con WhatsApp y nos funciona"*. La respuesta debería articular que WhatsApp resuelve la comunicación asíncrona pero no la atención inmediata de una llamada entrante, que es el momento de mayor intención de compra del cliente.
+
+**Sobre la sección de integraciones futuras:**
+A medida que el producto madure, la integración con los principales DMS del sector (descritos como pendiente en versiones futuras) será el principal argumento para cerrar concesionarios oficiales medianos. Vale la pena investigar cuáles son los DMS con mayor penetración en España antes de la Fase 3 para priorizar el orden de las integraciones.
+
+---
+
+## 5. CONTROL DE VERSIONES
+
+| Versión | Fecha | Responsable | Cambios principales |
+|:---|:---|:---|:---|
+| 1.0 | 23 febrero 2026 | Fundador | Documento inicial completo |
+| 1.1 | Marzo 2026 | Fundador + revisión IA | Corrección referencias Onucars sin contexto. Revisión proyecciones financieras arranque. Incorporación sistema de Slots para configuración del agente. Principio de separación SQL/IA en BI Conversacional. Clasificador de Intención como componente formal del RAG. Incorporación de Cuenta Demo y Demo en Vivo. Definición de arquitectura de marca Onucall/Onucars/Onuinmo. Decisiones de diseño 11 y 12 en Apéndice E. |
+
+---
+
+*Documento confidencial. Propiedad intelectual exclusiva del equipo fundador de Onucall.*
+*Onucall © 2026. Todos los derechos reservados.*
