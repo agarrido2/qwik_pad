@@ -67,7 +67,7 @@ export type ResolvedMenuItem = MenuItem & {
 // ============================================================================
 
 export const MENU_CONFIG: MenuItem[] = [
-  // ── 1. Visión General (Main) ───────────────────────────────
+  // ── 1. Visión General ─────────────────────────────────────
   {
     text: 'Dashboard',
     href: '/dashboard',
@@ -99,8 +99,8 @@ export const MENU_CONFIG: MenuItem[] = [
     roles: ['owner', 'admin', 'member'],
     section: 'main',
     children: [
-      { text: 'Calendario', href: '/dashboard/agenda', icon: 'calendar' },
-      { text: 'Citas Programadas', href: '/dashboard/citas', icon: 'clock' },
+      { text: 'Calendario',        href: '/dashboard/agenda', icon: 'calendar' },
+      { text: 'Citas Programadas', href: '/dashboard/appointments',  icon: 'clock' },
     ],
     dividerAfter: true,
   },
@@ -108,28 +108,28 @@ export const MENU_CONFIG: MenuItem[] = [
   // ── 3. Motor del Negocio (CMS Sectorial) ───────────────────
   {
     text: 'Inventario',
-    icon: 'building', // Cambiar a 'car' si usas iconos específicos de autos
+    icon: 'building',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
     children: [
-      { text: 'Catálogo de Vehículos', href: '/dashboard/cms/vehiculos', icon: 'list' },
-      { text: 'Gestión de Stock', href: '/dashboard/cms/inventario', icon: 'box' },
-      { text: 'Marcas y Modelos', href: '/dashboard/cms/maestros', icon: 'tags' },
+      { text: 'Catálogo de Vehículos', href: '/dashboard/cms/vehiculos',  icon: 'list' },
+      { text: 'Gestión de Stock',      href: '/dashboard/cms/inventario', icon: 'box' },
+      { text: 'Marcas y Modelos',      href: '/dashboard/cms/maestros',   icon: 'tags' },
     ],
     dividerAfter: true,
   },
 
-  // ── 4. Inteligencia Artificial y Reportes ──────────────────
+  // ── 4. Inteligencia Artificial ─────────────────────────────
   {
     text: 'Agentes de Voz AI',
     icon: 'bot',
-    roles: ['owner', 'admin'], // Solo admins configuran IA
+    roles: ['owner', 'admin'],
     section: 'main',
     children: [
-      { text: 'Mis Agentes', href: '/dashboard/agents', icon: 'bot' },
-      { text: 'Prompts y Guiones', href: '/dashboard/agents?view=prompts', icon: 'file-text' },
-      { text: 'Base de Conocimiento', href: '/dashboard/agents?view=conocimiento', icon: 'database' },
-    ]
+      { text: 'Mis Agentes',          href: '/dashboard/agents',              icon: 'bot' },
+      { text: 'Prompts y Guiones',    href: '/dashboard/agents/prompts',      icon: 'file-text' },
+      { text: 'Base de Conocimiento', href: '/dashboard/agents/conocimiento', icon: 'database' },
+    ],
   },
   {
     text: 'Analítica y KPIs',
@@ -140,25 +140,25 @@ export const MENU_CONFIG: MenuItem[] = [
     dividerAfter: true,
   },
 
-  // ── 5. Configuración del Workspace (Workspace) ─────────────
+  // ── 5. Configuración del Workspace ─────────────────────────
   {
     text: 'Configuración',
     icon: 'settings',
     roles: ['owner', 'admin'],
     section: 'workspace',
     children: [
-      { text: 'General', href: '/dashboard/configuracion', icon: 'settings' },
-      { text: 'Horarios de Atención', href: '/dashboard/horarios', icon: 'clock' },
-      { text: 'Integraciones', href: '/dashboard/integraciones', icon: 'puzzle' },
-      { text: 'Departamentos', href: '/dashboard/departamentos', icon: 'building', roles: ['owner'] },
-      { text: 'Usuarios', href: '/dashboard/usuarios', icon: 'users' },
+      { text: 'General',             href: '/dashboard/configuracion', icon: 'settings' },
+      { text: 'Horarios de Atención',href: '/dashboard/horarios',      icon: 'clock' },
+      { text: 'Integraciones',       href: '/dashboard/integraciones', icon: 'puzzle' },
+      { text: 'Departamentos',       href: '/dashboard/departments', icon: 'building', roles: ['owner'] },
+      { text: 'Usuarios',            href: '/dashboard/usuarios',      icon: 'users' },
     ],
   },
   {
     text: 'Suscripción',
     href: '/dashboard/facturacion',
     icon: 'credit-card',
-    roles: ['owner'], // Solo el owner accede a billing
+    roles: ['owner'],
     section: 'workspace',
   },
 ];
@@ -193,7 +193,9 @@ function buildRouteMap() {
 
       if (item.children) {
         if (depth >= 2) {
-          throw new Error(`MenuItem "${item.text}" tiene hijos en nivel ${depth + 1}. Máximo: 2 niveles.`);
+          throw new Error(
+            `MenuItem "${item.text}" tiene hijos en nivel ${depth}. Máximo: 2 niveles.`
+          );
         }
         traverse(item.children, depth + 1, effectiveRoles);
       }
@@ -201,7 +203,7 @@ function buildRouteMap() {
   }
 
   traverse(MENU_CONFIG, 1);
-  // Ordenar por longitud descendente (rutas más específicas primero)
+  // Rutas más específicas primero (evita falsos positivos en startsWith)
   PROTECTED_ROUTES.sort((a, b) => b[0].length - a[0].length);
 }
 
@@ -214,11 +216,11 @@ function resolveChildRoles(
   if (!childRoles || childRoles.length === 0) return parentRoles;
 
   const effective = childRoles.filter((role) => parentRoles.includes(role));
-  const widened = childRoles.filter((role) => !parentRoles.includes(role));
-  
+  const widened   = childRoles.filter((role) => !parentRoles.includes(role));
+
   if (widened.length > 0) {
     console.warn(
-      `[menu.config] MenuItem "${itemText}" intenta ampliar roles: [${widened.join(',')}]. ` +
+      `[menu.config] MenuItem "${itemText}" intenta ampliar roles: [${widened.join(', ')}]. ` +
       `Serán ignorados (los hijos solo pueden restringir).`
     );
   }
@@ -228,12 +230,16 @@ function resolveChildRoles(
 
 buildRouteMap();
 
+// ============================================================================
+// ROUTE ACCESS (consumida por middleware.ts)
+// ============================================================================
+
 /**
  * Verifica si un rol tiene acceso a una ruta del dashboard.
- * A prueba de trailing slashes de Qwik y subrutas dinámicas.
+ * A prueba de trailing slashes de Qwik City y subrutas dinámicas.
  */
 export function canAccessRoute(role: MemberRole, pathname: string): boolean {
-  // 1. Limpieza de URL (previene errores con Qwik City router)
+  // Limpieza de URL (trailing slash, query params, hash)
   let normalized = pathname;
   if (normalized.includes('?')) normalized = normalized.split('?')[0];
   if (normalized.includes('#')) normalized = normalized.split('#')[0];
@@ -241,19 +247,18 @@ export function canAccessRoute(role: MemberRole, pathname: string): boolean {
     normalized = normalized.slice(0, -1);
   }
 
-  // 2. Comprobar contra las rutas
   for (const [route, allowedRoles] of PROTECTED_ROUTES) {
     if (normalized === route || normalized.startsWith(route + '/')) {
       return allowedRoles.includes(role);
     }
   }
 
-  // Si no está en el config, se permite acceso
+  // Ruta no registrada en el config → acceso permitido
   return true;
 }
 
 // ============================================================================
-// MENU HELPERS (para componentes UI)
+// MENU HELPERS (consumidas por componentes UI)
 // ============================================================================
 
 export function getVisibleMenu(
@@ -261,7 +266,11 @@ export function getVisibleMenu(
   section: 'main' | 'workspace',
 ): ResolvedMenuItem[] {
   return MENU_CONFIG
-    .filter((item) => item.visible !== false && item.section === section && (item.roles ?? []).includes(role))
+    .filter((item) =>
+      item.visible !== false &&
+      item.section === section &&
+      (item.roles ?? []).includes(role)
+    )
     .map((item) => {
       const parentRoles = item.roles ?? [];
 

@@ -1,0 +1,117 @@
+
+
+/* ── Tailwind ─────────────────────────────────────────────── */
+@import "tailwindcss";
+
+/* ── Fonts ────────────────────────────────────────────────── */
+@import "./poppins.css";
+@import "./roboto.css";
+
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Roboto", ui-sans-serif, system-ui, sans-serif;
+
+  --sidebar-width-expanded:  280px;
+  --sidebar-width-collapsed: 64px;
+
+  --shadow-sm:     0 .1rem .4rem rgba(25, 24, 24, .1);
+  --shadow-normal: 0 0 10px rgba(25, 24, 24, .15);
+  --shadow-lg:     0 0.5rem 1rem rgba(25, 26, 28, 0.15);
+
+  --color-primary:    var(--app-primary);
+  --color-primary-10: var(--app-primary-10);
+  --color-secondary:  var(--app-secondary);
+
+  --color-body:       var(--app-body-color);
+  --color-card:       var(--app-card-color);
+  --color-border:     var(--app-border-color);
+  --color-font:       var(--app-font-color);
+  --color-font-muted: var(--app-font-color-100);
+
+  --color-success:      #198754;
+  --color-success-soft: #d1e7dd;
+  --color-warning:      #f1df3c;
+  --color-info:         #38818d;
+  --color-danger:       #dc3545;
+  --color-danger-soft:  #fc5a6926;
+
+  --color-chart-1: var(--app-chart-color1);
+  --color-chart-2: var(--app-chart-color2);
+  --color-chart-3: var(--app-chart-color3);
+  --color-chart-4: var(--app-chart-color4);
+  --color-chart-5: var(--app-chart-color5);
+}
+
+@layer base {
+  :root {
+    --app-body-color:      #f4f7f6;
+    --app-font-color:      #363535;
+    --app-font-color-100:  #9399a1;
+    --app-card-color:      #ffffff;
+    --app-border-color:    #e7e7e7;
+    --app-scrollbar-thumb: #b9b9b9;
+
+    --app-primary:      #4C3575;
+    --app-primary-10:   #4c35751a;
+    --app-secondary:    #e05170;
+    --app-chart-color1: #b9b3a8;
+    --app-chart-color2: #4C3575;
+    --app-chart-color3: #98427e;
+    --app-chart-color4: #d55a75;
+    --app-chart-color5: #fb8665;
+  }
+
+  .dark {
+    --app-body-color:      #2d3238;
+    --app-font-color:      #E0E0E0;
+    --app-font-color-100:  #9399a1;
+    --app-card-color:      #24282e;
+    --app-border-color:    #4c4c4c;
+    --app-scrollbar-thumb: #696969;
+  }
+
+  html, body {
+    font-family: var(--font-sans);
+    background-color: var(--app-body-color);
+    color: var(--app-font-color);
+  }
+
+  /* Scrollbar global */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--app-scrollbar-thumb) transparent;
+  }
+
+  /* ── Scrollbar sidebar ──────────────────────────────────── */
+
+  aside {
+    scrollbar-width: thin;
+    scrollbar-color: transparent #ffffff;
+    transition: scrollbar-color 0.4s ease;
+  }
+
+  aside:hover {
+    scrollbar-color: #b91c1c #ffffff;
+    transition: scrollbar-color 0.4s ease;
+  }
+
+  aside::-webkit-scrollbar {
+    width: 3px;
+  }
+  aside::-webkit-scrollbar-track {
+    background: #ffffff;
+  }
+  aside::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 999px;
+    transition: background-color 0.4s ease;
+  }
+  aside:hover::-webkit-scrollbar-thumb {
+    background-color: #b91c1c;
+  }
+  aside::-webkit-scrollbar-thumb:hover {
+    background-color: #991b1b;
+  }
+}

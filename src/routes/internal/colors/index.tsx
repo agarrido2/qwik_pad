@@ -42,29 +42,29 @@ const SWATCHES: ColorSwatch[] = [
     name: "Primary",
     bg: "bg-primary",
     text: "text-primary-foreground",
-    hex: "#19B6F6",
-    variable: "--primary: 197 92% 53%",
+    hex: "#37393A",
+    variable: "--primary: 200 3% 22%",
   },
   {
     name: "Primary Light",
     bg: "bg-primary-light",
     text: "text-primary-foreground",
-    hex: "#3FC2F8",
-    variable: "--primary-light: 197 92% 60%",
+    hex: "#37393A",
+    variable: "--primary-light: 200 3% 22%",
   },
   {
     name: "Secondary",
     bg: "bg-secondary",
     text: "text-secondary-foreground",
-    hex: "#AC7EF4",
-    variable: "--secondary: 263 84% 73%",
+    hex: "#B077F0",
+    variable: "--secondary: 268 80% 70%",
   },
   {
     name: "Secondary Light",
     bg: "bg-secondary-light",
     text: "text-secondary-foreground",
-    hex: "#BF9BF7",
-    variable: "--secondary-light: 263 84% 80%",
+    hex: "#AC7EF7BF",
+    variable: "--secondary-light: 263 88% 73% / 75%",
   },
   {
     name: "Brand Ink",
@@ -98,15 +98,15 @@ const SWATCHES: ColorSwatch[] = [
     name: "Warning",
     bg: "bg-warning",
     text: "text-warning-foreground",
-    hex: "#B86A08",
-    variable: "--warning: 38 92% 38%",
+    hex: "#F8FF99",
+    variable: "--warning: 64 100% 80%",
   },
   {
     name: "Info",
     bg: "bg-info",
     text: "text-info-foreground",
-    hex: "#0B9FD8",
-    variable: "--info: 199 89% 48%",
+    hex: "#CEDEF3",
+    variable: "--info: 214 61% 88%",
   },
   {
     name: "Destructive",
@@ -237,7 +237,8 @@ const BADGE_VARIANTS: BadgeVariant[] = [
   },
 ];
 
-const MODE_OPTIONS = ["light", "dark", "system"] as const;
+const MODE_OPTIONS = ["light", "dark"] as const;
+const THEME_STORAGE_KEY = "onucall-theme";
 
 /* ─── Componente Principal ───────────────────────────────────────────────── */
 
@@ -272,10 +273,8 @@ export default component$(() => {
                 onClick$={sync$(() => {
                   const root = document.documentElement;
                   root.classList.remove("light", "dark");
-                  if (mode !== "system") {
-                    root.classList.add(mode);
-                  }
-                  localStorage.setItem("theme", mode);
+                  root.classList.add(mode);
+                  localStorage.setItem(THEME_STORAGE_KEY, mode);
                 })}
               >
                 {mode}

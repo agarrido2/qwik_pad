@@ -72,8 +72,8 @@ export const useCalendarEvents = routeLoader$<CalendarEvent[]>(
         title: "Cita · Juan Pérez",
         start: `${isoDate}T10:00:00`,
         end: `${isoDate}T11:00:00`,
-        color: "hsl(var(--primary))",
-        textColor: "hsl(var(--primary-foreground))",
+        color: "hsl(var(--secondary))",
+        textColor: "#ffffff",
         extendedProps: {
           type: "appointment",
           contactName: "Juan Pérez",
@@ -88,8 +88,8 @@ export const useCalendarEvents = routeLoader$<CalendarEvent[]>(
         title: "Seguimiento · María López",
         start: `${isoDate}T13:30:00`,
         end: `${isoDate}T14:00:00`,
-        color: "hsl(var(--warning))",
-        textColor: "hsl(var(--warning-foreground))",
+        color: "hsl(var(--success))",
+        textColor: "#ffffff",
         extendedProps: {
           type: "follow-up",
           contactName: "María López",
@@ -104,8 +104,8 @@ export const useCalendarEvents = routeLoader$<CalendarEvent[]>(
         title: "Bloqueo · Formación interna",
         start: `${isoDate}T16:00:00`,
         end: `${isoDate}T17:30:00`,
-        color: "hsl(var(--muted))",
-        textColor: "hsl(var(--muted-foreground))",
+        color: "hsl(var(--primary))",
+        textColor: "#ffffff",
         extendedProps: {
           type: "blocked",
           departmentId: "dept-operations",
@@ -118,8 +118,8 @@ export const useCalendarEvents = routeLoader$<CalendarEvent[]>(
         title: "Demo producto · Lead B2B",
         start: `${isoDate}T12:00:00`,
         end: `${isoDate}T13:00:00`,
-        color: "hsl(var(--secondary))",
-        textColor: "hsl(var(--secondary-foreground))",
+        color: "hsl(var(--info))",
+        textColor: "hsl(var(--primary))",
         extendedProps: {
           type: "call",
           contactName: "Marta Gómez",

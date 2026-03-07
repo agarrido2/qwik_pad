@@ -16,26 +16,30 @@ export default component$(() => {
     <QwikCityProvider>
       <head>
         <meta charset="utf-8" />
+           <script dangerouslySetInnerHTML={`
+          (function() {
+            function setTheme(theme) {
+              document.documentElement.classList.remove('light', 'dark');
+              document.documentElement.classList.add(theme);
+              localStorage.setItem('onucall-theme', theme);
+            }
+            const stored = localStorage.getItem('onucall-theme');
+            if (stored) {
+              setTheme(stored);
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+              setTheme('dark');
+            } else {
+              setTheme('light');
+            }
+          })();
+        `}/>
+        
         {!isDev && (
           <link
             rel="manifest"
             href={`${import.meta.env.BASE_URL}manifest.json`}
           />
         )}
-        <script
-          dangerouslySetInnerHTML={`
-          (function() {
-          try {
-          var mode = localStorage.getItem('theme') || 'system';
-          var root = document.documentElement;
-          root.classList.remove('light', 'dark');
-          if (mode === 'light') root.classList.add('light');
-          if (mode === 'dark') root.classList.add('dark');
-          }
-          catch (e) {}
-          })();
-        `}
-        />
         <RouterHead />
       </head>
       <body lang="en">

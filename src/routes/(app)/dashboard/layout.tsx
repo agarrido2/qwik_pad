@@ -13,7 +13,6 @@ import { routeAction$, type RequestHandler } from '@builder.io/qwik-city';
 import { DashboardLayout } from '~/components/layouts';
 import { AuthService } from '~/lib/services/auth.service';
 import { checkRouteAccess } from '~/lib/auth/middleware';
-import { provideSidebarContext } from '~/lib/context/sidebar.context'; 
 
 /**
  * Middleware RBAC: Protege TODAS las rutas /dashboard/* usando menu.config.ts
@@ -31,8 +30,6 @@ export const useLogoutAction = routeAction$(async (_, requestEvent) => {
 });
 
 export default component$(() => {
-  // Proveer estado global del sidebar (open/collapse) a TODO el dashboard
-  provideSidebarContext();
   return (
     <DashboardLayout>
       <Slot />

@@ -322,8 +322,8 @@ export const IconGlobe = ({ size = 18, class: className = "" }: IconProps) => (
     stroke="currentColor"
     stroke-Linecap="round"
     stroke-Linejoin="round"
-    strokeWidth="2"
-    className={className}
+    stroke-width="2"
+    class={className}
     height={size}
     width={size}
     viewBox="0 0 24 24"

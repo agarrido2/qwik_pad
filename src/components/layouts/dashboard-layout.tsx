@@ -1,98 +1,72 @@
-/**
- * DashboardLayout - Shell orquestador del dashboard
- *
- * Arquitectura de 4 componentes:
- * 1. Sidebar: fixed left-0 - w-72 expandido / w-16 colapsado (desktop)
- * 2. Header: fixed top-0 - se desplaza con el sidebar
- * 3. Main: margen dinámico según estado del sidebar
- * 4. Footer: fixed bottom-0
- *
- * Collapse behavior:
- * - Mobile (<1024px): Sidebar como overlay (isOpen)
- *   → Backdrop semitransparente detrás
- *   → Se cierra con backdrop click o navegación
- * - Desktop (≥1024px): Sidebar colapsa a iconos w-16 (isCollapsed)
- *   → Contenido se desplaza (ml-72 → ml-16)
- *   → Sin backdrop
- *
- * Estado: SidebarContext (provideSidebarContext en routes layout)
- * Colores: Sistema HSL (bg-background, sin hardcoded)
- */
-
-import { component$, Slot, useContext } from "@builder.io/qwik";
-import { SidebarContext } from "~/lib/context/sidebar.context";
 import {
-  DashboardSidebar,
-  DashboardHeader,
-  DashboardFooter,
-} from "~/components/dashboard";
+  component$,
+  useSignal,
+  useVisibleTask$,
+  Slot,
+} from "@builder.io/qwik";
+import { Sidebar } from "../dashboard/sidebar";
+import { SidebarHeader } from "../dashboard/sidebar-header";
 
-import { cn } from "~/lib/utils/cn";
+
 
 export const DashboardLayout = component$(() => {
-  const sidebar = useContext(SidebarContext);
+  const collapsed  = useSignal(false);
+  const mobileOpen = useSignal(false);
+  const isMobile   = useSignal(false);
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ cleanup }) => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+
+    isMobile.value = mq.matches;
+
+    // Cierra el drawer si cambia a desktop
+    const handler = (e: MediaQueryListEvent) => {
+      isMobile.value = e.matches;
+      if (!e.matches) mobileOpen.value = false;
+    };
+
+    mq.addEventListener("change", handler);
+    cleanup(() => mq.removeEventListener("change", handler));
+  }, { strategy: "document-ready" });
 
   return (
-    <div class="bg-card min-h-screen">
-      {/* ── BACKDROP (mobile only) ─────────────────────────────────────────
-          Visible cuando sidebar está abierto en mobile.
-          Click cierra el sidebar.
-          lg:hidden → invisible en desktop (el sidebar no es overlay)
-      ──────────────────────────────────────────────────────────────────── */}
-      {sidebar.isOpen.value && (
+    <div
+      class={[
+        "grid h-screen overflow-hidden bg-body",
+        "[grid-template-rows:64px_1fr]",
+        // Mobile — sin columna sidebar en el grid
+        "grid-cols-[1fr]",
+        "[grid-template-areas:'header''main']",
+        // Desktop — con columna sidebar
+        "lg:[grid-template-areas:'sidebar_header''sidebar_main']",
+        collapsed.value
+          ? "lg:grid-cols-[64px_1fr]"
+          : "lg:grid-cols-[280px_1fr]",
+        "transition-[grid-template-columns] duration-300 ease-in-out",
+      ]}
+    >
+      {/* Backdrop mobile */}
+      {mobileOpen.value && (
         <div
-          class="sidebar-backdrop"
-          onClick$={sidebar.closeMobile}
-          aria-hidden="true"
+          class="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          onClick$={() => (mobileOpen.value = false)}
         />
       )}
 
-      {/* ── SIDEBAR ───────────────────────────────────────────────────────
-          Mobile:  traducción X (-translate-x-full oculto / translate-x-0 visible)
-          Desktop: ancho dinámico (w-72 expandido / w-16 colapsado)
-          z-30 → encima del backdrop (z-20) y debajo del header (z-20 fixed)
-      ──────────────────────────────────────────────────────────────────── */}
-      <DashboardSidebar />
-
-      {/* ── HEADER ────────────────────────────────────────────────────────
-          fixed top-0, se desplaza según estado del sidebar en desktop.
-          Mobile:  left-0 (sidebar es overlay, no empuja el header)
-          Desktop: left-72 expandido / left-16 colapsado
-      ──────────────────────────────────────────────────────────────────── */}
-      <DashboardHeader
-        notificationCount={0}
-        class={cn(
-          // Base: mobile full width
-          "left-0",
-          // Desktop: ajusta left según collapsed
-          sidebar.isCollapsed.value ? "lg:left-19" : "lg:left-75",
-        )}
+      <Sidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        isMobile={isMobile}
+      />
+      <SidebarHeader
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
       />
 
-      {/* ── MAIN CONTENT ──────────────────────────────────────────────────
-          Mobile:  ml-0 (sidebar es overlay, no ocupa espacio)
-          Desktop: ml-72 expandido / ml-16 colapsado
-          mt-19 → gap visual sobre header (h-16 + 12px)
-          bottom-15 → gap visual sobre footer (h-12 + 12px)
-          Scroll interno para mantener gaps visibles siempre.
-      ──────────────────────────────────────────────────────────────────── */}
-      <main
-        class={cn(
-          "bg-background fixed top-19 right-0 bottom-15 overflow-y-auto p-6",
-          // Mobile: sin margen lateral (sidebar es overlay)
-          "left-0",
-          // Desktop: margen dinámico según collapsed
-          sidebar.isCollapsed.value ? "lg:left-19" : "lg:left-75",
-        )}
-      >
+      <main class="[grid-area:main] overflow-y-auto bg-body p-6">
         <Slot />
       </main>
-
-      {/* ── FOOTER ────────────────────────────────────────────────────────
-          fixed bottom-0, ocupa todo el ancho.
-          La zona izquierda (w-72) se alinea visualmente con el sidebar.
-      ──────────────────────────────────────────────────────────────────── */}
-      <DashboardFooter />
     </div>
   );
 });
