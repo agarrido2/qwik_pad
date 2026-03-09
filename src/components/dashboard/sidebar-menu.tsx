@@ -344,7 +344,7 @@ const MenuItemNode = component$<MenuItemNodeProps>(
         </button>
 
         {isOpen && (
-          <ul class="relative ms-[10px] ps-[30px] mt-1 mb-2 before:absolute before:h-full before:w-px before:left-[10px] before:top-0 before:bg-white/20">
+          <ul class="relative ms-2.5 ps-7.5 mt-1 mb-2 before:absolute before:h-full before:w-px before:left-[10px] before:top-0 before:bg-white/20">
             {item.children?.map((child, childIdx) => (
               <MenuChildNode
                 key={child.href ?? child.text}
@@ -419,7 +419,7 @@ const MenuChildNode = component$<MenuChildNodeProps>(
         </button>
 
         {isOpen && (
-          <ul class="relative ms-[10px] ps-[30px] mt-1 mb-2 before:absolute before:h-full before:w-px before:left-[10px] before:top-0 before:bg-white/15">
+          <ul class="relative ms-2.5 ps-7.5 mt-1 mb-2 before:absolute before:h-full before:w-px before:left-[10px] before:top-0 before:bg-white/15">
             {child.children?.map((sub) => {
               const subActive = isActive(sub.href, pathname);
               return (
@@ -429,7 +429,7 @@ const MenuChildNode = component$<MenuChildNodeProps>(
                     onClick$={onNavigate$}
                     class={cn(
                       "relative flex items-center w-full py-1.5 text-[12px] transition-all",
-                      "before:hidden before:absolute before:rounded-full before:h-[7px] before:w-[7px] before:left-[-24px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:before:block",
+                      "before:hidden before:absolute before:rounded-full before:h-1.75 before:w-1.75 before:left-[-24px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:before:block",
                       subActive
                         ? "text-secondary font-medium before:!block"
                         : "text-white/40 hover:text-secondary"

@@ -61,7 +61,7 @@ export const UpcomingEvents = component$<UpcomingEventsProps>(({ events }) => {
                 <p class="line-clamp-1 text-sm font-medium text-foreground">{event.title}</p>
                 {event.priority === 'high' && (
                   <span
-                    class="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-error"
+                    class="mt-1 h-2 w-2 shrink-0 rounded-full bg-error"
                     aria-label="Evento de alta prioridad"
                   />
                 )}

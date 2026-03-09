@@ -34,7 +34,7 @@ export const DashboardLayout = component$(() => {
     <div
       class={[
         "grid h-screen overflow-hidden bg-body",
-        "[grid-template-rows:64px_1fr]",
+        "grid-rows-[64px_1fr]",
         // Mobile — sin columna sidebar en el grid
         "grid-cols-[1fr]",
         "[grid-template-areas:'header''main']",

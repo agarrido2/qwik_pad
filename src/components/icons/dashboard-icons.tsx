@@ -346,18 +346,80 @@ export const IconMap: Record<string, JSXOutput> = {
     </svg>
 ),
 moon: (
-  <svg 
-  fill="none" 
-  stroke="currentColor" 
-  aria-hidden="true" 
-  class="h-5 w-5" 
+  <svg
+  fill="none"
+  stroke="currentColor"
+  aria-hidden="true"
+  class="h-5 w-5"
   viewBox="0 0 24 24">
-    <path 
-    stroke-linecap="round" 
-    stroke-linejoin="round" 
+    <path
+    stroke-linecap="round"
+    stroke-linejoin="round"
     stroke-width="2" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79"
     />
     </svg>
 ),
+
+  // ── Iconos añadidos para módulos del SaaS ─────────────────────
+
+  /** Reloj — Citas Programadas, Horarios de Atención */
+  clock: (
+    <svg fill="none" stroke="currentColor" aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0" />
+    </svg>
+  ),
+
+  /** Base de datos cilíndrica — Base de Conocimiento */
+  database: (
+    <svg fill="none" stroke="currentColor" aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="6" rx="8" ry="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6v4c0 1.657 3.582 3 8 3s8-1.343 8-3V6" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10v4c0 1.657 3.582 3 8 3s8-1.343 8-3v-4" />
+    </svg>
+  ),
+
+  /** Documento con líneas — Prompts y Guiones */
+  "file-text": (
+    <svg fill="none" stroke="currentColor" aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+    </svg>
+  ),
+
+  /** Diana / Radar — Radar de Intención (Pipeline CRM) */
+  target: (
+    <svg fill="none" stroke="currentColor" aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+      <circle cx="12" cy="12" r="6"  stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+      <circle cx="12" cy="12" r="2"  stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+    </svg>
+  ),
+
+  /** Coche — Mis Vehículos (catálogo) */
+  car: (
+    <svg fill="none" stroke="currentColor" aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17a2 2 0 1 0 4 0m-4 0a2 2 0 1 1 4 0m0 0h2m4 0a2 2 0 1 0-4 0m4 0a2 2 0 1 1-4 0M3 11l1.5-5h15l1.5 5H3zm0 0v5a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-5" />
+    </svg>
+  ),
+
+  /** Globo terráqueo — Portal Web */
+  globe: (
+    <svg fill="none" stroke="currentColor" aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />
+    </svg>
+  ),
+
+  /** Línea ascendente — KPIs y Métricas */
+  trending: (
+    <svg fill="none" stroke="currentColor" aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8-8 8-4-4-6 6" />
+    </svg>
+  ),
+
+  /** Destellos — BI Conversacional (IA generativa) */
+  sparkles: (
+    <svg fill="none" stroke="currentColor" aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16 2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143z" />
+    </svg>
+  ),
 
 };

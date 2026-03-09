@@ -65,93 +65,152 @@ export type ResolvedMenuItem = MenuItem & {
 // ============================================================================
 // MENU CONFIGURATION (Source of Truth)
 // ============================================================================
+//
+// LEYENDA DE ESTADO:
+//   (sin visible)   → ruta construida y activa
+//   visible: false  → módulo planificado, pendiente de implementar
+//
+// SECCIONES:
+//   main      → navegación principal (núcleo del producto)
+//   workspace → ajustes y administración (zona inferior del sidebar)
+//
+// ============================================================================
 
 export const MENU_CONFIG: MenuItem[] = [
-  // ── 1. Visión General ─────────────────────────────────────
+
+  // ══════════════════════════════════════════════════════════════
+  // SECCIÓN PRINCIPAL
+  // ══════════════════════════════════════════════════════════════
+
+  // ── 1. Visión General ─────────────────────────────────────────
   {
     text: 'Dashboard',
     href: '/dashboard',
     icon: 'home',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
-    visible: true,
     dividerAfter: true,
   },
 
-  // ── 2. Gestión de Clientes y Leads (CRM Core) ──────────────
+  // ── 2. Núcleo Comercial ───────────────────────────────────────
+  //
+  // Llamadas: inbox de todas las llamadas gestionadas por el agente de voz.
+  // Muestra la grabación, transcripción y resumen de cada interacción.
   {
-    text: 'Inbox / Llamadas',
-    href: '/dashboard/interacciones',
-    icon: 'inbox',
+    text: 'Llamadas',
+    href: '/dashboard/llamadas',
+    icon: 'phone',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
+    visible: false, // TODO: pendiente de implementar
   },
+
+  // Radar de Intención: pipeline Kanban de leads activos.
+  // El lead que entra por llamada aparece aquí automáticamente.
   {
-    text: 'Contactos y Leads',
+    text: 'Radar de Intención',
+    href: '/dashboard/leads',
+    icon: 'target',
+    roles: ['owner', 'admin', 'member'],
+    section: 'main',
+    visible: false, // TODO: CRM Pipeline Kanban pendiente
+  },
+
+  // Contactos: directorio completo con ciclo de vida prospect → cliente.
+  {
+    text: 'Contactos',
     href: '/dashboard/contactos',
     icon: 'contact',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
+    visible: false, // TODO: directorio de contactos pendiente
   },
+
+  // Agenda: calendario visual + listado de citas programadas.
   {
-    text: 'Citas y Agenda',
+    text: 'Agenda',
     icon: 'calendar',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
     children: [
-      { text: 'Calendario',        href: '/dashboard/agenda', icon: 'calendar' },
-      { text: 'Citas Programadas', href: '/dashboard/appointments',  icon: 'clock' },
+      { text: 'Calendario',        href: '/dashboard/agenda',       icon: 'calendar' },
+      { text: 'Citas Programadas', href: '/dashboard/appointments', icon: 'clock'    },
     ],
     dividerAfter: true,
   },
 
-  // ── 3. Motor del Negocio (CMS Sectorial) ───────────────────
+  // ── 3. Inventario ─────────────────────────────────────────────
+  //
+  // Mis Vehículos: catálogo del concesionario conectado en tiempo real
+  // con el agente de voz. Cada ficha puede enriquecerse con IA.
   {
-    text: 'Inventario',
-    icon: 'building',
+    text: 'Mis Vehículos',
+    href: '/dashboard/vehiculos',
+    icon: 'car',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
-    children: [
-      { text: 'Catálogo de Vehículos', href: '/dashboard/cms/vehiculos',  icon: 'list' },
-      { text: 'Gestión de Stock',      href: '/dashboard/cms/inventario', icon: 'box' },
-      { text: 'Marcas y Modelos',      href: '/dashboard/cms/maestros',   icon: 'tags' },
-    ],
+    visible: false, // TODO: catálogo de vehículos pendiente
     dividerAfter: true,
   },
 
-  // ── 4. Inteligencia Artificial ─────────────────────────────
+  // ── 4. Inteligencia Artificial ────────────────────────────────
+
+  // Agente de Voz: configuración del agente, base de conocimiento
+  // y prompts/guiones que guían el comportamiento en cada llamada.
   {
-    text: 'Agentes de Voz AI',
+    text: 'Agente de Voz',
     icon: 'bot',
     roles: ['owner', 'admin'],
     section: 'main',
     children: [
-      { text: 'Mis Agentes',          href: '/dashboard/agents',              icon: 'bot' },
+      { text: 'Mis Agentes',          href: '/dashboard/agents',              icon: 'bot'       },
+      { text: 'Base de Conocimiento', href: '/dashboard/agents/conocimiento', icon: 'database'  },
       { text: 'Prompts y Guiones',    href: '/dashboard/agents/prompts',      icon: 'file-text' },
-      { text: 'Base de Conocimiento', href: '/dashboard/agents/conocimiento', icon: 'database' },
     ],
   },
+
+  // Analítica: KPIs del negocio + BI Conversacional en lenguaje natural.
+  // El BI Conversacional requiere plan Professional o superior.
   {
-    text: 'Analítica y KPIs',
-    href: '/dashboard/analitica',
+    text: 'Analítica',
     icon: 'chart',
     roles: ['owner', 'admin'],
     section: 'main',
+    children: [
+      { text: 'KPIs y Métricas',    href: '/dashboard/analitica', icon: 'trending', visible: false },
+      { text: 'BI Conversacional',  href: '/dashboard/bi',        icon: 'sparkles', visible: false },
+    ],
     dividerAfter: true,
   },
 
-  // ── 5. Configuración del Workspace ─────────────────────────
+  // ── 5. Portal Web (addon) ─────────────────────────────────────
+  //
+  // Portal Web: presencia web del concesionario generada automáticamente
+  // desde el catálogo de vehículos. Disponible en plan Professional+.
+  {
+    text: 'Portal Web',
+    href: '/dashboard/portal',
+    icon: 'globe',
+    roles: ['owner', 'admin'],
+    section: 'main',
+    visible: false, // TODO: addon Portal Web pendiente
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  // WORKSPACE (administración y ajustes)
+  // ══════════════════════════════════════════════════════════════
+
   {
     text: 'Configuración',
     icon: 'settings',
     roles: ['owner', 'admin'],
     section: 'workspace',
     children: [
-      { text: 'General',             href: '/dashboard/configuracion', icon: 'settings' },
-      { text: 'Horarios de Atención',href: '/dashboard/horarios',      icon: 'clock' },
-      { text: 'Integraciones',       href: '/dashboard/integraciones', icon: 'puzzle' },
-      { text: 'Departamentos',       href: '/dashboard/departments', icon: 'building', roles: ['owner'] },
-      { text: 'Usuarios',            href: '/dashboard/usuarios',      icon: 'users' },
+      { text: 'General',              href: '/dashboard/configuracion', icon: 'settings', visible: false },
+      { text: 'Horarios de Atención', href: '/dashboard/horarios',      icon: 'clock',    visible: false },
+      { text: 'Departamentos',        href: '/dashboard/departments',   icon: 'building', roles: ['owner'] },
+      { text: 'Usuarios',             href: '/dashboard/usuarios',      icon: 'users'     },
+      { text: 'Integraciones',        href: '/dashboard/integraciones', icon: 'puzzle',   visible: false },
     ],
   },
   {
