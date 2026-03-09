@@ -127,6 +127,26 @@ export const organizations = pgTable('organizations', {
   // Metadata de negocio (Onboarding Paso 2)
   sector: text('sector').default('concesionario'), // Vertical de negocio (Onucall Auto: concesionario)
   businessDescription: text('business_description'), // Descripción del negocio
+
+  // ── Identidad legal ───────────────────────────────────────
+  legalName:          text('legal_name'),
+  taxId:              text('tax_id'),
+  fiscalAddress:      text('fiscal_address'),
+  fiscalCity:         text('fiscal_city'),
+  fiscalProvince:     text('fiscal_province'),
+  fiscalPostalCode:   text('fiscal_postal_code'),
+
+  // ── Establecimiento comercial ─────────────────────────────
+  commercialName:     text('commercial_name'),
+  email:              text('email'),
+  address:            text('address'),
+  city:               text('city'),
+  province:           text('province'),
+  postalCode:         text('postal_code'),
+  country:            text('country').default('ES'),
+  website:            text('website'),
+  logoUrl:            text('logo_url'),
+  timezone:           text('timezone').default('Europe/Madrid'),
   
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
