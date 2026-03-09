@@ -66,13 +66,14 @@ export type ResolvedMenuItem = MenuItem & {
 // MENU CONFIGURATION (Source of Truth)
 // ============================================================================
 //
-// LEYENDA DE ESTADO:
-//   (sin visible)   → ruta construida y activa
-//   visible: false  → módulo planificado, pendiente de implementar
-//
 // SECCIONES:
 //   main      → navegación principal (núcleo del producto)
 //   workspace → ajustes y administración (zona inferior del sidebar)
+//
+// ROLES:
+//   owner  → propietario del concesionario, acceso total
+//   admin  → responsable de departamento, casi total
+//   member → vendedor, acceso operativo básico
 //
 // ============================================================================
 
@@ -93,40 +94,27 @@ export const MENU_CONFIG: MenuItem[] = [
   },
 
   // ── 2. Núcleo Comercial ───────────────────────────────────────
-  //
-  // Llamadas: inbox de todas las llamadas gestionadas por el agente de voz.
-  // Muestra la grabación, transcripción y resumen de cada interacción.
   {
     text: 'Llamadas',
     href: '/dashboard/llamadas',
     icon: 'phone',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
-    visible: false, // TODO: pendiente de implementar
   },
-
-  // Radar de Intención: pipeline Kanban de leads activos.
-  // El lead que entra por llamada aparece aquí automáticamente.
   {
     text: 'Radar de Intención',
     href: '/dashboard/leads',
     icon: 'target',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
-    visible: false, // TODO: CRM Pipeline Kanban pendiente
   },
-
-  // Contactos: directorio completo con ciclo de vida prospect → cliente.
   {
     text: 'Contactos',
     href: '/dashboard/contactos',
     icon: 'contact',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
-    visible: false, // TODO: directorio de contactos pendiente
   },
-
-  // Agenda: calendario visual + listado de citas programadas.
   {
     text: 'Agenda',
     icon: 'calendar',
@@ -140,23 +128,16 @@ export const MENU_CONFIG: MenuItem[] = [
   },
 
   // ── 3. Inventario ─────────────────────────────────────────────
-  //
-  // Mis Vehículos: catálogo del concesionario conectado en tiempo real
-  // con el agente de voz. Cada ficha puede enriquecerse con IA.
   {
     text: 'Mis Vehículos',
     href: '/dashboard/vehiculos',
     icon: 'car',
     roles: ['owner', 'admin', 'member'],
     section: 'main',
-    visible: false, // TODO: catálogo de vehículos pendiente
     dividerAfter: true,
   },
 
   // ── 4. Inteligencia Artificial ────────────────────────────────
-
-  // Agente de Voz: configuración del agente, base de conocimiento
-  // y prompts/guiones que guían el comportamiento en cada llamada.
   {
     text: 'Agente de Voz',
     icon: 'bot',
@@ -168,32 +149,25 @@ export const MENU_CONFIG: MenuItem[] = [
       { text: 'Prompts y Guiones',    href: '/dashboard/agents/prompts',      icon: 'file-text' },
     ],
   },
-
-  // Analítica: KPIs del negocio + BI Conversacional en lenguaje natural.
-  // El BI Conversacional requiere plan Professional o superior.
   {
     text: 'Analítica',
     icon: 'chart',
     roles: ['owner', 'admin'],
     section: 'main',
     children: [
-      { text: 'KPIs y Métricas',    href: '/dashboard/analitica', icon: 'trending', visible: false },
-      { text: 'BI Conversacional',  href: '/dashboard/bi',        icon: 'sparkles', visible: false },
+      { text: 'KPIs y Métricas',   href: '/dashboard/analitica', icon: 'trending' },
+      { text: 'BI Conversacional', href: '/dashboard/bi',        icon: 'sparkles' },
     ],
     dividerAfter: true,
   },
 
-  // ── 5. Portal Web (addon) ─────────────────────────────────────
-  //
-  // Portal Web: presencia web del concesionario generada automáticamente
-  // desde el catálogo de vehículos. Disponible en plan Professional+.
+  // ── 5. Portal Web ─────────────────────────────────────────────
   {
     text: 'Portal Web',
     href: '/dashboard/portal',
     icon: 'globe',
     roles: ['owner', 'admin'],
     section: 'main',
-    visible: false, // TODO: addon Portal Web pendiente
   },
 
   // ══════════════════════════════════════════════════════════════
@@ -206,11 +180,11 @@ export const MENU_CONFIG: MenuItem[] = [
     roles: ['owner', 'admin'],
     section: 'workspace',
     children: [
-      { text: 'General',              href: '/dashboard/configuracion', icon: 'settings', visible: false },
-      { text: 'Horarios de Atención', href: '/dashboard/horarios',      icon: 'clock',    visible: false },
+      { text: 'General',              href: '/dashboard/configuracion', icon: 'settings'                  },
+      { text: 'Horarios de Atención', href: '/dashboard/horarios',      icon: 'clock'                     },
       { text: 'Departamentos',        href: '/dashboard/departments',   icon: 'building', roles: ['owner'] },
-      { text: 'Usuarios',             href: '/dashboard/usuarios',      icon: 'users'     },
-      { text: 'Integraciones',        href: '/dashboard/integraciones', icon: 'puzzle',   visible: false },
+      { text: 'Usuarios',             href: '/dashboard/usuarios',      icon: 'users'                     },
+      { text: 'Integraciones',        href: '/dashboard/integraciones', icon: 'puzzle'                    },
     ],
   },
   {
