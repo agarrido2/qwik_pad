@@ -14,11 +14,11 @@ export const Sidebar = component$<SidebarProps>(
       <aside
         class={[
           "fixed inset-y-0 left-0 z-30 flex flex-col",
-          "bg-primary text-white",
+          "bg-primary/80 text-white",
           "overflow-y-scroll overflow-x-hidden",
           "transition-all duration-300 ease-in-out",
           // Mobile — drawer controlado por mobileOpen
-          "w-[280px]",
+          "w-70",
           mobileOpen.value ? "translate-x-0" : "-translate-x-full",
           // Desktop — integrado en grid, siempre visible
           "lg:relative lg:translate-x-0 lg:[grid-area:sidebar]",

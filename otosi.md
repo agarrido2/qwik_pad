@@ -6979,3 +6979,47 @@ A medida que el producto madure, la integración con los principales DMS del sec
 
 *Documento confidencial. Propiedad intelectual exclusiva del equipo fundador de Onucall. AGG
 *Onucall © 2026. Todos los derechos reservados.*
+
+
+## RESUMEN DE MEJORAS Y DEFINICIONES (VERSIÓN 1.2)
+
+### 1. Modelo de Negocio: "Performance SaaS"
+
+Se abandona el modelo tradicional de "pago por asiento" por uno basado en el **consumo y el éxito comercial**.
+
+* **Infrastructure Fee (Fijo):** Pago recurrente mínimo (€49/mes) que garantiza la disponibilidad 24/7 de la línea telefónica, hosting de datos y acceso al BI Conversacional.
+* **Variable por Resultado (Uso):** Pago por cada interacción útil generada por el agente de voz.
+* **Lead Informativo/Tibio:** €1,50 - €2,50 (Consultas resueltas sin cita).
+* **Cita Agendada (Éxito):** €10,00 (Compromiso de visita física o telefónica).
+
+
+* **Política de Cancelación:** El riesgo de "No-Show" o cancelación posterior lo asume el concesionario. El cobro se genera en el momento de la confirmación de la cita.
+
+### 2. IA Interna y BI Conversacional
+
+El acceso a la inteligencia del Dashboard no se cobra por uso para fomentar la recurrencia y el valor percibido.
+
+* **Coste Embebido:** El gasto de tokens de las consultas al negocio se incluye en la tasa de infraestructura.
+* **Límites de Seguridad:** Se establecen cuotas mensuales de consultas "pesadas" (RAG de PDFs o búsquedas externas) para proteger el margen.
+
+### 3. Arquitectura de Citas y Departamentos
+
+Se define una estructura rígida en el backend para garantizar la precisión matemática del calendario.
+
+* **Lógica Departamental:** Cada organización puede crear hasta un **máximo de 5 departamentos** (ej. Ventas VO, Ventas VN, Taller, Tasación, Motos).
+* **Parámetros de Tiempo:** Cada departamento define su propia **duración de slot, buffer pre-cita y buffer post-cita**.
+* **Mapeo de Intención:** El sistema de "Casos de Uso" actúa como puente, vinculando una intención detectada por la IA con un `ID_DEPARTAMENTO` específico para consultar disponibilidad.
+
+### 4. Estrategia de Confirmación Asíncrona (WhatsApp)
+
+Integración del canal de mensajería como refuerzo de confianza y control de inventario.
+
+* **Confirmación Orgánica:** El agente de voz ofrece el envío de la información por WhatsApp al finalizar la llamada ("Le envío los detalles ahora mismo...").
+* **Reserva Temporal (TTL):** Al agendar, el slot queda en estado "Pendiente" y bloqueado. Si el cliente no confirma vía WhatsApp en un tiempo determinado (ej. 15 min), el slot se libera automáticamente.
+
+### 5. Eficiencia en Costes de IA (COGS)
+
+* **IA de Voz:** El coste de infraestructura de Retell y LLM se calcula como un coste marginal por llamada (~€0,50 para 4 min) embebido en el precio del lead.
+* **IA de Dashboard:** Uso de modelos ligeros para tareas de SQL y cacheo de respuestas frecuentes para minimizar llamadas a la API.
+
+---

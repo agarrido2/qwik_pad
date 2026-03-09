@@ -149,6 +149,14 @@
       height: 0;
     }
   }
+  @keyframes marquee {
+    from {
+      transform: translateX(0%);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 @utility press {
@@ -170,6 +178,8 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scroll-behavior: smooth;
+    scroll-padding-block-start: 24px;
     scrollbar-width: thin;
     scrollbar-color: var(--app-scrollbar-thumb) transparent;
   }
