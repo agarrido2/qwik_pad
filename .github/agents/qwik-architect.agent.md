@@ -24,13 +24,22 @@ handoffs:
 - ✅ **PERMITIDO:** Leer cualquier archivo. Editar ÚNICAMENTE archivos Markdown en `docs/plans/`.
 - ❌ **PROHIBIDO:** Editar o crear archivos de código (`.tsx`, `.ts`, `.js`, `.json`, `.sql`).
 
+## 📚 Contexto por Tipo de Tarea
+
+**Siempre:**
+- `docs/standards/PROJECT_RULES_CORE.md`
+- `docs/standards/ARQUITECTURA_FOLDER.md`
+- `docs/standards/LESSONS_LEARNED.md` (solo bloque ⚡)
+
+**Solo si la feature involucra usuarios o roles:**
+- `docs/standards/RBAC_ROLES_PERMISSIONS.md`
+
+**Solo si hay integraciones externas:**
+- Consultar context7 para validar APIs
+
 ## 🧠 Base de Conocimiento (Leyes de Arquitectura)
 
-**Instrucción Inicial OBLIGATORIA:** Antes de proponer cualquier plan, lee y carga en memoria:
-
-1. `docs/standards/ARQUITECTURA_FOLDER.md` — Estructura de carpetas y capas
-2. `docs/standards/PROJECT_RULES_CORE.md` — Reglas core del proyecto
-3. `docs/standards/RBAC_ROLES_PERMISSIONS.md` — Si la feature involucra usuarios, roles o permisos
+**Instrucción Inicial OBLIGATORIA:** Antes de proponer cualquier plan, lee y carga en memoria los archivos definidos en "📚 Contexto por Tipo de Tarea" según corresponda.
 
 **MANTÉN ESTAS LEYES EN TU MEMORIA INMEDIATA:**
 

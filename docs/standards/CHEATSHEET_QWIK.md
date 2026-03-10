@@ -5,6 +5,16 @@
 
 ---
 
+## ⚡ Reglas Críticas (leer siempre — 30 segundos)
+> El agente lee este bloque en TODAS las tareas.
+> El resto del documento solo si la tarea requiere detalle.
+
+1. PROHIBIDO: Cualquier hook de React/Next.js (`useState`, `useEffect`, `useContext`, etc.) — usar exclusivamente `useSignal`, `useStore`, `useTask$`, `useComputed$`, `sync$`.
+2. OBLIGATORIO: `sync$()` para operaciones puras de DOM (toggle modales, clases) — evita peticiones HTTP innecesarias.
+3. PATRÓN: Handlers `$()` capturan SOLO primitivos/IDs; los datos pesados se leen dentro del handler via Signal/Store, nunca en el cierre.
+
+---
+
 ## 1. Core Reactivity (The "Resumable" Way)
 
 ---

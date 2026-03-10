@@ -23,6 +23,7 @@
 | 13  | `SVG_ICONS_GUIDE.md`         | Sistema de iconos SVG type-safe con PropsOf<'svg'>                           | @QwikBuilder                  |
 | 14  | `DB_QUERY_OPTIMIZATION.md`   | Índices, queries optimizadas, sharedMap, evitar N+1                          | @QwikDBA                      |
 | 15  | `BUN_NODE.md`                | Runtime Bun, scripts, comandos de terminal                                   | Todos                         |
+| 16  | `LESSONS_LEARNED.md`         | Registro vivo de errores recurrentes y lecciones propagadas                  | Todos                         |
 
 ---
 
@@ -39,6 +40,10 @@
 ---
 
 ## 🧭 ¿Qué necesito?
+
+### Voy a iniciar cualquier tarea
+
+→ Leer bloque ⚡ de `LESSONS_LEARNED.md` — siempre, sin excepciones
 
 ### Voy a crear una feature nueva
 

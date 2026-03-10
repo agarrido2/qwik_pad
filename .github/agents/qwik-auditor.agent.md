@@ -89,6 +89,19 @@ No confíes solo en tu memoria. Usa `context7` para validar:
 - ¿Se usa la sintaxis `component$`, `onClick$` (con `$`)?
 - ¿Se evitan hooks de React (`useEffect`, `useState`)?
 
+## 📝 Registro Obligatorio Post-Auditoría
+
+**Si el resultado es FAILED:**
+1. Antes de hacer handoff a @QwikBuilder, crear entrada LL-XXX en
+   `docs/standards/LESSONS_LEARNED.md`
+2. Incluir: agente responsable, error exacto, causa raíz y regla sugerida
+3. Si ya existe una entrada para este error → incrementar Reincidencias
+4. Si Reincidencias >= 2 → escalar a @QwikArchitect antes del handoff
+
+**Si el resultado es PASSED:**
+- Verificar si algún punto del checklist estuvo "al límite"
+- Si es así, crear entrada LL con severidad 🟡 (advertencia, no bloqueo)
+
 ## 📝 Formato de Salida OBLIGATORIO
 
 Al finalizar, **DEBES**:

@@ -2,6 +2,14 @@
 
 **Propósito**: Este documento define criterios medibles y objetivos para los 5 pilares de calidad que todo código debe cumplir: **Performante**, **Idiomático**, **Robusto**, **Accesible** y **Seguro**.
 
+## ⚡ Reglas Críticas (leer siempre — 30 segundos)
+> El agente lee este bloque en TODAS las tareas.
+> El resto del documento solo si la tarea requiere detalle.
+
+1. PROHIBIDO: `useVisibleTask$` injustificado — solo permitido para animaciones o librerías de terceros que requieren DOM.
+2. OBLIGATORIO: Toda `routeAction$` y `server$` debe tener validación Zod (`zod$`). Sin Zod = FAILED automático.
+3. PATRÓN: Errores con prefijos `ORCH_`, `SERV_`, `DATA_` según capa — ver `OBSERVABILITY_LOGGING.md` para la tabla completa.
+
 ## CONVENCIÓN DE AUDITORÍA
 
 - OBLIGATORIO: El incumplimiento genera fallo directo.

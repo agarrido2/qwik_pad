@@ -25,20 +25,17 @@ Cualquier propuesta que viole estos puntos debe ser RECHAZADA con una explicaci�
 
 ## 🔍 PROTOCOLO DE CONTEXTO DINÁMICO (RAG)
 
-No alucines APIs. Antes de codificar, ejecuta `read` sobre el estándar correspondiente en `docs/standards/`:
+Carga ÚNICAMENTE lo necesario. Nunca cargues todos los standards por defecto.
 
-- **Estructura**: `docs/standards/ARQUITECTURA_FOLDER.md`
-- **Reglas Core**: `docs/standards/PROJECT_RULES_CORE.md`
-- **DB/Auth**: `docs/standards/SUPABASE_DRIZZLE_MASTER.md`
-- **Reactividad**: `docs/standards/CHEATSHEET_QWIK.md`
-- **APIs Avanzadas**: `docs/standards/QWIK_ADVANCE_API.md`
-- **Serialización**: `docs/standards/SERIALIZATION_CONTRACTS.md`
-- **Diagnóstico**: `docs/standards/OBSERVABILITY_LOGGING.md`
-- **Tailwind v4**: `docs/standards/TAILWIND_QWIK_GUIDE.md`
-- **Calidad**: `docs/standards/QUALITY_STANDARDS.md`
-- **Roles/Permisos**: `docs/standards/RBAC_ROLES_PERMISSIONS.md`
-- **UX**: `docs/standards/UX_GUIDE.md`
-- **Iconografía**: `docs/standards/SVG_ICONS_GUIDE.md`
+| Tipo de tarea              | Standards a cargar                                           |
+|----------------------------|--------------------------------------------------------------|
+| Componente UI              | CHEATSHEET_QWIK + TAILWIND_QWIK_GUIDE + UX_GUIDE             |
+| Servicio / lógica          | CHEATSHEET_QWIK + SERIALIZATION_CONTRACTS                    |
+| Ruta / endpoint            | ARQUITECTURA_FOLDER + QWIK_ADVANCE_API + OBSERVABILITY       |
+| Cambio de esquema DB       | SUPABASE_DRIZZLE_MASTER + DB_QUERY_OPTIMIZATION              |
+| Feature con roles/permisos | añade RBAC_ROLES_PERMISSIONS                                 |
+| Auditoría                  | QUALITY_STANDARDS + SEO_A11Y_GUIDE + SERIALIZATION_CONTRACTS |
+| Cualquier tarea            | PROJECT_RULES_CORE + LESSONS_LEARNED (solo bloque ⚡)        |
 
 ## 🛠️ TOOLING & RUNTIME
 
@@ -58,3 +55,14 @@ El desarrollo sigue este flujo de agentes. Invoca al agente correcto según la f
 
 Si el usuario solicita algo que rompa la resumabilidad o mezcle capas, DEBES responder:
 "VULNERACIÓN ARQUITECTÓNICA DETECTADA: [Explicación basada en QRLs]. Propuesta alternativa: [Código Segmentado]."
+
+## 🧠 GESTIÓN DE ERRORES RECURRENTES
+
+Cuando @QwikAuditor emite FAILED en cualquier auditoría:
+1. Registrar la violación en `docs/standards/LESSONS_LEARNED.md` (formato LL-XXX)
+2. Si reincidencia >= 2 en el mismo error → escalar a @QwikArchitect
+   para reforzar la restricción en el `.agent.md` del agente responsable
+3. El handoff a @QwikBuilder NO ocurre hasta que la entrada LL está creada
+
+Antes de iniciar cualquier tarea, leer ÚNICAMENTE el bloque
+"⚡ Errores Frecuentes" de `LESSONS_LEARNED.md` — no el registro completo.

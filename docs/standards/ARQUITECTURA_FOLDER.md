@@ -1,8 +1,16 @@
 
 # **Arquitectura Canónica Definitiva para Qwik + Supabase**
 
-**Propósito**:  
+**Propósito**:
 Este documento establece la arquitectura y las reglas canónicas para la construcción de aplicaciones Qwik con secciones públicas y privadas.
+
+## ⚡ Reglas Críticas (leer siempre — 30 segundos)
+> El agente lee este bloque en TODAS las tareas.
+> El resto del documento solo si la tarea requiere detalle.
+
+1. PROHIBIDO: Consultas DB directas (`db.select`) o lógica de negocio en `src/routes/` — las rutas son SOLO para `routeLoader$`, `routeAction$` y ensamblaje de componentes.
+2. OBLIGATORIO: Nueva funcionalidad de negocio en `src/features/[feature]/` o `src/lib/services/` — nunca en la ruta directamente.
+3. PATRÓN: `src/routes/` → orquesta | `src/features/` → lógica | `src/components/` → UI tonta sin imports de DB.
 
 Su objetivo es servir como la **única fuente de verdad** para la organización del código, eliminando ambigüedades arquitectónicas y asegurando:
 

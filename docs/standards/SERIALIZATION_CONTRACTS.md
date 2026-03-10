@@ -2,6 +2,14 @@
 
 Propósito: Garantizar que el estado de la aplicación sea 100% resumible, eliminando fallos en tiempo de ejecución causados por datos no serializables en la frontera Servidor -> Cliente.
 
+## ⚡ Reglas Críticas (leer siempre — 30 segundos)
+> El agente lee este bloque en TODAS las tareas.
+> El resto del documento solo si la tarea requiere detalle.
+
+1. PROHIBIDO: Usar `class` para objetos de dominio consumidos por componentes — Qwik no puede serializar instancias de clase. Usar siempre POJOs/interfaces puras.
+2. OBLIGATORIO: Todo dato que cruce una frontera `$()` debe ser POJO, primitivo o Signal. Prohibido: Promesas activas, Maps, Sets, instancias de clase.
+3. PATRÓN: Aplicar `noSerialize()` agresivamente a cualquier dato de librería de terceros (Charts, Mapas, etc.) e inicializar en `useVisibleTask$`.
+
 ## 1. El Problema de la Hidratación
 Qwik no "hidrata"; "reanuda". Para ello, todo el estado debe ser serializable en el HTML (JSON-like). Si un agente introduce un objeto no serializable, la app se romperá al intentar reanudarse en el navegador.
 
